@@ -29,6 +29,16 @@ Unity는 게임 화면, Ultraleap 손 입력, 마이크 녹음, 웹캠 캡처를
 5. Python 분석 엔진이 얼굴/음성 점수를 결합해 판정을 반환합니다.
 6. 진실의 입이 `TRUE`, `FALSE`, `UNCERTAIN` 중 하나를 보여줍니다.
 
+## 릴리스 다운로드
+
+사전 빌드된 배포본은 [GitHub Releases](https://github.com/potterLim/mouth-of-truth/releases)에서 받습니다.
+
+macOS 배포본은 Unity 앱, Python 분석 엔진, 모델 파일, macOS용 Python runtime을 함께 담고 있습니다. 압축을 푼 뒤 Ultraleap Hand Tracking Software를 실행하고 Leap Motion 또는 Ultraleap 호환 장치를 연결한 상태에서 `Run Mouth of Truth.command`를 실행합니다. 현재 공개 배포본의 Python runtime은 Apple Silicon 환경에서 검증했습니다.
+
+Windows 배포본도 Unity 앱, Python 분석 엔진, 모델 파일, Windows용 Python runtime을 함께 담고 있습니다. 압축을 푼 뒤 Ultraleap Hand Tracking Software를 실행하고 Leap Motion 또는 Ultraleap 호환 장치를 연결한 상태에서 `Run Mouth of Truth.bat`을 실행합니다. 실제 Windows 장비에서 카메라, 마이크, Ultraleap runtime 권한은 추가로 확인하는 것을 권장합니다.
+
+릴리스 자동화는 GitHub Actions workflow로 준비되어 있습니다. GitHub Actions에서 Release workflow를 수동 실행하고 `v0.1.0` 같은 tag 이름을 입력하면 macOS/Windows 빌드를 만들고 draft GitHub Release에 asset을 올립니다. CI에서 쓰는 모델과 Unity Asset Store 자산은 공개 Git에 넣지 않고, 비공개 asset bundle URL을 GitHub Actions secret으로 제공합니다.
+
 ## 실행 준비
 
 필수 환경:
@@ -62,7 +72,7 @@ PYTHONPATH=python-engine/src python -m unittest discover -s python-engine/tests
 | --- | --- | --- |
 | 얼굴/음성 모델 묶음 | `python-engine/models/` | [모델 자산](python-engine/models/README.md) |
 | Dungeon Modular Pack | `unity-app/Assets/ThirdParty/Environment/DungeonModularPack/` | [서드파티 자산과 런타임](THIRD_PARTY_ASSETS.md) |
-| Persiang Carpets URP | `unity-app/Assets/ThirdParty/Environment/PersianCarpetUrp/` | [서드파티 자산과 런타임](THIRD_PARTY_ASSETS.md) |
+| Persian Carpets URP | `unity-app/Assets/ThirdParty/Environment/PersianCarpetUrp/` | [서드파티 자산과 런타임](THIRD_PARTY_ASSETS.md) |
 | Ultraleap Hand Tracking Software | 실행 PC | [서드파티 자산과 런타임](THIRD_PARTY_ASSETS.md) |
 | Python 실행 환경 묶음 | `python-runtime/`, `python-runtime-windows/` | 릴리스 빌드 시 생성 |
 

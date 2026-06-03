@@ -1,0 +1,9 @@
+name: mouth-of-truth
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - conda-pack
+  - pip:
+      - -r requirements.txt

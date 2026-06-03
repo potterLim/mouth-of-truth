@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using MouthOfTruth.Game.App;
 using UnityEditor;
 using UnityEditor.Build;
@@ -14,6 +15,7 @@ namespace MouthOfTruth.Editor
     {
         private const string MAIN_SCENE_PATH = "Assets/Scenes/Main.unity";
         private const string DISTRIBUTION_ROOT_RELATIVE_PATH = "dist/windows/MouthOfTruth";
+        private const string DISTRIBUTION_ARCHIVE_RELATIVE_PATH = "dist/windows/MouthOfTruth-windows.zip";
         private const string APPLICATION_NAME = "MouthOfTruth.exe";
         private const string PYTHON_RUNTIME_ENVIRONMENT_VARIABLE_NAME = "MOUTH_OF_TRUTH_WINDOWS_PYTHON_RUNTIME_ROOT";
         private const string PACKAGE_PYTHON_RUNTIME_SCRIPT_RELATIVE_PATH = "python-engine/scripts/package_python_runtime.ps1";
@@ -37,7 +39,7 @@ namespace MouthOfTruth.Editor
                 throw new BuildFailedException("Windows Build Support is not installed for the current Unity editor.");
             }
 
-            BuildMainSceneEditor.Run();
+            prepareMainSceneForBuild();
 
             if (SystemInfo.graphicsDeviceType != GraphicsDeviceType.Null)
             {
@@ -70,7 +72,21 @@ namespace MouthOfTruth.Editor
             ReleaseRuntimeValidator.ValidateDistributionRuntimeAssets(distributionRootPath);
             pruneDistributionArtifacts(distributionRootPath);
             writeLauncherScript(distributionRootPath);
+            writeDistributionArchive(runtimeRootPath, distributionRootPath);
             AssetDatabase.Refresh();
+        }
+
+        private static void prepareMainSceneForBuild()
+        {
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(MAIN_SCENE_PATH) == null)
+            {
+                throw new BuildFailedException($"Main scene is missing: {MAIN_SCENE_PATH}. Run Mouth Of Truth/Build Main Scene before creating a release.");
+            }
+
+            EditorBuildSettings.scenes = new[]
+            {
+                new EditorBuildSettingsScene(MAIN_SCENE_PATH, true),
+            };
         }
 
         private static void stageRuntimeSupport(string runtimeRootPath, string distributionRootPath)
@@ -285,6 +301,29 @@ namespace MouthOfTruth.Editor
             string launcherScriptContents = "@echo off\r\n" + "setlocal EnableExtensions\r\n" + "set \"SCRIPT_DIRECTORY_PATH=%~dp0\"\r\n" + "for %%I in (\"%SCRIPT_DIRECTORY_PATH%.\") do set \"MOUTH_OF_TRUTH_RUNTIME_ROOT=%%~fI\"\r\n" + "start \"Mouth of Truth\" \"%MOUTH_OF_TRUTH_RUNTIME_ROOT%\\MouthOfTruth.exe\" -screen-fullscreen 1\r\n";
 
             File.WriteAllText(launcherScriptPath, launcherScriptContents);
+        }
+
+        private static void writeDistributionArchive(string runtimeRootPath, string distributionRootPath)
+        {
+            string archivePath = Path.Combine(runtimeRootPath, DISTRIBUTION_ARCHIVE_RELATIVE_PATH);
+
+            if (File.Exists(archivePath))
+            {
+                File.Delete(archivePath);
+            }
+
+            string archiveDirectoryPath = Path.GetDirectoryName(archivePath);
+            Directory.CreateDirectory(string.IsNullOrEmpty(archiveDirectoryPath) ? runtimeRootPath : archiveDirectoryPath);
+
+            using (FileStream archiveStream = File.Create(archivePath))
+            using (ZipArchive archive = new ZipArchive(archiveStream, ZipArchiveMode.Create))
+            {
+                foreach (string filePath in Directory.GetFiles(distributionRootPath, "*", SearchOption.AllDirectories))
+                {
+                    string relativePath = Path.GetRelativePath(distributionRootPath, filePath).Replace(Path.DirectorySeparatorChar, '/');
+                    archive.CreateEntryFromFile(filePath, $"MouthOfTruth/{relativePath}", System.IO.Compression.CompressionLevel.Optimal);
+                }
+            }
         }
     }
 }

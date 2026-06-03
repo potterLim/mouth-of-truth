@@ -1,0 +1,240 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag to build, for example v0.1.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  UNITY_VERSION: 6000.4.1f1
+  RELEASE_TAG: ${{ github.event.inputs.tag_name || github.ref_name }}
+
+jobs:
+  build-macos:
+    name: Build macOS
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore private release assets
+        shell: bash
+        env:
+          ASSET_BUNDLE_URL: ${{ secrets.MOUTH_OF_TRUTH_CI_ASSET_BUNDLE_URL }}
+          ASSET_BUNDLE_TOKEN: ${{ secrets.MOUTH_OF_TRUTH_CI_ASSET_BUNDLE_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${ASSET_BUNDLE_URL}" ]]; then
+            echo "MOUTH_OF_TRUTH_CI_ASSET_BUNDLE_URL is required for release builds." >&2
+            exit 1
+          fi
+
+          ASSET_BUNDLE_PATH="${RUNNER_TEMP}/mouth-of-truth-ci-assets.tar.gz"
+
+          if [[ -n "${ASSET_BUNDLE_TOKEN}" ]]; then
+            curl --fail --location --retry 3 \
+              --header "Authorization: Bearer ${ASSET_BUNDLE_TOKEN}" \
+              --output "${ASSET_BUNDLE_PATH}" \
+              "${ASSET_BUNDLE_URL}"
+          else
+            curl --fail --location --retry 3 \
+              --output "${ASSET_BUNDLE_PATH}" \
+              "${ASSET_BUNDLE_URL}"
+          fi
+
+          tools/restore-model-assets.sh "${ASSET_BUNDLE_PATH}"
+          test -d unity-app/Assets/ThirdParty/Environment/DungeonModularPack
+          test -d unity-app/Assets/ThirdParty/Environment/PersianCarpetUrp
+
+      - name: Set up Python
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          environment-file: python-engine/environment.yml
+          activate-environment: mouth-of-truth
+          auto-activate-base: false
+
+      - name: Test and package macOS Python runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          conda run --no-capture-output -n mouth-of-truth python -m compileall -q python-engine/src
+          PYTHONPATH=python-engine/src conda run --no-capture-output -n mouth-of-truth python -m unittest discover -s python-engine/tests
+          export MOUTH_OF_TRUTH_CONDA_ENV=mouth-of-truth
+          python-engine/scripts/package_python_runtime.sh
+
+      - name: Build macOS release
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: unity-app
+          unityVersion: ${{ env.UNITY_VERSION }}
+          targetPlatform: StandaloneOSX
+          buildMethod: MouthOfTruth.Editor.BuildMacReleaseEditor.Run
+          allowDirtyBuild: true
+          cacheUnityInstallationOnMac: true
+
+      - name: Write checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          shasum -a 256 dist/macos/MouthOfTruth-macos.zip > dist/macos/MouthOfTruth-macos.zip.sha256
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mouth-of-truth-macos
+          path: |
+            dist/macos/MouthOfTruth-macos.zip
+            dist/macos/MouthOfTruth-macos.zip.sha256
+          if-no-files-found: error
+
+  build-windows:
+    name: Build Windows
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Restore private release assets
+        shell: pwsh
+        env:
+          ASSET_BUNDLE_URL: ${{ secrets.MOUTH_OF_TRUTH_CI_ASSET_BUNDLE_URL }}
+          ASSET_BUNDLE_TOKEN: ${{ secrets.MOUTH_OF_TRUTH_CI_ASSET_BUNDLE_TOKEN }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:ASSET_BUNDLE_URL)) {
+              throw "MOUTH_OF_TRUTH_CI_ASSET_BUNDLE_URL is required for release builds."
+          }
+
+          $assetBundlePath = Join-Path $env:RUNNER_TEMP "mouth-of-truth-ci-assets.tar.gz"
+          $headers = @{}
+
+          if ([string]::IsNullOrWhiteSpace($env:ASSET_BUNDLE_TOKEN) -eq $false) {
+              $headers.Authorization = "Bearer $env:ASSET_BUNDLE_TOKEN"
+          }
+
+          Invoke-WebRequest -Uri $env:ASSET_BUNDLE_URL -OutFile $assetBundlePath -Headers $headers
+          .\tools\restore-model-assets.ps1 -ModelBundlePath $assetBundlePath
+
+          if ((Test-Path "unity-app\Assets\ThirdParty\Environment\DungeonModularPack") -eq $false) {
+              throw "Dungeon Modular Pack assets were not restored."
+          }
+
+          if ((Test-Path "unity-app\Assets\ThirdParty\Environment\PersianCarpetUrp") -eq $false) {
+              throw "Persian Carpets URP assets were not restored."
+          }
+
+      - name: Set up Python
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          environment-file: python-engine/environment.yml
+          activate-environment: mouth-of-truth
+          auto-activate-base: false
+
+      - name: Test and package Windows Python runtime
+        shell: pwsh
+        run: |
+          conda run --no-capture-output -n mouth-of-truth python -m compileall -q python-engine/src
+          conda run --no-capture-output -n mouth-of-truth python -c "import sys; print(sys.executable)"
+          $env:PYTHONPATH = "python-engine/src"
+          conda run --no-capture-output -n mouth-of-truth python -m unittest discover -s python-engine/tests
+          $env:MOUTH_OF_TRUTH_CONDA_ENV = "mouth-of-truth"
+          .\python-engine\scripts\package_python_runtime.ps1
+
+      - name: Build Windows release
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: unity-app
+          unityVersion: ${{ env.UNITY_VERSION }}
+          targetPlatform: StandaloneWindows64
+          buildMethod: MouthOfTruth.Editor.BuildWindowsReleaseEditor.Run
+          allowDirtyBuild: true
+
+      - name: Write checksum
+        shell: pwsh
+        run: |
+          $zipPath = "dist\windows\MouthOfTruth-windows.zip"
+          $hash = (Get-FileHash -Algorithm SHA256 $zipPath).Hash.ToLowerInvariant()
+          "$hash  dist/windows/MouthOfTruth-windows.zip" | Out-File -Encoding ascii "dist\windows\MouthOfTruth-windows.zip.sha256"
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mouth-of-truth-windows
+          path: |
+            dist/windows/MouthOfTruth-windows.zip
+            dist/windows/MouthOfTruth-windows.zip.sha256
+          if-no-files-found: error
+
+  publish-draft-release:
+    name: Publish draft release
+    runs-on: ubuntu-latest
+    needs:
+      - build-macos
+      - build-windows
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create draft GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          RELEASE_TITLE="Mouth of Truth ${RELEASE_TAG}"
+          RELEASE_NOTES_PATH="${RUNNER_TEMP}/release-notes.md"
+
+          cat > "${RELEASE_NOTES_PATH}" <<EOF
+          ## Included
+
+          - macOS release package: \`MouthOfTruth-macos.zip\`
+          - Windows release package: \`MouthOfTruth-windows.zip\`
+          - Unity app, Python analysis engine, required face/voice models, and bundled OS-specific Python runtime
+
+          ## Run Notes
+
+          1. Install and run Ultraleap Hand Tracking Software.
+          2. Connect a Leap Motion or Ultraleap-compatible device.
+          3. Unzip the package and run the launcher script for your OS.
+          4. Allow camera and microphone permissions when the OS asks.
+
+          ## Verification
+
+          - Python unit tests ran before packaging each runtime.
+          - Unity release builds completed on GitHub Actions.
+          - Required model SHA-256 checks passed while restoring release assets.
+          EOF
+
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "Release ${RELEASE_TAG} already exists. Delete it or use a new tag." >&2
+            exit 1
+          fi
+
+          gh release create "${RELEASE_TAG}" \
+            release-assets/* \
+            --draft \
+            --target "${GITHUB_SHA}" \
+            --title "${RELEASE_TITLE}" \
+            --notes-file "${RELEASE_NOTES_PATH}"

@@ -253,7 +253,7 @@ Leap Motion 입력 장비에는 Ultraleap Hand Tracking Software를 설치하고
 필요한 Unity Asset Store 자산은 Git에 포함하지 않습니다. 각 개발자는 본인 라이선스 계정으로 내려받아 지정 경로에 가져옵니다.
 
 - Dungeon Modular Pack
-- Persiang Carpets URP
+- Persian Carpets URP
 
 복원 경로:
 
@@ -399,6 +399,69 @@ unity-app/Assets/StreamingAssets/audio/questions/Q0012.wav
 
 ## 14. 릴리스 빌드
 
+GitHub Release에는 검증된 실행 묶음만 올립니다. macOS에서 만든 배포본은 macOS용 Python runtime을 포함하므로 macOS 배포본으로만 사용하고, Windows 배포본은 Windows에서 패키징한 `python-runtime-windows/`를 포함해 별도로 만듭니다.
+
+### GitHub Actions 릴리스 workflow
+
+`.github/workflows/release.yml`은 수동 실행하는 draft release workflow입니다. 공개 Git에는 모델과 Unity Asset Store 자산을 넣지 않으므로, 실행 전에 아래 secrets를 먼저 설정해야 합니다.
+
+흐름:
+
+1. GitHub Actions에서 Release workflow를 수동 실행하고 `v0.1.0` 같은 tag 이름을 입력합니다.
+2. GitHub Actions가 macOS와 Windows job을 실행합니다.
+3. 각 job이 비공개 asset bundle을 복원합니다.
+4. Python runtime을 OS별로 패키징합니다.
+5. Unity release build를 실행합니다.
+6. `MouthOfTruth-macos.zip`, `MouthOfTruth-windows.zip`과 checksum을 artifact로 모읍니다.
+7. draft GitHub Release를 만들고 asset을 업로드합니다.
+8. GitHub에서 release note와 asset을 확인한 뒤 publish합니다.
+
+필요한 GitHub Actions secrets:
+
+```text
+UNITY_LICENSE
+UNITY_EMAIL
+UNITY_PASSWORD
+MOUTH_OF_TRUTH_CI_ASSET_BUNDLE_URL
+MOUTH_OF_TRUTH_CI_ASSET_BUNDLE_TOKEN   # optional
+```
+
+`MOUTH_OF_TRUTH_CI_ASSET_BUNDLE_URL`은 공개 Git에 넣지 않는 실행 자산을 담은 tarball URL입니다. 이 묶음에는 아래 항목이 들어갑니다.
+
+```text
+python-engine/models/face/yolo26x_rafdb_best.pt
+python-engine/models/voice/best_wav2vec2_iemocap/
+python-engine/models/whisper/models--openai--whisper-tiny/   # optional
+unity-app/Assets/ThirdParty/Environment/DungeonModularPack/
+unity-app/Assets/ThirdParty/Environment/PersianCarpetUrp/
+```
+
+로컬에서 CI용 asset bundle을 만들 때:
+
+```bash
+tools/package-ci-release-assets.sh
+```
+
+생성 위치:
+
+```text
+dist/ci-assets/mouth-of-truth-ci-assets.tar.gz
+dist/ci-assets/mouth-of-truth-ci-assets.tar.gz.sha256
+```
+
+이 파일은 모델과 Unity Asset Store 원본 자산을 포함하므로 Git에 commit하거나 public release asset으로 올리지 않습니다. 사내 저장소, private object storage, 만료 시간이 있는 pre-signed URL 같은 비공개 경로에 둡니다.
+
+tag로 자동 릴리스를 시작할 때:
+
+```bash
+git tag v0.1.1
+git push origin v0.1.1
+```
+
+이미 있는 tag가 아니라 새 tag를 사용합니다. workflow는 release를 draft로 만들며, 최종 publish는 GitHub Releases 화면에서 수동으로 합니다.
+
+### 로컬 릴리스 빌드
+
 릴리스 빌드는 아래 항목을 배포물에 포함하고, 필수 파일과 모델 검사값을 검증합니다.
 
 ```text
@@ -435,8 +498,26 @@ $env:UNITY_EDITOR_PATH="<unity-editor-executable>"
 
 ```text
 dist/macos/MouthOfTruth/
+dist/macos/MouthOfTruth-macos.zip
 dist/windows/MouthOfTruth/
+dist/windows/MouthOfTruth-windows.zip
 ```
+
+Release asset으로 올릴 때는 zip 파일과 SHA-256 검사값을 함께 기록합니다.
+
+```bash
+shasum -a 256 dist/macos/MouthOfTruth-macos.zip
+```
+
+Windows:
+
+```powershell
+Get-FileHash .\dist\windows\MouthOfTruth-windows.zip -Algorithm SHA256
+```
+
+macOS 첫 실행에서 Gatekeeper가 unsigned 앱을 막으면 Finder에서 앱 또는 `Run Mouth of Truth.command`를 우클릭한 뒤 `Open`으로 실행합니다. 카메라와 마이크 권한 요청은 허용해야 얼굴/음성 분석 경로가 동작합니다.
+
+Windows 배포 전에는 Windows PC에서 Ultraleap Hand Tracking Software, 카메라, 마이크 권한, `Run Mouth of Truth.bat` 실행을 확인한 뒤 Release asset을 추가합니다. macOS에서 만든 Python runtime을 Windows 배포본에 넣지 않습니다.
 
 ## 15. 공개 전 확인
 

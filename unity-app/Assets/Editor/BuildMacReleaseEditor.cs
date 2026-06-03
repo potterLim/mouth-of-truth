@@ -34,7 +34,7 @@ namespace MouthOfTruth.Editor
         [MenuItem("Mouth Of Truth/Build Mac Release")]
         public static void Run()
         {
-            BuildMainSceneEditor.Run();
+            prepareMainSceneForBuild();
 
             if (SystemInfo.graphicsDeviceType != GraphicsDeviceType.Null)
             {
@@ -69,6 +69,19 @@ namespace MouthOfTruth.Editor
             writeLauncherScript(distributionRootPath);
             writeDistributionArchive(runtimeRootPath, distributionRootPath);
             AssetDatabase.Refresh();
+        }
+
+        private static void prepareMainSceneForBuild()
+        {
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(MAIN_SCENE_PATH) == null)
+            {
+                throw new BuildFailedException($"Main scene is missing: {MAIN_SCENE_PATH}. Run Mouth Of Truth/Build Main Scene before creating a release.");
+            }
+
+            EditorBuildSettings.scenes = new[]
+            {
+                new EditorBuildSettingsScene(MAIN_SCENE_PATH, true),
+            };
         }
 
         private static void stageRuntimeSupport(string runtimeRootPath, string distributionRootPath)

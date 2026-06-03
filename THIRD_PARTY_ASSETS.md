@@ -7,7 +7,7 @@
 | Ultraleap Unity package `com.ultraleap.tracking` | 포함 | 선택 | Unity 프로젝트에 포함된 패키지입니다. |
 | Ultraleap Hand Tracking Software | 미포함 | 필요 | Leap Motion/Ultraleap 카메라를 연결한 실행 PC에 설치합니다. |
 | Dungeon Modular Pack | 미포함 | 필요 | Unity Asset Store에서 라이선스를 보유한 계정으로 가져옵니다. |
-| Persiang Carpets URP | 미포함 | 필요 | Unity Asset Store에서 라이선스를 보유한 계정으로 가져옵니다. |
+| Persian Carpets URP | 미포함 | 필요 | Unity Asset Store에서 라이선스를 보유한 계정으로 가져옵니다. |
 | 실행 이미지, 오디오, 질문 자산 | 포함 | 불필요 | `unity-app/Assets/StreamingAssets/` 아래에 포함되어 있습니다. |
 | 얼굴/음성 모델 파일 | 미포함 | 필요 | 모델 묶음 파일을 받아 `python-engine/models/`에 복원합니다. |
 | Whisper 캐시 | 미포함 | 선택 | 전사 기능을 켤 때만 필요합니다. |
@@ -121,7 +121,7 @@ unity-app/Assets/ThirdParty/Environment/DungeonModularPack/Prefabs/Arch_A.prefab
 unity-app/Assets/ThirdParty/Environment/DungeonModularPack/Meshes/
 ```
 
-### Persiang Carpets URP
+### Persian Carpets URP
 
 다운로드:
 

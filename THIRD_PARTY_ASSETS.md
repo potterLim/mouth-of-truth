@@ -60,7 +60,7 @@ https://docs.ultraleap.com/hand-tracking/Hyperion/index.html
 
 ### Unity 패키지를 다시 받아야 하는 경우
 
-저장소를 정상적으로 받았다면 `unity-app/Packages/com.ultraleap.tracking/`이 포함됩니다. 해당 폴더가 빠진 경우에만 다시 받습니다.
+저장소를 정상적으로 받았다면 `unity-app/Packages/com.ultraleap.tracking/`이 포함됩니다. 이 폴더가 빠진 경우에만 다시 받습니다.
 
 GitHub 릴리스:
 
@@ -88,7 +88,7 @@ OpenUPM 목록에 `7.3.0`이 없으면 GitHub 릴리스 패키지를 사용합�
 
 ## Unity Asset Store 환경 자산
 
-아래 원본 자산은 Git에 포함하지 않습니다. Unity Asset Store 자산은 빌드 결과물에 포함해 사용할 수 있지만, 원본 파일을 공개 Git 저장소에 그대로 재배포하지 않습니다.
+아래 원본 자산은 Git에 포함하지 않습니다. Unity Asset Store 자산은 빌드 결과물에 포함해 사용할 수 있지만 원본 파일을 공개 Git 저장소에 그대로 재배포하지 않습니다.
 
 공식 참고:
 

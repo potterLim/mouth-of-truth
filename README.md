@@ -1,6 +1,6 @@
 # Mouth of Truth
 
-`Mouth of Truth`는 질문 카드 선택, 손 입력, 음성 답변, 얼굴 캡처를 하나의 의식처럼 이어지는 인터랙티브 설치형 게임입니다. 참가자는 진실의 입 앞에서 질문을 고르고 답변하며, 앱은 얼굴 표정과 음성 감정 신호를 결합해 `TRUE`, `FALSE`, `UNCERTAIN` 중 하나를 보여줍니다.
+`Mouth of Truth`는 질문 카드 선택, 손 입력, 음성 답변, 얼굴 캡처를 하나의 의식처럼 이어 가는 인터랙티브 설치형 게임입니다. 참가자는 진실의 입 앞에서 질문을 고르고 답변합니다. 앱은 얼굴 표정과 음성 감정 신호를 결합해 `TRUE`, `FALSE`, `UNCERTAIN` 중 하나를 보여줍니다.
 
 Unity는 게임 화면, Ultraleap 손 입력, 마이크 녹음, 웹캠 캡처를 담당합니다. Python 엔진은 얼굴/음성 분석 결과를 받아 최종 판정을 계산합니다.
 
@@ -8,33 +8,33 @@ Unity는 게임 화면, Ultraleap 손 입력, 마이크 녹음, 웹캠 캡처를
 
 ## 프로젝트 성격
 
-이 프로젝트의 `TRUE`, `FALSE`, `UNCERTAIN` 판정은 인터랙티브 설치 경험을 위한 게임 연출입니다. 얼굴 표정과 음성 신호는 참가자 반응을 극적으로 표현하기 위한 입력이며, 실제 거짓말 탐지, 신뢰도 평가, 채용/심사/의사결정 근거로 사용하지 않습니다.
+이 프로젝트의 `TRUE`, `FALSE`, `UNCERTAIN` 판정은 인터랙티브 설치 경험을 위한 게임 연출입니다. 얼굴 표정과 음성 신호는 참가자 반응을 극적으로 표현하기 위한 입력이며 실제 거짓말 탐지, 신뢰도 평가, 채용/심사/의사결정 근거로 사용하지 않습니다.
 
-카메라와 마이크는 참가자에게 수집 목적을 알리고 동의를 받은 설치 환경에서만 사용합니다. 얼굴/음성 모델과 기준값은 데이터셋, 조명, 카메라 각도, 마이크 품질, 주변 소음에 영향을 받으므로 운영 전 현장 검증이 필요합니다.
+카메라와 마이크는 참가자에게 수집 목적을 알리고 동의를 받은 설치 환경에서만 사용합니다. 얼굴/음성 모델과 기준값은 데이터셋, 조명, 카메라 각도, 마이크 품질, 주변 소음에 영향을 받기 때문에 운영 전 현장 검증이 필요합니다.
 
 답변 중 생성되는 얼굴 프레임과 음성 파일은 로컬 `python-engine/data/session-workspace/` 아래에 임시로 저장되며, 분석 직후와 앱 시작/종료 시 정리됩니다. 디버깅을 위해 보존이 필요한 경우에는 별도 보존 정책을 추가한 뒤 참가자 고지와 운영 절차를 함께 갱신해야 합니다.
 
 ## 구현 범위
 
-질문 카드 선택, Ultraleap 손 입력, 질문 내레이션, 음성 답변 수집, 웹캠 프레임 캡처, Python 분석 엔진 연동, macOS/Windows 릴리스 패키징 흐름까지 구현되어 있습니다.
+질문 카드 선택, Ultraleap 손 입력, 질문 내레이션, 음성 답변 수집, 웹캠 프레임 캡처, Python 분석 엔진 연동, macOS/Windows 릴리스 패키징 흐름까지 구현했습니다.
 
 자동 검증은 게임 상태 머신, 판정 정책, Python 분석 계약, 릴리스 빌드 전제 조건처럼 하드웨어 없이 재현 가능한 경계를 중심으로 구성했습니다.
 
 ## 다운로드
 
-최신 macOS/Windows 빌드는 GitHub Releases에서 받을 수 있습니다.
+현재 배포 빌드는 GitHub Releases에서 받을 수 있습니다.
 
 - [Mouth of Truth v0.1.0 다운로드](https://github.com/potterLim/mouth-of-truth/releases/tag/v0.1.0)
 - macOS: ZIP 배포본
 - Windows: ZIP 배포본
-- 포함 항목: Unity 앱, Python 분석 엔진, 필수 모델, 플랫폼별 Python runtime
+- 포함 항목: Unity 앱, Python 분석 엔진, 필수 모델, 플랫폼별 Python 런타임
 
 실행:
 
 1. Ultraleap Hand Tracking Software를 설치하고 실행합니다.
 2. Leap Motion 또는 Ultraleap 호환 장치를 연결합니다.
 3. OS가 요청하는 카메라와 마이크 권한을 허용합니다.
-4. macOS에서는 `Run Mouth of Truth.command`, Windows에서는 `Run Mouth of Truth.bat`을 실행합니다.
+4. macOS에서는 `Run Mouth of Truth.command`를 실행하고 Windows에서는 `Run Mouth of Truth.bat`을 실행합니다.
 
 macOS와 Windows 배포본은 각 플랫폼에서 빌드해 확인했습니다.
 
@@ -101,7 +101,7 @@ PYTHONPATH=python-engine/src python -m unittest discover -s python-engine/tests
 | Dungeon Modular Pack | `unity-app/Assets/ThirdParty/Environment/DungeonModularPack/` | [서드파티 자산과 런타임](THIRD_PARTY_ASSETS.md) |
 | Persian Carpets URP | `unity-app/Assets/ThirdParty/Environment/PersianCarpetUrp/` | [서드파티 자산과 런타임](THIRD_PARTY_ASSETS.md) |
 | Ultraleap Hand Tracking Software | 실행 PC | [서드파티 자산과 런타임](THIRD_PARTY_ASSETS.md) |
-| Python 실행 환경 묶음 | `python-runtime/`, `python-runtime-windows/` | 릴리스 빌드 시 생성 |
+| Python 실행 환경 묶음 | `python-runtime/`, `python-runtime-windows/` | 릴리스 빌드 때 생성 |
 
 모델 묶음 복원:
 
@@ -117,9 +117,9 @@ Windows PowerShell:
 
 ## 릴리스 자동화
 
-Release workflow를 수동 실행하고 `v0.1.0` 같은 tag 이름을 입력하면 macOS/Windows 빌드를 만들고 draft GitHub Release에 asset을 올립니다.
+Release workflow를 수동 실행하고 `v0.1.0` 같은 tag 이름을 입력하면 macOS/Windows 빌드를 만들고 draft GitHub Release에 asset을 업로드합니다.
 
-모델과 Unity Asset Store 자산은 공개 Git에 넣지 않습니다. 비공개 asset bundle URL과 접근 토큰을 GitHub Actions secret으로 제공하고, 빌드 중 필수 모델의 SHA-256을 확인합니다.
+모델과 Unity Asset Store 자산은 공개 Git에 넣지 않습니다. 비공개 asset bundle URL과 접근 토큰을 GitHub Actions secret으로 제공하며 빌드 중 필수 모델의 SHA-256을 확인합니다.
 
 ## 판정 정책
 
@@ -184,7 +184,7 @@ Release workflow는 Python 테스트와 Unity EditMode 테스트를 통과한 �
 
 ## 분석 런타임 설정
 
-기본 분석 모드는 `auto`입니다. Python 브리지가 있으면 Python 분석을 사용하고, 브리지가 없으면 deterministic 분석을 사용합니다.
+기본 분석 모드는 `auto`입니다. Python 브리지가 있으면 Python 분석을 사용합니다. 브리지가 없으면 deterministic 분석을 사용합니다.
 
 ```bash
 export MOUTH_OF_TRUTH_ANALYSIS_MODE=auto
@@ -192,7 +192,7 @@ export MOUTH_OF_TRUTH_ANALYSIS_MODE=python
 export MOUTH_OF_TRUTH_ANALYSIS_MODE=deterministic
 ```
 
-분석 중 Python 브리지가 실패했을 때 기본 정책은 `fail-fast`입니다. 출시 환경에서 조용히 다른 판정기로 바뀌지 않게 하기 위한 설정입니다. 개발/전시 리허설 환경에서만 deterministic fallback이 필요하면 명시적으로 켭니다.
+분석 중 Python 브리지가 실패했을 때 기본 정책은 `fail-fast`입니다. 출시 환경에서 조용히 다른 판정기로 바뀌지 않게 하기 위한 설정입니다. 개발/전시 리허설 환경에서 deterministic fallback이 필요할 때만 명시적으로 켭니다.
 
 ```bash
 export MOUTH_OF_TRUTH_ANALYSIS_FAILURE_POLICY=fail-fast

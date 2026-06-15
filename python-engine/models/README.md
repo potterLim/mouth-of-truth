@@ -76,7 +76,7 @@ whisper/models--openai--whisper-tiny/
 
 ## 대용량 파일 관리
 
-모델 묶음 파일은 GitHub Release asset, 모델 저장소, 사내 저장소, 또는 다른 외부 저장소로 관리합니다. 일반 GitHub Git push는 100 MiB를 초과하는 단일 파일을 차단합니다.
+모델 묶음 파일은 GitHub Release asset, 모델 저장소, 사내 저장소 또는 다른 외부 저장소로 관리합니다. GitHub의 일반 Git 저장소는 100 MiB를 초과하는 단일 파일 push를 차단합니다.
 
 로컬 모델 파일로 묶음 파일을 만들 때:
 
@@ -93,4 +93,4 @@ dist/model-assets/mouth-of-truth-models-required.tar.gz.sha256
 
 ## 모델 교체
 
-배포본은 학습된 모델 산출물을 사용합니다. 다른 모델을 사용할 때는 같은 경로와 출력 포맷을 맞추고, 얼굴/음성 점수 규칙이 기대하는 레이블 체계를 유지합니다.
+배포본은 학습된 모델 산출물을 사용합니다. 다른 모델을 사용할 때는 같은 경로와 출력 포맷을 맞추고 얼굴/음성 점수 규칙이 기대하는 레이블 체계를 유지합니다.

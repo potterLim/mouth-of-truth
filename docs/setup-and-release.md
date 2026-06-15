@@ -175,7 +175,7 @@ Whisper:
 
 ## 6. 모델 교체
 
-배포본은 학습된 모델 산출물을 기준으로 실행됩니다. 원본 데이터셋은 모델 출처 확인과 새 모델 학습에만 필요하며, 프로젝트 실행에는 필요하지 않습니다.
+배포본은 학습된 모델 산출물을 기준으로 실행됩니다. 원본 데이터셋은 모델 출처 확인과 새 모델 학습에만 필요합니다. 프로젝트 실행에는 필요하지 않습니다.
 
 얼굴 모델을 교체할 때:
 
@@ -206,7 +206,7 @@ Git에 포함하지 않는 항목:
 - `bridge/*.json`
 - Unity `Library/`, `Temp/`, `Obj/`, `Logs/`, `UserSettings/`
 
-GitHub 일반 Git 저장소는 100 MiB를 초과하는 단일 파일 push를 차단합니다. 모델 묶음 파일은 GitHub Release asset, 별도 모델 저장소, 사내 저장소, 또는 다른 외부 저장소로 관리합니다.
+GitHub의 일반 Git 저장소는 100 MiB를 초과하는 단일 파일 push를 차단합니다. 모델 묶음 파일은 GitHub Release asset, 별도 모델 저장소, 사내 저장소 또는 다른 외부 저장소로 관리합니다.
 
 공식 참고:
 
@@ -302,7 +302,7 @@ unity-app/Assets/StreamingAssets/audio
 
 ## 10. 실행 모드
 
-기본 분석 모드는 `auto`입니다. Python 브리지가 있으면 Python 분석을 사용하고, 브리지가 없으면 deterministic 분석을 사용합니다.
+기본 분석 모드는 `auto`입니다. Python 브리지가 있으면 Python 분석을 사용합니다. 브리지가 없으면 deterministic 분석을 사용합니다.
 
 ```bash
 export MOUTH_OF_TRUTH_ANALYSIS_MODE=auto
@@ -348,7 +348,7 @@ export MOUTH_OF_TRUTH_USE_TRAINED_VOICE_MODEL=1
 
 ## 11. 판정 해석과 한계
 
-`TRUE`, `FALSE`, `UNCERTAIN`은 인터랙티브 설치 경험을 위한 게임 판정입니다. 얼굴 표정과 음성 신호를 사용하지만, 실제 거짓말 탐지, 신뢰도 평가, 채용/심사, 의사결정 근거로 사용하지 않습니다.
+`TRUE`, `FALSE`, `UNCERTAIN`은 인터랙티브 설치 경험을 위한 게임 판정입니다. 얼굴 표정과 음성 신호를 사용하지만 실제 거짓말 탐지, 신뢰도 평가, 채용/심사, 의사결정 근거로 사용하지 않습니다.
 
 운영 전 확인 대상:
 
@@ -360,9 +360,9 @@ export MOUTH_OF_TRUTH_USE_TRAINED_VOICE_MODEL=1
 지연 시간을 줄이기 위한 현재 구현:
 
 - Python persistent worker가 얼굴 모델을 미리 로드합니다.
-- 얼굴 분석은 대표 프레임 최대 3개를 샘플링하고, 현재 정책은 첫 유효 얼굴 인식 1개만으로 세션 요약을 만듭니다.
-- 음성 분석은 기본적으로 빠른 음향 요약을 사용하고, 학습된 wav2vec2 모델은 `MOUTH_OF_TRUTH_USE_TRAINED_VOICE_MODEL=1`일 때만 사용합니다.
-- Unity 브리지는 persistent worker 실패 시 일회성 Python 프로세스를 사용하고, 그마저 실패하면 결정적 대체 판정으로 내려갑니다.
+- 얼굴 분석은 대표 프레임 최대 3개를 샘플링합니다. 현재 정책은 첫 유효 얼굴 인식 1개만으로 세션 요약을 만듭니다.
+- 음성 분석은 기본적으로 빠른 음향 요약을 사용합니다. 학습된 wav2vec2 모델은 `MOUTH_OF_TRUTH_USE_TRAINED_VOICE_MODEL=1`일 때만 사용합니다.
+- Unity 브리지는 persistent worker가 실패하면 일회성 Python 프로세스를 사용합니다. 그마저 실패하면 결정적 대체 판정으로 내려갑니다.
 
 ## 12. 판정 정책
 
@@ -399,7 +399,7 @@ Unity 대체 판정:
 unity-app/Assets/Scripts/Game/Analysis/DeterministicAnswerAnalysisClient.cs
 ```
 
-대체 판정은 Python 브리지가 없을 때 사용하는 보조 경로입니다. 얼굴 프레임 수와 음성 segment 수가 부족하면 `UNCERTAIN`을 반환하고, 충분하면 질문 ID와 답변 전사 텍스트에서 계산한 검사값으로 `TRUE` / `FALSE`를 반환합니다.
+대체 판정은 Python 브리지가 없을 때 사용하는 보조 경로입니다. 얼굴 프레임 수와 음성 segment 수가 부족하면 `UNCERTAIN`을 반환합니다. 충분하면 질문 ID와 답변 전사 텍스트에서 계산한 검사값으로 `TRUE` / `FALSE`를 반환합니다.
 
 ## 13. 질문과 질문 음성
 
@@ -431,18 +431,18 @@ unity-app/Assets/StreamingAssets/audio/questions/Q0012.wav
 
 ## 14. 릴리스 빌드
 
-GitHub Release에는 검증된 실행 묶음만 올립니다. macOS에서 만든 배포본은 macOS용 Python runtime을 포함하므로 macOS 배포본으로만 사용하고, Windows 배포본은 Windows에서 패키징한 `python-runtime-windows/`를 포함해 별도로 만듭니다.
+GitHub Release에는 검증된 실행 묶음만 올립니다. macOS에서 만든 배포본은 macOS용 Python 런타임을 포함하므로 macOS 배포본으로만 사용합니다. Windows 배포본은 Windows에서 패키징한 `python-runtime-windows/`를 포함해 별도로 만듭니다.
 
 ### GitHub Actions 릴리스 workflow
 
-`.github/workflows/release.yml`은 수동 실행하는 draft release workflow입니다. 공개 Git에는 모델과 Unity Asset Store 자산을 넣지 않으므로, 실행 전에 아래 secrets를 먼저 설정해야 합니다.
+`.github/workflows/release.yml`은 수동 실행하는 draft release workflow입니다. 공개 Git에는 모델과 Unity Asset Store 자산을 넣지 않으므로 실행 전에 아래 secrets를 먼저 설정해야 합니다.
 
 흐름:
 
 1. GitHub Actions에서 Release workflow를 수동 실행하고 `v0.1.0` 같은 tag 이름을 입력합니다.
 2. GitHub Actions가 macOS와 Windows job을 실행합니다.
 3. 각 job이 비공개 asset bundle을 복원합니다.
-4. Python 소스 compile 검사와 unit test를 실행한 뒤 Python runtime을 OS별로 패키징합니다.
+4. Python 소스 컴파일 검사와 unit test를 실행한 뒤 Python 런타임을 OS별로 패키징합니다.
 5. Unity EditMode 테스트를 실행하고 결과 XML을 artifact로 남깁니다.
 6. Unity release build를 실행합니다.
 7. `MouthOfTruth-macos.zip`, `MouthOfTruth-windows.zip`과 checksum을 artifact로 모읍니다.
@@ -491,11 +491,11 @@ git tag v0.1.1
 git push origin v0.1.1
 ```
 
-이미 있는 tag가 아니라 새 tag를 사용합니다. workflow는 release를 draft로 만들며, 최종 publish는 GitHub Releases 화면에서 수동으로 합니다.
+이미 있는 tag가 아니라 새 tag를 사용합니다. workflow는 release를 draft로 만들며 최종 publish는 GitHub Releases 화면에서 수동으로 합니다.
 
 ### 로컬 릴리스 빌드
 
-릴리스 빌드는 아래 항목을 배포물에 포함하고, 필수 파일과 모델 검사값을 검증합니다.
+릴리스 빌드는 아래 항목을 배포물에 포함하고 필수 파일과 모델 검사값을 검증합니다.
 
 ```text
 python-engine/src/
@@ -548,9 +548,9 @@ Windows:
 Get-FileHash .\dist\windows\MouthOfTruth-windows.zip -Algorithm SHA256
 ```
 
-macOS 첫 실행에서 Gatekeeper가 unsigned 앱을 막으면 Finder에서 앱 또는 `Run Mouth of Truth.command`를 우클릭한 뒤 `Open`으로 실행합니다. 카메라와 마이크 권한 요청은 허용해야 얼굴/음성 분석 경로가 동작합니다.
+macOS 첫 실행에서 Gatekeeper가 서명되지 않은 앱을 막으면 Finder에서 앱 또는 `Run Mouth of Truth.command`를 우클릭한 뒤 `Open`으로 실행합니다. 카메라와 마이크 권한 요청은 허용해야 얼굴/음성 분석 경로가 동작합니다.
 
-Windows 배포 전에는 Windows PC에서 Ultraleap Hand Tracking Software, 카메라, 마이크 권한, `Run Mouth of Truth.bat` 실행을 확인한 뒤 Release asset을 추가합니다. macOS에서 만든 Python runtime을 Windows 배포본에 넣지 않습니다.
+Windows 배포 전에는 Windows PC에서 Ultraleap Hand Tracking Software, 카메라, 마이크 권한, `Run Mouth of Truth.bat` 실행을 확인한 뒤 Release asset을 추가합니다. macOS에서 만든 Python 런타임을 Windows 배포본에 넣지 않습니다.
 
 ## 15. 공개 전 확인
 

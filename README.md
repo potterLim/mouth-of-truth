@@ -36,7 +36,7 @@ Unity는 게임 화면, Ultraleap 손 입력, 마이크 녹음, 웹캠 캡처를
 3. OS가 요청하는 카메라와 마이크 권한을 허용합니다.
 4. macOS에서는 `Run Mouth of Truth.command`를 실행하고 Windows에서는 `Run Mouth of Truth.bat`을 실행합니다.
 
-macOS와 Windows 배포본은 각 플랫폼에서 빌드해 확인했습니다.
+macOS와 Windows 배포본은 Unity `6000.4.1f1` 기준으로 릴리스 패키징, 필수 모델 검사값, ZIP 무결성 검사를 마쳤습니다.
 
 ## 주요 화면
 
@@ -117,7 +117,7 @@ Windows PowerShell:
 
 ## 릴리스 자동화
 
-Release workflow를 수동 실행하고 `v0.1.1` 같은 tag 이름을 입력하면 입력값과 필수 secrets를 검증한 뒤 macOS/Windows 빌드를 만들고 draft GitHub Release에 asset을 업로드합니다.
+Release workflow를 수동 실행하고 `v0.1.1` 같은 tag 이름을 입력하면 입력값과 필수 secrets를 검증한 뒤 macOS/Windows 빌드를 만들고 draft GitHub Release에 asset을 업로드합니다. draft release는 asset과 release note를 확인한 뒤 수동으로 공개합니다.
 
 모델과 Unity Asset Store 자산은 공개 Git에 넣지 않습니다. 비공개 asset bundle URL과 접근 토큰을 GitHub Actions secret으로 제공하며 빌드 중 필수 모델의 SHA-256을 확인합니다.
 

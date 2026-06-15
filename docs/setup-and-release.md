@@ -564,9 +564,9 @@ Windows:
 Get-FileHash .\dist\windows\MouthOfTruth-windows.zip -Algorithm SHA256
 ```
 
-macOS 첫 실행에서 Gatekeeper가 서명되지 않은 앱을 막으면 Finder에서 앱 또는 `Run Mouth of Truth.command`를 우클릭한 뒤 `Open`으로 실행합니다. 카메라와 마이크 권한 요청은 허용해야 얼굴/음성 분석 경로가 동작합니다.
+macOS 첫 실행에서 보안 확인으로 실행이 막히면 Finder에서 앱 또는 `Run Mouth of Truth.command`를 우클릭한 뒤 `Open`으로 실행합니다. 카메라와 마이크 권한 요청은 허용해야 얼굴/음성 분석 경로가 동작합니다.
 
-Windows 배포 전에는 Windows PC에서 Ultraleap Hand Tracking Software, 카메라, 마이크 권한, `Run Mouth of Truth.bat` 실행을 확인한 뒤 Release asset을 추가합니다. macOS에서 만든 Python 런타임을 Windows 배포본에 넣지 않습니다.
+Windows 배포본을 검증할 때는 Windows PC에서 Ultraleap Hand Tracking Software, 카메라, 마이크 권한, `Run Mouth of Truth.bat` 실행을 확인합니다. macOS에서 만든 Python 런타임을 Windows 배포본에 넣지 않습니다.
 
 ## 15. 공개 전 확인
 

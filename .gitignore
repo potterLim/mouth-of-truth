@@ -4,6 +4,7 @@ Thumbs.db
 
 # Local-only work notes and generated diagnostics
 .local-docs/
+artifacts/
 *.log
 *.tmp
 *.bak

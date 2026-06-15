@@ -146,11 +146,19 @@ unity-app/Assets/Scripts/Game/Analysis/DeterministicAnswerAnalysisClient.cs
 하드웨어 없이 확인 가능한 검증:
 
 ```bash
+tools/run-quality-checks.sh
+```
+
+개별 명령:
+
+```bash
 python -m compileall -q python-engine/src
 PYTHONPATH=python-engine/src python -m unittest discover -s python-engine/tests
 dotnet build unity-app/MouthOfTruth.Game.csproj /m:1
 dotnet build unity-app/Assembly-CSharp-Editor.csproj /m:1
 dotnet build unity-app/MouthOfTruth.Editor.Tests.csproj /m:1
+dotnet format unity-app/MouthOfTruth.Game.csproj --verify-no-changes --severity error --no-restore
+dotnet format unity-app/MouthOfTruth.Editor.Tests.csproj --verify-no-changes --severity error --no-restore
 ```
 
 Unity EditMode 테스트:
@@ -158,10 +166,37 @@ Unity EditMode 테스트:
 ```bash
 /Applications/Unity/Hub/Editor/6000.4.1f1/Unity.app/Contents/MacOS/Unity \
   -batchmode \
+  -nographics \
   -projectPath unity-app \
   -runTests \
-  -testPlatform editmode \
+  -testPlatform EditMode \
   -testResults /tmp/mouth-of-truth-editmode-results.xml
+```
+
+로컬에서 같은 검사를 스크립트로 실행할 때:
+
+```bash
+UNITY_EDITOR_PATH=/Applications/Unity/Hub/Editor/6000.4.1f1/Unity.app/Contents/MacOS/Unity \
+  tools/run-unity-editmode-tests.sh
+```
+
+Release workflow는 Python 테스트와 Unity EditMode 테스트를 통과한 뒤에만 macOS/Windows 빌드를 생성합니다.
+
+## 분석 런타임 설정
+
+기본 분석 모드는 `auto`입니다. Python 브리지가 있으면 Python 분석을 사용하고, 브리지가 없으면 deterministic 분석을 사용합니다.
+
+```bash
+export MOUTH_OF_TRUTH_ANALYSIS_MODE=auto
+export MOUTH_OF_TRUTH_ANALYSIS_MODE=python
+export MOUTH_OF_TRUTH_ANALYSIS_MODE=deterministic
+```
+
+분석 중 Python 브리지가 실패했을 때 기본 정책은 `fail-fast`입니다. 출시 환경에서 조용히 다른 판정기로 바뀌지 않게 하기 위한 설정입니다. 개발/전시 리허설 환경에서만 deterministic fallback이 필요하면 명시적으로 켭니다.
+
+```bash
+export MOUTH_OF_TRUTH_ANALYSIS_FAILURE_POLICY=fail-fast
+export MOUTH_OF_TRUTH_ANALYSIS_FAILURE_POLICY=deterministic
 ```
 
 Ultraleap 손 입력, 마이크 녹음, 웹캠 캡처, 실제 모델 지연 시간은 장비가 연결된 Unity 실행 환경에서 별도로 확인합니다.

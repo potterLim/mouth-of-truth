@@ -34,6 +34,20 @@ python -m compileall -q python-engine/src
 PYTHONPATH=python-engine/src python -m unittest discover -s python-engine/tests
 ```
 
+저장소 전체 품질 게이트:
+
+```bash
+tools/run-quality-checks.sh
+```
+
+Unity EditMode 테스트까지 로컬에서 실행할 때:
+
+```bash
+MOUTH_OF_TRUTH_RUN_UNITY_TESTS=1 \
+UNITY_EDITOR_PATH=/Applications/Unity/Hub/Editor/6000.4.1f1/Unity.app/Contents/MacOS/Unity \
+  tools/run-quality-checks.sh
+```
+
 기존 환경 이름이 `mouth-truth`인 경우에도 패키징 스크립트가 인식합니다. 다른 환경 이름을 사용하려면:
 
 ```bash
@@ -288,6 +302,12 @@ unity-app/Assets/StreamingAssets/audio
 
 ## 10. 실행 모드
 
+기본 분석 모드는 `auto`입니다. Python 브리지가 있으면 Python 분석을 사용하고, 브리지가 없으면 deterministic 분석을 사용합니다.
+
+```bash
+export MOUTH_OF_TRUTH_ANALYSIS_MODE=auto
+```
+
 Python 브리지 사용:
 
 ```bash
@@ -298,6 +318,18 @@ Unity 결정적 대체 판정 사용:
 
 ```bash
 export MOUTH_OF_TRUTH_ANALYSIS_MODE=deterministic
+```
+
+분석 실행 중 실패 정책은 기본적으로 `fail-fast`입니다. 출시 환경에서 Python 분석 오류가 deterministic 결과로 조용히 바뀌지 않도록 하기 위한 설정입니다.
+
+```bash
+export MOUTH_OF_TRUTH_ANALYSIS_FAILURE_POLICY=fail-fast
+```
+
+개발/리허설 환경에서 Python 분석 실패 시 deterministic 분석으로 대체해야 할 때만 아래처럼 명시합니다.
+
+```bash
+export MOUTH_OF_TRUTH_ANALYSIS_FAILURE_POLICY=deterministic
 ```
 
 Whisper 전사 활성화:
@@ -312,7 +344,7 @@ export MOUTH_OF_TRUTH_ENABLE_TRANSCRIPTION=1
 export MOUTH_OF_TRUTH_USE_TRAINED_VOICE_MODEL=1
 ```
 
-설정이 없으면 Unity는 Python 브리지 실행 파일과 Python module root를 찾고, 찾지 못하면 결정적 대체 판정을 사용합니다.
+분석 모드 설정이 없으면 Unity는 Python 브리지 실행 파일과 Python module root를 찾고, 찾지 못하면 deterministic 판정을 사용합니다.
 
 ## 11. 판정 해석과 한계
 
@@ -410,11 +442,12 @@ GitHub Release에는 검증된 실행 묶음만 올립니다. macOS에서 만든
 1. GitHub Actions에서 Release workflow를 수동 실행하고 `v0.1.0` 같은 tag 이름을 입력합니다.
 2. GitHub Actions가 macOS와 Windows job을 실행합니다.
 3. 각 job이 비공개 asset bundle을 복원합니다.
-4. Python runtime을 OS별로 패키징합니다.
-5. Unity release build를 실행합니다.
-6. `MouthOfTruth-macos.zip`, `MouthOfTruth-windows.zip`과 checksum을 artifact로 모읍니다.
-7. draft GitHub Release를 만들고 asset을 업로드합니다.
-8. GitHub에서 release note와 asset을 확인한 뒤 publish합니다.
+4. Python 소스 compile 검사와 unit test를 실행한 뒤 Python runtime을 OS별로 패키징합니다.
+5. Unity EditMode 테스트를 실행하고 결과 XML을 artifact로 남깁니다.
+6. Unity release build를 실행합니다.
+7. `MouthOfTruth-macos.zip`, `MouthOfTruth-windows.zip`과 checksum을 artifact로 모읍니다.
+8. draft GitHub Release를 만들고 asset을 업로드합니다.
+9. GitHub에서 release note와 asset을 확인한 뒤 publish합니다.
 
 필요한 GitHub Actions secrets:
 
@@ -537,9 +570,10 @@ Unity EditMode 테스트:
 ```bash
 /Applications/Unity/Hub/Editor/6000.4.1f1/Unity.app/Contents/MacOS/Unity \
   -batchmode \
+  -nographics \
   -projectPath unity-app \
   -runTests \
-  -testPlatform editmode \
+  -testPlatform EditMode \
   -testResults /tmp/mouth-of-truth-editmode-results.xml
 ```
 

@@ -9,6 +9,7 @@ on:
         type: string
 
 permissions:
+  checks: write
   contents: write
 
 env:
@@ -70,6 +71,28 @@ jobs:
           PYTHONPATH=python-engine/src conda run --no-capture-output -n mouth-of-truth python -m unittest discover -s python-engine/tests
           export MOUTH_OF_TRUTH_CONDA_ENV=mouth-of-truth
           python-engine/scripts/package_python_runtime.sh
+
+      - name: Run macOS Unity EditMode tests
+        id: unity-editmode-tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: unity-app
+          unityVersion: ${{ env.UNITY_VERSION }}
+          testMode: EditMode
+          artifactsPath: unity-editmode-test-results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: macOS EditMode Test Results
+
+      - name: Upload macOS Unity EditMode test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-editmode-test-results-macos
+          path: ${{ steps.unity-editmode-tests.outputs.artifactsPath }}
 
       - name: Build macOS release
         uses: game-ci/unity-builder@v4
@@ -154,6 +177,28 @@ jobs:
           $env:MOUTH_OF_TRUTH_CONDA_ENV = "mouth-of-truth"
           .\python-engine\scripts\package_python_runtime.ps1
 
+      - name: Run Windows Unity EditMode tests
+        id: unity-editmode-tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: unity-app
+          unityVersion: ${{ env.UNITY_VERSION }}
+          testMode: EditMode
+          artifactsPath: unity-editmode-test-results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Windows EditMode Test Results
+
+      - name: Upload Windows Unity EditMode test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-editmode-test-results-windows
+          path: ${{ steps.unity-editmode-tests.outputs.artifactsPath }}
+
       - name: Build Windows release
         uses: game-ci/unity-builder@v4
         env:
@@ -223,6 +268,7 @@ jobs:
           ## Verification
 
           - Python unit tests ran before packaging each runtime.
+          - Unity EditMode tests ran before each platform release build.
           - Unity release builds completed on GitHub Actions.
           - Required model SHA-256 checks passed while restoring release assets.
           EOF

@@ -5,13 +5,13 @@ from __future__ import annotations
 from array import array
 from pathlib import Path
 import sys
-from typing import Any
 import wave
 
 import librosa
 import torch
 from transformers import AutoFeatureExtractor, AutoModelForAudioClassification
 
+from mouth_of_truth.contracts.analysis_payloads import VoiceFilePredictionPayload
 from mouth_of_truth.runtime.model_paths import resolve_voice_model_directory
 
 
@@ -81,7 +81,11 @@ def probs_to_dict(probs_data: list[float]) -> dict[str, float]:
     return {label: float(score) for label, score in zip(VOICE_LABELS, probs_data)}
 
 
-def predict_voice_file(feature_extractor: AutoFeatureExtractor, model: AutoModelForAudioClassification, audio_path: str) -> dict[str, Any]:
+def predict_voice_file(
+    feature_extractor: AutoFeatureExtractor,
+    model: AutoModelForAudioClassification,
+    audio_path: str,
+) -> VoiceFilePredictionPayload:
     """Runs one full-file voice-emotion prediction."""
     waveform = load_audio(audio_path)
     inputs = feature_extractor(waveform, sampling_rate=TARGET_SAMPLE_RATE, return_tensors="pt", padding=True)

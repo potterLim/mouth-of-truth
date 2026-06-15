@@ -50,12 +50,33 @@ namespace MouthOfTruth.Game.App
                 && (mGameStateMachine.CurrentState == EGameFlowState.InsertingHand || mGameStateMachine.CurrentState == EGameFlowState.ShowingResult);
             bool shouldShowPointer = pointerScreenPositionOrNull.HasValue
                 && isCinematicTransition == false
-                && (mGameStateMachine.CurrentState == EGameFlowState.StartScreen || mGameView.IsFirstRunTutorialVisible || mGameStateMachine.CurrentState == EGameFlowState.AwaitingCardSelection || mGameStateMachine.CurrentState == EGameFlowState.ShowingResult || mGameStateMachine.CurrentState == EGameFlowState.AwaitingHandInsertion || mGameStateMachine.CurrentState == EGameFlowState.AnswerPaused || mGameStateMachine.CurrentState == EGameFlowState.Answering);
+                && canShowPointerForCurrentState();
             EPointerVisualState pointerVisualState = shouldShowPointer
                 ? EPointerVisualState.Visible
                 : EPointerVisualState.Hidden;
 
             mGameView.UpdatePointerVisual(pointerVisualState, pointerScreenPositionOrNull);
+        }
+
+        private bool canShowPointerForCurrentState()
+        {
+            if (mGameView.IsFirstRunTutorialVisible)
+            {
+                return true;
+            }
+
+            switch (mGameStateMachine.CurrentState)
+            {
+                case EGameFlowState.StartScreen:
+                case EGameFlowState.AwaitingCardSelection:
+                case EGameFlowState.ShowingResult:
+                case EGameFlowState.AwaitingHandInsertion:
+                case EGameFlowState.AnswerPaused:
+                case EGameFlowState.Answering:
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         private bool updatePointerActivationGuard(PointerScreenPosition? pointerScreenPositionOrNull)
@@ -100,9 +121,9 @@ namespace MouthOfTruth.Game.App
             mGameView?.UpdateActionButtonHoverVisual(null, NormalizedProgress.Zero);
         }
 
-        private static void applyRuntimeCursorPresentation(bool isFocused)
+        private static void hideSystemCursorForRuntime()
         {
-            Cursor.visible = isFocused == false;
+            Cursor.visible = false;
             Cursor.lockState = CursorLockMode.None;
         }
 
@@ -131,8 +152,12 @@ namespace MouthOfTruth.Game.App
                 return;
             }
 
-            float dismissalMovementThresholdPixels = Mathf.Max(HAND_PROMPT_DISMISS_MOVEMENT_MIN_PIXELS, Screen.height * HAND_PROMPT_DISMISS_MOVEMENT_SCREEN_HEIGHT_FACTOR);
-            float pointerMovementPixels = Vector2.Distance(mHandPromptDismissalBaselineScreenPositionOrNull.Value.Value, pointerScreenPositionOrNull.Value.Value);
+            float dismissalMovementThresholdPixels = Mathf.Max(
+                HAND_PROMPT_DISMISS_MOVEMENT_MIN_PIXELS,
+                Screen.height * HAND_PROMPT_DISMISS_MOVEMENT_SCREEN_HEIGHT_FACTOR);
+            float pointerMovementPixels = Vector2.Distance(
+                mHandPromptDismissalBaselineScreenPositionOrNull.Value.Value,
+                pointerScreenPositionOrNull.Value.Value);
 
             if (pointerMovementPixels < dismissalMovementThresholdPixels)
             {
@@ -230,8 +255,13 @@ namespace MouthOfTruth.Game.App
 
         private Vector2 getRebasedPointerScreenPosition(Vector2 inputScreenPosition)
         {
-            Vector2 rebasedPointerScreenPosition = mPointerPresentationRebaseOutputScreenPosition + inputScreenPosition - mPointerPresentationRebaseInputScreenPosition;
-            return new Vector2(Mathf.Clamp(rebasedPointerScreenPosition.x, 0.0f, Screen.width), Mathf.Clamp(rebasedPointerScreenPosition.y, 0.0f, Screen.height));
+            Vector2 rebasedPointerScreenPosition =
+                mPointerPresentationRebaseOutputScreenPosition
+                + inputScreenPosition
+                - mPointerPresentationRebaseInputScreenPosition;
+            return new Vector2(
+                Mathf.Clamp(rebasedPointerScreenPosition.x, 0.0f, Screen.width),
+                Mathf.Clamp(rebasedPointerScreenPosition.y, 0.0f, Screen.height));
         }
 
         private void resetPointerPresentationRebase()

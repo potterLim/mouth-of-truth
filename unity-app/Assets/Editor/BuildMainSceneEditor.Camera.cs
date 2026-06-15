@@ -109,8 +109,11 @@ namespace MouthOfTruth.Editor
             public float GetExtent(Bounds bounds)
             {
                 Vector3 normalizedForward = Forward.normalized;
+                float xExtent = Mathf.Abs(normalizedForward.x) * bounds.extents.x;
+                float yExtent = Mathf.Abs(normalizedForward.y) * bounds.extents.y;
+                float zExtent = Mathf.Abs(normalizedForward.z) * bounds.extents.z;
 
-                return (Mathf.Abs(normalizedForward.x) * bounds.extents.x) + (Mathf.Abs(normalizedForward.y) * bounds.extents.y) + (Mathf.Abs(normalizedForward.z) * bounds.extents.z);
+                return xExtent + yExtent + zExtent;
             }
         }
 

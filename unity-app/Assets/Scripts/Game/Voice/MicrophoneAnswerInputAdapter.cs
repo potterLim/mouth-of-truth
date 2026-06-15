@@ -22,7 +22,7 @@ namespace MouthOfTruth.Game.Voice
         private readonly List<float[]> mRecordedSegments = new List<float[]>();
 
         private AudioClip mActiveRecordingClip;
-        private string mSelectedDeviceName;
+        private readonly string mSelectedDeviceName;
         private bool mIsCollecting;
         private bool mIsMicrophoneRunning;
         private int mSegmentStartSamplePosition;
@@ -107,7 +107,7 @@ namespace MouthOfTruth.Game.Voice
             }
 
             AnswerAudioFilePath audioFilePath = AnswerAudioWorkspacePaths.BuildAudioFilePath(questionId);
-            WaveFileWriter.WriteMono16BitPcm(audioFilePath, new MonoAudioSampleBuffer(mergedSamples), MICROPHONE_SAMPLE_RATE);
+            WaveFileWriter.writeMono16BitPcm(audioFilePath, new MonoAudioSampleBuffer(mergedSamples), MICROPHONE_SAMPLE_RATE);
 
             return Task.FromResult(new AnswerCaptureResult(AnswerTranscript.Empty, audioFilePath, new VoiceSegmentCount(mRecordedSegmentCount)));
         }
@@ -205,9 +205,14 @@ namespace MouthOfTruth.Game.Voice
                 return Array.Empty<float>();
             }
 
-            AudioSamplePosition currentSamplePosition = new AudioSamplePosition(Mathf.Clamp(Microphone.GetPosition(mSelectedDeviceName), 0, mActiveRecordingClip.samples));
-            AudioSamplePosition segmentStartSamplePosition = new AudioSamplePosition(Mathf.Clamp(mSegmentStartSamplePosition, 0, mActiveRecordingClip.samples));
-            AudioSampleCount recordedSampleCount = LoopedAudioClipReader.CalculateLoopedSampleDistance(segmentStartSamplePosition, currentSamplePosition, new AudioSampleCount(mActiveRecordingClip.samples));
+            AudioSamplePosition currentSamplePosition = new AudioSamplePosition(
+                Mathf.Clamp(Microphone.GetPosition(mSelectedDeviceName), 0, mActiveRecordingClip.samples));
+            AudioSamplePosition segmentStartSamplePosition = new AudioSamplePosition(
+                Mathf.Clamp(mSegmentStartSamplePosition, 0, mActiveRecordingClip.samples));
+            AudioSampleCount recordedSampleCount = LoopedAudioClipReader.CalculateLoopedSampleDistance(
+                segmentStartSamplePosition,
+                currentSamplePosition,
+                new AudioSampleCount(mActiveRecordingClip.samples));
 
             if (recordedSampleCount.Value <= 0)
             {
@@ -224,9 +229,16 @@ namespace MouthOfTruth.Game.Voice
                 return ESpeechDetectionState.Silent;
             }
 
-            AudioSamplePosition currentSamplePosition = new AudioSamplePosition(Mathf.Clamp(Microphone.GetPosition(mSelectedDeviceName), 0, mActiveRecordingClip.samples));
-            AudioSampleCount availableSampleCount = LoopedAudioClipReader.CalculateLoopedSampleDistance(new AudioSamplePosition(mSegmentStartSamplePosition), currentSamplePosition, new AudioSampleCount(mActiveRecordingClip.samples));
-            AudioSampleCount windowSampleCount = new AudioSampleCount(Mathf.Min(availableSampleCount.Value, Mathf.CeilToInt(MICROPHONE_SAMPLE_RATE.Value * mSpeechEvidenceDetector.SpeechWindowDuration.Value)));
+            AudioSamplePosition currentSamplePosition = new AudioSamplePosition(
+                Mathf.Clamp(Microphone.GetPosition(mSelectedDeviceName), 0, mActiveRecordingClip.samples));
+            AudioSampleCount availableSampleCount = LoopedAudioClipReader.CalculateLoopedSampleDistance(
+                new AudioSamplePosition(mSegmentStartSamplePosition),
+                currentSamplePosition,
+                new AudioSampleCount(mActiveRecordingClip.samples));
+            int speechWindowSampleCount = Mathf.CeilToInt(
+                MICROPHONE_SAMPLE_RATE.Value * mSpeechEvidenceDetector.SpeechWindowDuration.Value);
+            AudioSampleCount windowSampleCount = new AudioSampleCount(
+                Mathf.Min(availableSampleCount.Value, speechWindowSampleCount));
 
             if (windowSampleCount.Value <= 0)
             {
@@ -240,7 +252,10 @@ namespace MouthOfTruth.Game.Voice
                 startSampleOffset += mActiveRecordingClip.samples;
             }
 
-            float[] activeSpeechSamples = LoopedAudioClipReader.ReadMonoSamples(mActiveRecordingClip, new AudioSamplePosition(startSampleOffset), windowSampleCount);
+            float[] activeSpeechSamples = LoopedAudioClipReader.ReadMonoSamples(
+                mActiveRecordingClip,
+                new AudioSamplePosition(startSampleOffset),
+                windowSampleCount);
             return mSpeechEvidenceDetector.EvaluateSpeechState(activeSpeechSamples);
         }
 

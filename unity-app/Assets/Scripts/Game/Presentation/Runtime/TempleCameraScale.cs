@@ -9,6 +9,9 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             Value = Mathf.Max(0.01f, value);
         }
 
-        public float Value { get; }
+        public float Value
+        {
+            get;
+        }
     }
 }

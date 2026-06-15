@@ -56,7 +56,13 @@ def run_worker() -> int:
             return 0
 
         if command.command != "analyze":
-            _write_protocol_response(protocol_stdout, {"Status": "error", "ErrorMessage": f"Unsupported worker command: {command.command}"})
+            _write_protocol_response(
+                protocol_stdout,
+                {
+                    "Status": "error",
+                    "ErrorMessage": f"Unsupported worker command: {command.command}",
+                },
+            )
             continue
 
         try:
@@ -114,7 +120,11 @@ def _prewarm_model(load_model: Callable[[], object], failure_message: str) -> No
 def _parse_worker_command(raw_line: str) -> WorkerCommand:
     """Parses one JSON-line worker command."""
     payload = json.loads(raw_line)
-    return WorkerCommand(command=str(payload.get("Command", "")).strip().lower(), request_file_path=str(payload.get("RequestFilePath", "")).strip(), result_file_path=str(payload.get("ResultFilePath", "")).strip())
+    return WorkerCommand(
+        command=str(payload.get("Command", "")).strip().lower(),
+        request_file_path=str(payload.get("RequestFilePath", "")).strip(),
+        result_file_path=str(payload.get("ResultFilePath", "")).strip(),
+    )
 
 
 def _write_protocol_response(protocol_stdout: TextIO, payload: dict[str, str]) -> None:

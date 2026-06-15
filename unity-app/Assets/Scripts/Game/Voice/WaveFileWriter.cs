@@ -6,7 +6,7 @@ namespace MouthOfTruth.Game.Voice
 {
     internal static class WaveFileWriter
     {
-        internal static void WriteMono16BitPcm(AnswerAudioFilePath outputFilePath, MonoAudioSampleBuffer monoAudioSampleBuffer, AudioSampleRate sampleRate)
+        internal static void writeMono16BitPcm(AnswerAudioFilePath outputFilePath, MonoAudioSampleBuffer monoAudioSampleBuffer, AudioSampleRate sampleRate)
         {
             if (outputFilePath.IsEmpty)
             {

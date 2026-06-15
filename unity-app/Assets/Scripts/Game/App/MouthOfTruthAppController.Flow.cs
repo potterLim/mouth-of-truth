@@ -73,7 +73,12 @@ namespace MouthOfTruth.Game.App
             {
                 mGameView.UpdatePointerVisual(EPointerVisualState.Hidden, null);
                 mGameView.UpdateActionButtonHoverVisual(null, NormalizedProgress.Zero);
-                await mGameView.PlayQuestionRevealAsync(selectedQuestionCardSlot, selectedQuestionDefinition, () => mQuestionNarrationService.SpeakQuestionAsync(selectedQuestionDefinition, mLifecycleCancellationTokenSource.Token));
+                await mGameView.PlayQuestionRevealAsync(
+                    selectedQuestionCardSlot,
+                    selectedQuestionDefinition,
+                    () => mQuestionNarrationService.SpeakQuestionAsync(
+                        selectedQuestionDefinition,
+                        mLifecycleCancellationTokenSource.Token));
                 await mGameView.PrepareTempleGameplayBackdropAsync();
                 mGameStateMachine.MarkQuestionRevealCompleted();
                 mGameStateMachine.MarkQuestionNarrationCompleted();
@@ -118,7 +123,8 @@ namespace MouthOfTruth.Game.App
                     mAnswerCaptureInputAdapter.Reset();
                     beginOrResumeAnswerCapture(EAnswerCaptureStartMode.Begin);
                 }
-                beginOrResumeFaceCapture(snapshot.SelectedQuestionDefinitionOrNull == null ? QuestionId.Fallback : snapshot.SelectedQuestionDefinitionOrNull.Id, answerCaptureStartMode);
+                QuestionId selectedQuestionId = getSelectedQuestionIdOrFallback(snapshot);
+                beginOrResumeFaceCapture(selectedQuestionId, answerCaptureStartMode);
 
                 mGameView.ShowAnswering();
                 mGameView.SetAnswerTranscriptInputMode(mAnswerCaptureInputAdapter.TranscriptInputMode);
@@ -141,11 +147,14 @@ namespace MouthOfTruth.Game.App
                 float analysisPresentationStartedAtSeconds = Time.unscaledTime + mGameView.AnalysisFocusRampDuration.Value;
                 GameSessionSnapshot snapshot = mGameStateMachine.CreateSnapshot();
                 System.Diagnostics.Stopwatch captureStopwatch = System.Diagnostics.Stopwatch.StartNew();
-                Task<AnswerCaptureResult> answerCaptureTask = mAnswerCaptureInputAdapter.CompleteCollectionAsync(snapshot.SelectedQuestionDefinitionOrNull == null ? QuestionId.Fallback : snapshot.SelectedQuestionDefinitionOrNull.Id, mLifecycleCancellationTokenSource.Token);
+                QuestionId selectedQuestionId = getSelectedQuestionIdOrFallback(snapshot);
+                Task<AnswerCaptureResult> answerCaptureTask = mAnswerCaptureInputAdapter.CompleteCollectionAsync(
+                    selectedQuestionId,
+                    mLifecycleCancellationTokenSource.Token);
                 Task<FaceCaptureResult> faceCaptureTask = mFaceCaptureInputAdapter.CompleteCollectionAsync(mLifecycleCancellationTokenSource.Token);
                 await Task.WhenAll(answerCaptureTask, faceCaptureTask);
                 captureStopwatch.Stop();
-                MouthOfTruthLog.LogInfo($"Answer capture finalization completed in {captureStopwatch.ElapsedMilliseconds} ms.");
+                MouthOfTruthLog.logInfo($"Answer capture finalization completed in {captureStopwatch.ElapsedMilliseconds} ms.");
                 answerCaptureResult = await answerCaptureTask;
                 faceCaptureResult = await faceCaptureTask;
 
@@ -163,7 +172,7 @@ namespace MouthOfTruth.Game.App
                     System.Diagnostics.Stopwatch analysisStopwatch = System.Diagnostics.Stopwatch.StartNew();
                     answerAnalysisResult = await mAnswerAnalysisClient.AnalyzeAsync(answerAnalysisRequest, mLifecycleCancellationTokenSource.Token);
                     analysisStopwatch.Stop();
-                    MouthOfTruthLog.LogInfo($"Answer analysis completed in {analysisStopwatch.ElapsedMilliseconds} ms.");
+                    MouthOfTruthLog.logInfo($"Answer analysis completed in {analysisStopwatch.ElapsedMilliseconds} ms.");
                 }
                 catch (OperationCanceledException)
                 {
@@ -171,8 +180,21 @@ namespace MouthOfTruth.Game.App
                 }
                 catch (Exception exception)
                 {
+                    bool canFallBackToDeterministicAnalysis =
+                        mAnswerAnalysisRuntimeConfiguration != null
+                        && mAnswerAnalysisRuntimeConfiguration.ShouldFallBackToDeterministicAnalysis;
+
+                    if (canFallBackToDeterministicAnalysis == false)
+                    {
+                        throw new InvalidOperationException(
+                            "Primary answer analysis failed and deterministic fallback is disabled. "
+                            + "Set MOUTH_OF_TRUTH_ANALYSIS_FAILURE_POLICY=deterministic to allow fallback.",
+                            exception);
+                    }
+
                     Debug.LogWarning("Primary answer analysis failed. Falling back to deterministic analysis.\n" + exception);
-                    answerAnalysisResult = await new DeterministicAnswerAnalysisClient().AnalyzeAsync(answerAnalysisRequest, mLifecycleCancellationTokenSource.Token);
+                    answerAnalysisResult = await new DeterministicAnswerAnalysisClient()
+                        .AnalyzeAsync(answerAnalysisRequest, mLifecycleCancellationTokenSource.Token);
                 }
 
                 SecondsDuration remainingAnalysisPresentationDuration = getRemainingAnalysisPresentationDuration(analysisPresentationStartedAtSeconds);
@@ -200,7 +222,9 @@ namespace MouthOfTruth.Game.App
         private static SecondsDuration getRemainingAnalysisPresentationDuration(float analysisPresentationStartedAtSeconds)
         {
             float elapsedAnalysisPresentationSeconds = Time.unscaledTime - analysisPresentationStartedAtSeconds;
-            float remainingAnalysisPresentationSeconds = Mathf.Max(0.0f, MINIMUM_ANALYSIS_PRESENTATION_DURATION.Value - elapsedAnalysisPresentationSeconds);
+            float remainingAnalysisPresentationSeconds = Mathf.Max(
+                0.0f,
+                MINIMUM_ANALYSIS_PRESENTATION_DURATION.Value - elapsedAnalysisPresentationSeconds);
             return new SecondsDuration(remainingAnalysisPresentationSeconds);
         }
 
@@ -231,7 +255,20 @@ namespace MouthOfTruth.Game.App
                 throw new InvalidOperationException("Cannot build an analysis request without a selected question.");
             }
 
-            return new AnswerAnalysisRequest(snapshot.SelectedQuestionDefinitionOrNull, answerTranscript, answerCaptureResult.AudioFilePath, faceCaptureResult.FaceFramesDirectoryPath, faceCaptureResult.CapturedFrameCount, answerCaptureResult.VoiceSegmentCount);
+            return new AnswerAnalysisRequest(
+                snapshot.SelectedQuestionDefinitionOrNull,
+                answerTranscript,
+                answerCaptureResult.AudioFilePath,
+                faceCaptureResult.FaceFramesDirectoryPath,
+                faceCaptureResult.CapturedFrameCount,
+                answerCaptureResult.VoiceSegmentCount);
+        }
+
+        private static QuestionId getSelectedQuestionIdOrFallback(GameSessionSnapshot snapshot)
+        {
+            return snapshot.SelectedQuestionDefinitionOrNull == null
+                ? QuestionId.Fallback
+                : snapshot.SelectedQuestionDefinitionOrNull.Id;
         }
     }
 }

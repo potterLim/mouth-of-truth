@@ -20,7 +20,10 @@ namespace MouthOfTruth.Game.Session
         private SecondsDuration mElapsedAnswerDuration;
         private SecondsDuration mElapsedSilenceDuration;
 
-        public MouthOfTruthGameStateMachine(QuestionDeckService questionDeckService, CardDwellSelectionTracker cardDwellSelectionTracker, AnswerCollectionPolicy answerCollectionPolicy)
+        public MouthOfTruthGameStateMachine(
+            QuestionDeckService questionDeckService,
+            CardDwellSelectionTracker cardDwellSelectionTracker,
+            AnswerCollectionPolicy answerCollectionPolicy)
         {
             if (questionDeckService == null)
             {
@@ -43,7 +46,10 @@ namespace MouthOfTruth.Game.Session
             CurrentState = EGameFlowState.StartScreen;
         }
 
-        public EGameFlowState CurrentState { get; private set; }
+        public EGameFlowState CurrentState
+        {
+            get; private set;
+        }
 
         public void OpenStartScreen()
         {
@@ -138,7 +144,11 @@ namespace MouthOfTruth.Game.Session
         {
             ensureCurrentState(EGameFlowState.Answering);
 
-            AnswerCollectionTickResult answerCollectionTickResult = mAnswerCollectionPolicy.Advance(mElapsedAnswerDuration, mElapsedSilenceDuration, deltaTimeDuration, speechDetectionState);
+            AnswerCollectionTickResult answerCollectionTickResult = mAnswerCollectionPolicy.Advance(
+                mElapsedAnswerDuration,
+                mElapsedSilenceDuration,
+                deltaTimeDuration,
+                speechDetectionState);
 
             mElapsedAnswerDuration = answerCollectionTickResult.ElapsedAnswerDuration;
             mElapsedSilenceDuration = answerCollectionTickResult.ElapsedSilenceDuration;
@@ -188,7 +198,16 @@ namespace MouthOfTruth.Game.Session
 
         public GameSessionSnapshot CreateSnapshot()
         {
-            return new GameSessionSnapshot(CurrentState, mCurrentRoundSelection, mSelectedQuestionCardSlotOrNull, mSelectedQuestionDefinitionOrNull, mCurrentVerdictKindOrNull, mCurrentAnswerTranscript, mCardDwellSelectionTracker.HoveredDuration, mElapsedAnswerDuration, mElapsedSilenceDuration);
+            return new GameSessionSnapshot(
+                CurrentState,
+                mCurrentRoundSelection,
+                mSelectedQuestionCardSlotOrNull,
+                mSelectedQuestionDefinitionOrNull,
+                mCurrentVerdictKindOrNull,
+                mCurrentAnswerTranscript,
+                mCardDwellSelectionTracker.HoveredDuration,
+                mElapsedAnswerDuration,
+                mElapsedSilenceDuration);
         }
 
         private void ensureCurrentState(EGameFlowState expectedGameFlowState)

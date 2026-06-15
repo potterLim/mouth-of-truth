@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using MouthOfTruth.Game.Data;
+using MouthOfTruth.Game.Input;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,7 +10,9 @@ namespace MouthOfTruth.Game.Presentation.Runtime
     {
         private void applyTopLeftExitButtonLayout()
         {
-            setRectTransformLayout(mExitButton.GetComponent<RectTransform>(), new Vector2(0.06f, 0.90f), new Vector2(78.0f, 78.0f));
+            setRectTransformLayout(
+                mExitButton.GetComponent<RectTransform>(),
+                UiRectLayout.At(new Vector2(0.06f, 0.90f), new Vector2(78.0f, 78.0f)));
         }
 
         private void setOverlayAlpha(float alpha)
@@ -130,7 +133,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mExitButton.image.sprite = mExitIconButtonSprite;
             mExitButton.image.type = Image.Type.Simple;
             mExitButton.image.preserveAspect = true;
-            setButtonLabelVisible(mExitButton, false);
+            setButtonLabelVisibility(mExitButton, EUiElementVisibility.Hidden);
         }
 
         private void configureExitButtonAsEndGameButton()
@@ -143,25 +146,30 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mExitButton.image.sprite = mEndGameButtonSprite;
             mExitButton.image.type = Image.Type.Simple;
             mExitButton.image.preserveAspect = true;
-            setButtonLabelVisible(mExitButton, false);
+            setButtonLabelVisibility(mExitButton, EUiElementVisibility.Hidden);
         }
 
-        private void setButtonLabelVisible(Button button, bool isVisible)
+        private void setButtonLabelVisibility(Button button, EUiElementVisibility visibility)
         {
             Text label = button != null ? button.GetComponentInChildren<Text>(includeInactive: true) : null;
 
             if (label != null)
             {
-                label.gameObject.SetActive(isVisible);
+                label.gameObject.SetActive(isUiElementVisible(visibility));
             }
         }
 
         private bool isScreenPointOverButton(Button button, Vector2 screenPosition, float intentExpansionPixels)
         {
+            RectTransform buttonRectTransform = button != null
+                ? button.GetComponent<RectTransform>()
+                : null;
+
             return button != null
                 && button.gameObject.activeInHierarchy
                 && button.interactable
-                && (isScreenPointOverRectTransform(button.GetComponent<RectTransform>(), screenPosition) || isScreenPointOverExpandedRectTransform(button.GetComponent<RectTransform>(), screenPosition, intentExpansionPixels));
+                && (isScreenPointOverRectTransform(buttonRectTransform, screenPosition)
+                    || isScreenPointOverExpandedRectTransform(buttonRectTransform, screenPosition, intentExpansionPixels));
         }
 
         private bool isScreenPointOverRectTransform(RectTransform rectTransform, Vector2 screenPosition)
@@ -199,13 +207,18 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 && screenPosition.y <= maximumY + expansionPixels;
         }
 
-        private void updateButtonVisual(Button button, bool isHovered, NormalizedProgress hoverProgress)
+        private void updateButtonVisual(
+            Button button,
+            EUiActionTarget? hoveredUiActionTargetOrNull,
+            EUiActionTarget buttonTarget,
+            NormalizedProgress hoverProgress)
         {
             if (button == null)
             {
                 return;
             }
 
+            bool isHovered = hoveredUiActionTargetOrNull == buttonTarget;
             float effectiveHoverProgress = isHovered ? hoverProgress.Value : 0.0f;
             RectTransform rectTransform = button.GetComponent<RectTransform>();
             rectTransform.localScale = Vector3.one * Mathf.Lerp(1.0f, 1.06f, effectiveHoverProgress);
@@ -223,22 +236,55 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             }
         }
 
-        private void setCardsVisible(bool isVisible)
+        private void hideCommonScreenElements()
+        {
+            setObjectVisibility(mLogoImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mTitleVignetteImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mSceneOverlayImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mStartButton, EUiElementVisibility.Hidden);
+            setObjectVisibility(mExitButton, EUiElementVisibility.Hidden);
+            setObjectVisibility(mQuestionText, EUiElementVisibility.Hidden);
+            setObjectVisibility(mQuestionPanelImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mStatusPanelImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mResultPanelImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mPromptText, EUiElementVisibility.Hidden);
+            setObjectVisibility(mStatusText, EUiElementVisibility.Hidden);
+            setObjectVisibility(mAnswerTimerText, EUiElementVisibility.Hidden);
+            setObjectVisibility(mAnswerInputField, EUiElementVisibility.Hidden);
+            setObjectVisibility(mMouthImage, EUiElementVisibility.Hidden);
+            setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
+            setEyeBeamImagesVisibility(EUiElementVisibility.Hidden);
+            setObjectVisibility(mHandImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mRitualHandImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mPointerImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mVerdictImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mVerdictText, EUiElementVisibility.Hidden);
+            setObjectVisibility(mTryAgainButton, EUiElementVisibility.Hidden);
+            setObjectVisibility(mBackToTitleButton, EUiElementVisibility.Hidden);
+            setCardsVisibility(EUiElementVisibility.Hidden);
+        }
+
+        private void setCardsVisibility(EUiElementVisibility visibility)
         {
             foreach (KeyValuePair<EQuestionCardSlot, QuestionCardView> pair in mCardViews)
             {
-                pair.Value.gameObject.SetActive(isVisible);
+                pair.Value.gameObject.SetActive(isUiElementVisible(visibility));
             }
         }
 
-        private void setObjectActive(Component component, bool isActive)
+        private void setObjectVisibility(Component component, EUiElementVisibility visibility)
         {
             if (component == null)
             {
                 return;
             }
 
-            component.gameObject.SetActive(isActive);
+            component.gameObject.SetActive(isUiElementVisible(visibility));
+        }
+
+        private static bool isUiElementVisible(EUiElementVisibility visibility)
+        {
+            return visibility == EUiElementVisibility.Visible;
         }
 
         private static bool isInsideAnchorWindow(Vector2 offsetFromAnchor, float halfWidth, float halfHeight)

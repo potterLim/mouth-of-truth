@@ -80,7 +80,10 @@ namespace MouthOfTruth.Game.Analysis
                 }
 
                 IReadOnlyList<AnalysisReasonCode> reasonCodes = parseReasonCodes(bridgeAnalysisResultFileData.ReasonCodes);
-                return new AnswerAnalysisResult(parseVerdictKind(bridgeAnalysisResultFileData.Verdict), new AnswerTranscript(bridgeAnalysisResultFileData.AnswerTranscript), reasonCodes);
+                return new AnswerAnalysisResult(
+                    parseVerdictKind(bridgeAnalysisResultFileData.Verdict),
+                    new AnswerTranscript(bridgeAnalysisResultFileData.AnswerTranscript),
+                    reasonCodes);
             }
             finally
             {

@@ -17,8 +17,8 @@ namespace MouthOfTruth.Game.Presentation.Runtime
         private void hideHandPromptPanelImmediately()
         {
             mIsHandPromptPanelDismissalActive = false;
-            setObjectActive(mQuestionPanelImage, false);
-            setObjectActive(mQuestionText, false);
+            setObjectVisibility(mQuestionPanelImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mQuestionText, EUiElementVisibility.Hidden);
             resetHandPromptPanelAlpha();
         }
 
@@ -26,8 +26,8 @@ namespace MouthOfTruth.Game.Presentation.Runtime
         {
             mIsHandPromptPanelDismissalActive = false;
             setHandPromptPanelAlpha(0.0f);
-            setObjectActive(mQuestionPanelImage, false);
-            setObjectActive(mQuestionText, false);
+            setObjectVisibility(mQuestionPanelImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mQuestionText, EUiElementVisibility.Hidden);
         }
 
         private void resetHandPromptPanelAlpha()

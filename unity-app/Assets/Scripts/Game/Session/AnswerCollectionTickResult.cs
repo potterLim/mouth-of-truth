@@ -14,11 +14,20 @@ namespace MouthOfTruth.Game.Session
             FinishReason = finishReason;
         }
 
-        public SecondsDuration ElapsedAnswerDuration { get; }
+        public SecondsDuration ElapsedAnswerDuration
+        {
+            get;
+        }
 
-        public SecondsDuration ElapsedSilenceDuration { get; }
+        public SecondsDuration ElapsedSilenceDuration
+        {
+            get;
+        }
 
-        public EAnswerCollectionFinishReason FinishReason { get; }
+        public EAnswerCollectionFinishReason FinishReason
+        {
+            get;
+        }
 
         public bool ShouldFinishForSilence => FinishReason == EAnswerCollectionFinishReason.Silence;
 

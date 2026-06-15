@@ -23,17 +23,17 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             SecondsDuration tutorialDuration = new SecondsDuration(firstRunTutorialDuration.Value * FIRST_RUN_TUTORIAL_DURATION_SCALE);
             IsFirstRunTutorialVisible = true;
             configureExitButtonAsTopLeftIcon();
-            setObjectActive(mTutorialOverlayImage, true);
-            setObjectActive(mTutorialDevicePanelImage, true);
-            setObjectActive(mTutorialLeapMotionDeviceImage, true);
-            setObjectActive(mTutorialHandImage, true);
-            setObjectActive(mTutorialTitleText, true);
-            setObjectActive(mTutorialBodyText, true);
-            setObjectActive(mTutorialStepText, false);
-            setObjectActive(mStartButton, false);
-            setObjectActive(mTryAgainButton, false);
-            setObjectActive(mBackToTitleButton, false);
-            setObjectActive(mExitButton, true);
+            setObjectVisibility(mTutorialOverlayImage, EUiElementVisibility.Visible);
+            setObjectVisibility(mTutorialDevicePanelImage, EUiElementVisibility.Visible);
+            setObjectVisibility(mTutorialLeapMotionDeviceImage, EUiElementVisibility.Visible);
+            setObjectVisibility(mTutorialHandImage, EUiElementVisibility.Visible);
+            setObjectVisibility(mTutorialTitleText, EUiElementVisibility.Visible);
+            setObjectVisibility(mTutorialBodyText, EUiElementVisibility.Visible);
+            setObjectVisibility(mTutorialStepText, EUiElementVisibility.Hidden);
+            setObjectVisibility(mStartButton, EUiElementVisibility.Hidden);
+            setObjectVisibility(mTryAgainButton, EUiElementVisibility.Hidden);
+            setObjectVisibility(mBackToTitleButton, EUiElementVisibility.Hidden);
+            setObjectVisibility(mExitButton, EUiElementVisibility.Visible);
             mTutorialOverlayImage.color = new Color(0.078f, 0.080f, 0.090f, 1.0f);
             mTutorialDevicePanelImage.color = new Color(0.145f, 0.148f, 0.162f, 0.97f);
             mTutorialOverlayImage.transform.SetAsLastSibling();
@@ -68,21 +68,21 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
         private void hideFirstRunTutorialPresentation()
         {
-            setObjectActive(mTutorialOverlayImage, false);
-            setObjectActive(mTutorialDevicePanelImage, false);
-            setObjectActive(mTutorialLeapMotionDeviceImage, false);
-            setObjectActive(mTutorialHandImage, false);
-            setObjectActive(mTutorialTitleText, false);
-            setObjectActive(mTutorialBodyText, false);
-            setObjectActive(mTutorialStepText, false);
+            setObjectVisibility(mTutorialOverlayImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mTutorialDevicePanelImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mTutorialLeapMotionDeviceImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mTutorialHandImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mTutorialTitleText, EUiElementVisibility.Hidden);
+            setObjectVisibility(mTutorialBodyText, EUiElementVisibility.Hidden);
+            setObjectVisibility(mTutorialStepText, EUiElementVisibility.Hidden);
             IsFirstRunTutorialVisible = false;
         }
 
         private void hideStartScreenPresentationBehindTutorial()
         {
-            setObjectActive(mLogoImage, false);
-            setObjectActive(mTitleVignetteImage, false);
-            setObjectActive(mStartButton, false);
+            setObjectVisibility(mLogoImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mTitleVignetteImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mStartButton, EUiElementVisibility.Hidden);
         }
 
         private static Vector2 getTutorialScanPosition(float progress)

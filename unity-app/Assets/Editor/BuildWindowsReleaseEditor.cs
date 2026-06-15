@@ -33,7 +33,10 @@ namespace MouthOfTruth.Editor
             ReleaseBuildPipeline.RecreateDirectory(distributionRootPath.Value);
             ReleaseBuildPipeline.BuildPlayerOrThrow(MAIN_SCENE_PATH, applicationPath, BuildTarget.StandaloneWindows64, "Windows");
 
-            string bundledPythonRuntimeRootPath = resolveBundledPythonRuntimeRootPath(runtimeRootPath.Value, Environment.GetEnvironmentVariable(PYTHON_RUNTIME_ENVIRONMENT_VARIABLE_NAME));
+            string configuredPythonRuntimeRootPath = Environment.GetEnvironmentVariable(PYTHON_RUNTIME_ENVIRONMENT_VARIABLE_NAME);
+            string bundledPythonRuntimeRootPath = resolveBundledPythonRuntimeRootPath(
+                runtimeRootPath.Value,
+                configuredPythonRuntimeRootPath);
             ReleaseBuildPipeline.StageRuntimeSupport(runtimeRootPath.Value, distributionRootPath.Value, bundledPythonRuntimeRootPath);
             ReleaseRuntimeValidator.ValidateDistributionRuntimeAssets(distributionRootPath);
             ReleaseBuildPipeline.PruneDistributionArtifacts(distributionRootPath.Value);
@@ -82,7 +85,9 @@ namespace MouthOfTruth.Editor
 
             if (Application.platform != RuntimePlatform.WindowsEditor)
             {
-                throw new BuildFailedException("Automatic Windows python runtime packaging must be run from a Windows Unity editor, " + "or you must set MOUTH_OF_TRUTH_WINDOWS_PYTHON_RUNTIME_ROOT to a prepared runtime folder.");
+                throw new BuildFailedException(
+                    "Automatic Windows python runtime packaging must be run from a Windows Unity editor, "
+                    + "or you must set MOUTH_OF_TRUTH_WINDOWS_PYTHON_RUNTIME_ROOT to a prepared runtime folder.");
             }
 
             ReleaseBuildPipeline.RunProcess("powershell.exe", $"-ExecutionPolicy Bypass -File \"{packageScriptPath}\"", runtimeRootPath);

@@ -7,7 +7,13 @@ namespace MouthOfTruth.Game.Analysis
 {
     public class AnswerAnalysisRequest
     {
-        public AnswerAnalysisRequest(QuestionDefinition questionDefinition, AnswerTranscript answerTranscript, AnswerAudioFilePath answerAudioFilePath, FaceFramesDirectoryPath faceFramesDirectoryPath, FaceFrameCount faceFrameCount, VoiceSegmentCount voiceSegmentCount)
+        public AnswerAnalysisRequest(
+            QuestionDefinition questionDefinition,
+            AnswerTranscript answerTranscript,
+            AnswerAudioFilePath answerAudioFilePath,
+            FaceFramesDirectoryPath faceFramesDirectoryPath,
+            FaceFrameCount faceFrameCount,
+            VoiceSegmentCount voiceSegmentCount)
         {
             if (questionDefinition == null)
             {
@@ -22,16 +28,34 @@ namespace MouthOfTruth.Game.Analysis
             VoiceSegmentCount = voiceSegmentCount;
         }
 
-        public QuestionDefinition QuestionDefinition { get; }
+        public QuestionDefinition QuestionDefinition
+        {
+            get;
+        }
 
-        public AnswerTranscript AnswerTranscript { get; }
+        public AnswerTranscript AnswerTranscript
+        {
+            get;
+        }
 
-        public AnswerAudioFilePath AnswerAudioFilePath { get; }
+        public AnswerAudioFilePath AnswerAudioFilePath
+        {
+            get;
+        }
 
-        public FaceFramesDirectoryPath FaceFramesDirectoryPath { get; }
+        public FaceFramesDirectoryPath FaceFramesDirectoryPath
+        {
+            get;
+        }
 
-        public FaceFrameCount FaceFrameCount { get; }
+        public FaceFrameCount FaceFrameCount
+        {
+            get;
+        }
 
-        public VoiceSegmentCount VoiceSegmentCount { get; }
+        public VoiceSegmentCount VoiceSegmentCount
+        {
+            get;
+        }
     }
 }

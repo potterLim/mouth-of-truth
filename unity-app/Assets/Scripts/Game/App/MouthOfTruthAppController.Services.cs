@@ -30,24 +30,29 @@ namespace MouthOfTruth.Game.App
 
         private IAnswerAnalysisClient createAnalysisClient()
         {
-            string analysisMode = Environment.GetEnvironmentVariable("MOUTH_OF_TRUTH_ANALYSIS_MODE");
-
-            if (string.Equals(analysisMode, "python", StringComparison.OrdinalIgnoreCase))
+            if (mAnswerAnalysisRuntimeConfiguration == null)
             {
-                return new PythonBridgeAnalysisClient();
+                mAnswerAnalysisRuntimeConfiguration = AnswerAnalysisRuntimeConfiguration.LoadFromEnvironment();
             }
 
-            if (string.Equals(analysisMode, "deterministic", StringComparison.OrdinalIgnoreCase))
+            switch (mAnswerAnalysisRuntimeConfiguration.AnalysisMode)
             {
-                return new DeterministicAnswerAnalysisClient();
-            }
+                case EAnswerAnalysisMode.Python:
+                    if (isPythonBridgeAvailable() == false)
+                    {
+                        throw new InvalidDataException("Python analysis mode was requested, but the Python bridge runtime was not found.");
+                    }
 
-            if (File.Exists(PythonAnalysisBridgePaths.GetBridgeLauncherScriptPath()) && Directory.Exists(PythonAnalysisBridgePaths.GetPythonModuleRootPath()))
-            {
-                return new PythonBridgeAnalysisClient();
-            }
+                    return new PythonBridgeAnalysisClient();
 
-            return new DeterministicAnswerAnalysisClient();
+                case EAnswerAnalysisMode.Deterministic:
+                    return new DeterministicAnswerAnalysisClient();
+
+                default:
+                    return isPythonBridgeAvailable()
+                        ? new PythonBridgeAnalysisClient()
+                        : new DeterministicAnswerAnalysisClient();
+            }
         }
 
         private async Task warmUpAnalysisClientAsync()
@@ -57,7 +62,7 @@ namespace MouthOfTruth.Game.App
                 System.Diagnostics.Stopwatch warmUpStopwatch = System.Diagnostics.Stopwatch.StartNew();
                 await mAnswerAnalysisClient.WarmUpAsync(mLifecycleCancellationTokenSource.Token);
                 warmUpStopwatch.Stop();
-                MouthOfTruthLog.LogInfo($"Answer analysis engine warmed up in {warmUpStopwatch.ElapsedMilliseconds} ms.");
+                MouthOfTruthLog.logInfo($"Answer analysis engine warmed up in {warmUpStopwatch.ElapsedMilliseconds} ms.");
             }
             catch (Exception exception)
             {
@@ -104,6 +109,12 @@ namespace MouthOfTruth.Game.App
         private IFaceCaptureInputAdapter createFaceCaptureInputAdapter()
         {
             return new WebcamFaceCaptureInputAdapter();
+        }
+
+        private static bool isPythonBridgeAvailable()
+        {
+            return File.Exists(PythonAnalysisBridgePaths.GetBridgeLauncherScriptPath())
+                && Directory.Exists(PythonAnalysisBridgePaths.GetPythonModuleRootPath());
         }
 
         private void beginOrResumeAnswerCapture(EAnswerCaptureStartMode answerCaptureStartMode)

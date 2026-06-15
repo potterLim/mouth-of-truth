@@ -10,9 +10,15 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             Vertical = Mathf.Max(0.01f, vertical);
         }
 
-        public float Horizontal { get; }
+        public float Horizontal
+        {
+            get;
+        }
 
-        public float Vertical { get; }
+        public float Vertical
+        {
+            get;
+        }
 
         public static QuestionCardScale Uniform(float value)
         {

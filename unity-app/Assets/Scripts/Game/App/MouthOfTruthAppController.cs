@@ -24,6 +24,7 @@ namespace MouthOfTruth.Game.App
         private MouthOfTruthGameStateMachine mGameStateMachine;
         private IQuestionNarrationService mQuestionNarrationService;
         private IAnswerAnalysisClient mAnswerAnalysisClient;
+        private AnswerAnalysisRuntimeConfiguration mAnswerAnalysisRuntimeConfiguration;
         private IHandInteractionInputAdapter mHandInteractionInputAdapter;
         private IAnswerCaptureInputAdapter mAnswerCaptureInputAdapter;
         private IFaceCaptureInputAdapter mFaceCaptureInputAdapter;
@@ -36,6 +37,7 @@ namespace MouthOfTruth.Game.App
         private bool mHasCleanedSessionArtifactsOnExit;
         private AnswerTranscript mLastObservedTranscript = AnswerTranscript.Empty;
 
+#pragma warning disable IDE1006 // Unity message names are invoked by the engine.
         private void Awake()
         {
             Application.runInBackground = true;
@@ -47,14 +49,16 @@ namespace MouthOfTruth.Game.App
         {
             _ = startAsync();
         }
+#pragma warning restore IDE1006
 
         private async Task startAsync()
         {
             try
             {
-                MouthOfTruthLog.LogInfo("MouthOfTruthAppController started.");
+                MouthOfTruthLog.logInfo("MouthOfTruthAppController started.");
                 mLifecycleCancellationTokenSource = new CancellationTokenSource();
                 tryCleanAllSessionArtifacts("startup");
+                mAnswerAnalysisRuntimeConfiguration = AnswerAnalysisRuntimeConfiguration.LoadFromEnvironment();
                 mAnswerAnalysisClient = createAnalysisClient();
                 _ = warmUpAnalysisClientAsync();
                 mGameView = GetComponent<MouthOfTruthGameView>();
@@ -64,8 +68,8 @@ namespace MouthOfTruth.Game.App
                 }
 
                 await mGameView.InitializeAsync();
-                MouthOfTruthLog.LogInfo("MouthOfTruthGameView initialized.");
-                applyRuntimeCursorPresentation(isFocused: true);
+                MouthOfTruthLog.logInfo("MouthOfTruthGameView initialized.");
+                hideSystemCursorForRuntime();
 
                 await requestCaptureAuthorizationsAsync();
 
@@ -78,6 +82,7 @@ namespace MouthOfTruth.Game.App
             }
         }
 
+#pragma warning disable IDE1006 // Unity message names are invoked by the engine.
         private void Update()
         {
             if (mIsInitialized == false)
@@ -126,7 +131,7 @@ namespace MouthOfTruth.Game.App
                 return;
             }
 
-            if (mGameView.ConsumeBackToTitleRequested() || (mGameStateMachine.CurrentState == EGameFlowState.ShowingResult && mHandInteractionInputAdapter.WasReturnToTitleTriggeredThisFrame()))
+            if (shouldReturnToStartScreen())
             {
                 mGameStateMachine.ReturnToStart();
                 mGameView.ShowStartScreen();
@@ -180,7 +185,7 @@ namespace MouthOfTruth.Game.App
         {
             if (hasFocus)
             {
-                applyRuntimeCursorPresentation(isFocused: true);
+                hideSystemCursorForRuntime();
                 return;
             }
 
@@ -195,13 +200,14 @@ namespace MouthOfTruth.Game.App
                 return;
             }
 
-            applyRuntimeCursorPresentation(isFocused: true);
+            hideSystemCursorForRuntime();
         }
+#pragma warning restore IDE1006
 
         private void initializeStateMachine()
         {
             QuestionPoolFilePath questionPoolFilePath = new QuestionPoolFilePath(System.IO.Path.Combine(Application.streamingAssetsPath, "questions", "question_pool.json"));
-            IReadOnlyList<QuestionDefinition> questionDefinitions = QuestionPoolLoader.LoadQuestionDefinitions(questionPoolFilePath);
+            IReadOnlyList<QuestionDefinition> questionDefinitions = QuestionPoolLoader.loadQuestionDefinitions(questionPoolFilePath);
             QuestionDeckService questionDeckService = new QuestionDeckService(questionDefinitions);
             CardDwellSelectionTracker cardDwellSelectionTracker = new CardDwellSelectionTracker(CARD_SELECTION_DWELL_DURATION);
             AnswerCollectionPolicy answerCollectionPolicy = new AnswerCollectionPolicy();
@@ -222,6 +228,13 @@ namespace MouthOfTruth.Game.App
             mGameView.SetAnswerTranscriptInputMode(mAnswerCaptureInputAdapter.TranscriptInputMode);
             resetInteractionSelectionState();
             mGameStateMachine.OpenStartScreen();
+        }
+
+        private bool shouldReturnToStartScreen()
+        {
+            return mGameView.ConsumeBackToTitleRequested()
+                || (mGameStateMachine.CurrentState == EGameFlowState.ShowingResult
+                    && mHandInteractionInputAdapter.WasReturnToTitleTriggeredThisFrame());
         }
 
     }

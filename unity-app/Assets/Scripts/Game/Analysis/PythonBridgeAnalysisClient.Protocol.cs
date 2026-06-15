@@ -66,7 +66,8 @@ namespace MouthOfTruth.Game.Analysis
             string runtimeRootWithSeparator = runtimeRootPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
                 + Path.DirectorySeparatorChar;
 
-            if (normalizedPath.StartsWith(runtimeRootWithSeparator, StringComparison.OrdinalIgnoreCase) || string.Equals(normalizedPath, runtimeRootPath, StringComparison.OrdinalIgnoreCase))
+            if (normalizedPath.StartsWith(runtimeRootWithSeparator, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(normalizedPath, runtimeRootPath, StringComparison.OrdinalIgnoreCase))
             {
                 return Path.GetRelativePath(runtimeRootPath, normalizedPath)
                     .Replace(Path.DirectorySeparatorChar, '/');

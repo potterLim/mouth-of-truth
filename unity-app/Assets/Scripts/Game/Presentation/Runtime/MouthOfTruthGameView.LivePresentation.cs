@@ -6,6 +6,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 {
     public partial class MouthOfTruthGameView
     {
+#pragma warning disable IDE1006 // Unity message names are invoked by the engine.
         private void LateUpdate()
         {
             ensureAmbiencePlayback();
@@ -14,6 +15,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             updateAnsweringPresentation();
             updateAnalyzingPresentation();
         }
+#pragma warning restore IDE1006
 
         private void updateAnsweringPresentation()
         {

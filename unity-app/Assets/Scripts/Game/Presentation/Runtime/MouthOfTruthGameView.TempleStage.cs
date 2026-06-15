@@ -17,32 +17,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             configureExitButtonAsTopLeftIcon();
             mBackgroundImage.sprite = mCardSelectionBackgroundSprite;
             setBackgroundTint(STAGE_BACKGROUND_TINT);
-            setObjectActive(mBackgroundImage, false);
-            setObjectActive(mCarpetImage, false);
-            setObjectActive(mMouthImage, false);
-            setObjectActive(mSceneOverlayImage, true);
-            setObjectActive(mLogoImage, false);
-            setObjectActive(mTitleVignetteImage, false);
-            setObjectActive(mStartButton, false);
-            setObjectActive(mExitButton, true);
-            setObjectActive(mQuestionText, false);
-            setObjectActive(mQuestionPanelImage, false);
-            setObjectActive(mStatusPanelImage, false);
-            setObjectActive(mResultPanelImage, false);
-            setObjectActive(mPromptText, false);
-            setObjectActive(mStatusText, false);
-            setObjectActive(mAnswerTimerText, false);
-            setObjectActive(mAnswerInputField, false);
-            setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
-            setEyeBeamImagesActive(false);
-            setObjectActive(mHandImage, false);
-            setObjectActive(mRitualHandImage, false);
-            setObjectActive(mPointerImage, false);
-            setObjectActive(mVerdictImage, false);
-            setObjectActive(mVerdictText, false);
-            setObjectActive(mTryAgainButton, false);
-            setObjectActive(mBackToTitleButton, false);
-            setCardsVisible(false);
+            hideCommonScreenElements();
+            setObjectVisibility(mBackgroundImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mCarpetImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mSceneOverlayImage, EUiElementVisibility.Visible);
+            setObjectVisibility(mExitButton, EUiElementVisibility.Visible);
             createTempleApproachScene();
             setOverlayTint(STAGE_OVERLAY_TINT, TEMPLE_APPROACH_START_OVERLAY_ALPHA);
             hideFirstRunTutorialPresentation();
@@ -74,11 +53,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 return Task.CompletedTask;
             }
 
-            setObjectActive(mBackgroundImage, false);
-            setObjectActive(mCarpetImage, false);
-            setObjectActive(mSceneOverlayImage, true);
+            setObjectVisibility(mBackgroundImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mCarpetImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mSceneOverlayImage, EUiElementVisibility.Visible);
             setOverlayTint(STAGE_OVERLAY_TINT, TEMPLE_APPROACH_STAGE_OVERLAY_ALPHA);
-            setObjectActive(mMouthImage, true);
+            setObjectVisibility(mMouthImage, EUiElementVisibility.Visible);
             setTempleApproachMouthAlpha(1.0f);
             syncTempleStageMouthOverlay(0.0f);
             return Task.CompletedTask;
@@ -104,11 +83,19 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             approachBackgroundImage.preserveAspect = mBackgroundImage.preserveAspect;
             approachBackgroundImage.raycastTarget = false;
 
-            Image approachCarpetImage = createImage("TempleApproachCarpet", mTempleApproachCameraRectTransform, new Vector2(0.5f, 0.0f), new Vector2(0.5f, 0.0f), STAGE_CARPET_POSITION, STAGE_CARPET_SIZE, STAGE_CARPET_TINT);
+            Image approachCarpetImage = createImage(
+                "TempleApproachCarpet",
+                mTempleApproachCameraRectTransform,
+                UiRectLayout.At(new Vector2(0.5f, 0.0f), STAGE_CARPET_POSITION, STAGE_CARPET_SIZE),
+                STAGE_CARPET_TINT);
             approachCarpetImage.sprite = mCarpetImage.sprite;
             approachCarpetImage.raycastTarget = false;
 
-            mTempleApproachMouthImage = createImage("TempleApproachMouth", mTempleApproachCameraRectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), TEMPLE_APPROACH_MOUTH_POSITION, TEMPLE_APPROACH_MOUTH_SIZE, new Color(1.0f, 1.0f, 1.0f, 0.86f));
+            mTempleApproachMouthImage = createImage(
+                "TempleApproachMouth",
+                mTempleApproachCameraRectTransform,
+                UiRectLayout.At(new Vector2(0.5f, 0.5f), TEMPLE_APPROACH_MOUTH_POSITION, TEMPLE_APPROACH_MOUTH_SIZE),
+                new Color(1.0f, 1.0f, 1.0f, 0.86f));
             mTempleApproachMouthImage.sprite = mMouthImage.sprite;
             mTempleApproachMouthImage.preserveAspect = true;
             mTempleApproachMouthImage.raycastTarget = false;
@@ -130,32 +117,32 @@ namespace MouthOfTruth.Game.Presentation.Runtime
         {
             if (cardLaunchPresentationMode == ECardLaunchPresentationMode.TempleApproach)
             {
-                setObjectActive(mBackgroundImage, false);
-                setObjectActive(mCarpetImage, false);
-                setObjectActive(mMouthImage, false);
-                setObjectActive(mSceneOverlayImage, true);
+                setObjectVisibility(mBackgroundImage, EUiElementVisibility.Hidden);
+                setObjectVisibility(mCarpetImage, EUiElementVisibility.Hidden);
+                setObjectVisibility(mMouthImage, EUiElementVisibility.Hidden);
+                setObjectVisibility(mSceneOverlayImage, EUiElementVisibility.Visible);
                 setOverlayTint(STAGE_OVERLAY_TINT, TEMPLE_APPROACH_STAGE_OVERLAY_ALPHA);
-                setObjectActive(mPromptText, false);
-                setObjectActive(mStatusText, false);
-                setObjectActive(mQuestionPanelImage, false);
-                setObjectActive(mQuestionText, false);
-                setObjectActive(mRitualHandImage, false);
+                setObjectVisibility(mPromptText, EUiElementVisibility.Hidden);
+                setObjectVisibility(mStatusText, EUiElementVisibility.Hidden);
+                setObjectVisibility(mQuestionPanelImage, EUiElementVisibility.Hidden);
+                setObjectVisibility(mQuestionText, EUiElementVisibility.Hidden);
+                setObjectVisibility(mRitualHandImage, EUiElementVisibility.Hidden);
                 return;
             }
 
             applyNarrationLayout();
             mBackgroundImage.sprite = mMouthChamberBackgroundSprite;
             setBackgroundTint(STAGE_BACKGROUND_TINT);
-            setObjectActive(mBackgroundImage, true);
-            setObjectActive(mCarpetImage, false);
-            setObjectActive(mSceneOverlayImage, true);
+            setObjectVisibility(mBackgroundImage, EUiElementVisibility.Visible);
+            setObjectVisibility(mCarpetImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mSceneOverlayImage, EUiElementVisibility.Visible);
             setOverlayAlpha(0.18f);
-            setObjectActive(mPromptText, false);
-            setObjectActive(mStatusText, false);
-            setObjectActive(mQuestionPanelImage, false);
-            setObjectActive(mQuestionText, false);
-            setObjectActive(mMouthImage, true);
-            setObjectActive(mRitualHandImage, false);
+            setObjectVisibility(mPromptText, EUiElementVisibility.Hidden);
+            setObjectVisibility(mStatusText, EUiElementVisibility.Hidden);
+            setObjectVisibility(mQuestionPanelImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mQuestionText, EUiElementVisibility.Hidden);
+            setObjectVisibility(mMouthImage, EUiElementVisibility.Visible);
+            setObjectVisibility(mRitualHandImage, EUiElementVisibility.Hidden);
             applyMouthAnchoredLayout();
             mMouthImage.rectTransform.localScale = Vector3.one * 0.94f;
         }
@@ -167,11 +154,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
         private void applyTempleStageBackgroundPresentation(float overlayAlpha)
         {
-            setObjectActive(mBackgroundImage, false);
-            setObjectActive(mCarpetImage, false);
-            setObjectActive(mSceneOverlayImage, true);
+            setObjectVisibility(mBackgroundImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mCarpetImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mSceneOverlayImage, EUiElementVisibility.Visible);
             setOverlayTint(STAGE_OVERLAY_TINT, overlayAlpha);
-            setObjectActive(mMouthImage, true);
+            setObjectVisibility(mMouthImage, EUiElementVisibility.Visible);
             setTempleApproachMouthAlpha(1.0f);
             syncTempleStageMouthOverlay(0.0f);
         }

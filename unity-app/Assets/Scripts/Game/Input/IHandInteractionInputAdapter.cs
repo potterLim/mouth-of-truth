@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace MouthOfTruth.Game.Input
 {
     public interface IHandInteractionInputAdapter

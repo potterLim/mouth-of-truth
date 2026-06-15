@@ -1,8 +1,7 @@
-using System;
 using System.Linq;
+using Leap;
 using MouthOfTruth.Game.Diagnostics;
 using UnityEngine;
-using Leap;
 
 namespace MouthOfTruth.Game.Input.Leap
 {
@@ -25,6 +24,7 @@ namespace MouthOfTruth.Game.Input.Leap
         private const float DEFAULT_POINTER_SMOOTHING = 18.0f;
         private const float DEFAULT_POINTER_LOSS_GRACE_SECONDS = 0.55f;
 
+#pragma warning disable IDE0044 // Unity serialized fields are assigned through the inspector.
         [SerializeField]
         private string mServerNamespace = DEFAULT_SERVER_NAMESPACE;
 
@@ -48,6 +48,7 @@ namespace MouthOfTruth.Game.Input.Leap
 
         [SerializeField]
         private bool mShouldLogStateChanges = true;
+#pragma warning restore IDE0044
 
         private LeapServiceProvider mLeapServiceProvider;
         private Vector2 mSmoothedPointerScreenPosition;
@@ -57,9 +58,15 @@ namespace MouthOfTruth.Game.Input.Leap
         private bool mPreviousDeviceConnectedState;
         private bool mPreviousTrackedPointerState;
 
-        public bool IsTrackingServiceConnected { get; private set; }
+        public bool IsTrackingServiceConnected
+        {
+            get; private set;
+        }
 
-        public bool IsTrackingDeviceConnected { get; private set; }
+        public bool IsTrackingDeviceConnected
+        {
+            get; private set;
+        }
 
         public bool ShouldOwnPointerInput =>
             IsTrackingDeviceConnected
@@ -82,6 +89,7 @@ namespace MouthOfTruth.Game.Input.Leap
             return runtimeObject.AddComponent<LeapHandTrackingRuntime>();
         }
 
+#pragma warning disable IDE1006 // Unity message names are invoked by the engine.
         private void Awake()
         {
             ensureServiceProviderExists();
@@ -97,6 +105,7 @@ namespace MouthOfTruth.Game.Input.Leap
             ensureServiceProviderExists();
             updateTrackingState();
         }
+#pragma warning restore IDE1006
 
         public bool TryGetPointerScreenPosition(out PointerScreenPosition pointerScreenPosition)
         {
@@ -218,19 +227,19 @@ namespace MouthOfTruth.Game.Input.Leap
 
             if (mPreviousServiceConnectedState != IsTrackingServiceConnected)
             {
-                MouthOfTruthLog.LogInfo($"LeapHandTrackingRuntime: tracking service connected = {IsTrackingServiceConnected}.");
+                MouthOfTruthLog.logInfo($"LeapHandTrackingRuntime: tracking service connected = {IsTrackingServiceConnected}.");
                 mPreviousServiceConnectedState = IsTrackingServiceConnected;
             }
 
             if (mPreviousDeviceConnectedState != IsTrackingDeviceConnected)
             {
-                MouthOfTruthLog.LogInfo($"LeapHandTrackingRuntime: tracking device connected = {IsTrackingDeviceConnected}.");
+                MouthOfTruthLog.logInfo($"LeapHandTrackingRuntime: tracking device connected = {IsTrackingDeviceConnected}.");
                 mPreviousDeviceConnectedState = IsTrackingDeviceConnected;
             }
 
             if (mPreviousTrackedPointerState != mHasTrackedPointer)
             {
-                MouthOfTruthLog.LogInfo($"LeapHandTrackingRuntime: pointer tracked = {mHasTrackedPointer}.");
+                MouthOfTruthLog.logInfo($"LeapHandTrackingRuntime: pointer tracked = {mHasTrackedPointer}.");
                 mPreviousTrackedPointerState = mHasTrackedPointer;
             }
         }

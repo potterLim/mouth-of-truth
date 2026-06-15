@@ -1,4 +1,3 @@
-using System;
 using MouthOfTruth.Game.Data;
 using UnityEngine;
 

@@ -9,7 +9,12 @@ DEFAULT_SPEECH_WINDOW_SECONDS = 0.20
 DEFAULT_SPEECH_RMS_THRESHOLD = 0.0085
 
 
-def has_speech_signal(waveform: list[float], sample_rate: int, window_seconds: float = DEFAULT_SPEECH_WINDOW_SECONDS, rms_threshold: float = DEFAULT_SPEECH_RMS_THRESHOLD) -> bool:
+def has_speech_signal(
+    waveform: list[float],
+    sample_rate: int,
+    window_seconds: float = DEFAULT_SPEECH_WINDOW_SECONDS,
+    rms_threshold: float = DEFAULT_SPEECH_RMS_THRESHOLD,
+) -> bool:
     """Returns whether one waveform contains one speech-like signal window."""
     if not waveform:
         return False

@@ -86,10 +86,10 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 mLastHoveredUiActionTargetOrNull = hoveredUiActionTargetOrNull;
             }
 
-            updateButtonVisual(mStartButton, hoveredUiActionTargetOrNull == EUiActionTarget.StartGame, hoverProgress);
-            updateButtonVisual(mTryAgainButton, hoveredUiActionTargetOrNull == EUiActionTarget.TryAgain, hoverProgress);
-            updateButtonVisual(mExitButton, hoveredUiActionTargetOrNull == EUiActionTarget.ExitGame, hoverProgress);
-            updateButtonVisual(mBackToTitleButton, hoveredUiActionTargetOrNull == EUiActionTarget.BackToTitle, hoverProgress);
+            updateButtonVisual(mStartButton, hoveredUiActionTargetOrNull, EUiActionTarget.StartGame, hoverProgress);
+            updateButtonVisual(mTryAgainButton, hoveredUiActionTargetOrNull, EUiActionTarget.TryAgain, hoverProgress);
+            updateButtonVisual(mExitButton, hoveredUiActionTargetOrNull, EUiActionTarget.ExitGame, hoverProgress);
+            updateButtonVisual(mBackToTitleButton, hoveredUiActionTargetOrNull, EUiActionTarget.BackToTitle, hoverProgress);
         }
 
         public EHandAnchorState GetHandAnchorState(PointerScreenPosition? pointerScreenPositionOrNull)
@@ -110,11 +110,17 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 syncTempleStageMouthOverlay(0.0f);
             }
 
-            float mouthDiameterPixels = Mathf.Max(1.0f, Mathf.Min(mMouthImage.rectTransform.rect.width, mMouthImage.rectTransform.rect.height));
+            float mouthDiameterPixels = Mathf.Max(
+                1.0f,
+                Mathf.Min(mMouthImage.rectTransform.rect.width, mMouthImage.rectTransform.rect.height));
             Vector2 handDetectionOffset = getHandDetectionOffset(mouthDiameterPixels);
             Vector2 handFrontPosition = getHandFrontPosition() + handDetectionOffset;
             Vector2 handInnerPosition = getHandInnerPosition() + handDetectionOffset;
-            EHandAnchorState exactAnchorState = evaluateHandAnchorState(pointerCanvasPosition, handFrontPosition, handInnerPosition, mouthDiameterPixels);
+            EHandAnchorState exactAnchorState = evaluateHandAnchorState(
+                pointerCanvasPosition,
+                handFrontPosition,
+                handInnerPosition,
+                mouthDiameterPixels);
 
             if (exactAnchorState != EHandAnchorState.OutsideMouth)
             {
@@ -152,7 +158,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             return EQuestionCardSlot.CenterCard;
         }
 
-        private static EHandAnchorState evaluateHandAnchorState(Vector2 pointerCanvasPosition, Vector2 handFrontPosition, Vector2 handInnerPosition, float mouthDiameterPixels)
+        private static EHandAnchorState evaluateHandAnchorState(
+            Vector2 pointerCanvasPosition,
+            Vector2 handFrontPosition,
+            Vector2 handInnerPosition,
+            float mouthDiameterPixels)
         {
             float clampedMouthDiameterPixels = Mathf.Max(1.0f, mouthDiameterPixels);
             float frontAnchorRadiusPixels = clampedMouthDiameterPixels * FRONT_ANCHOR_RADIUS_FACTOR;
@@ -160,7 +170,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             float distanceToInnerAnchor = Vector2.Distance(pointerCanvasPosition, handInnerPosition);
             Vector2 innerAnchorOffset = pointerCanvasPosition - handInnerPosition;
 
-            if (distanceToInnerAnchor <= innerAnchorRadiusPixels || isInsideAnchorWindow(innerAnchorOffset, clampedMouthDiameterPixels * INNER_ENTRY_HALF_WIDTH_FACTOR, clampedMouthDiameterPixels * INNER_ENTRY_HALF_HEIGHT_FACTOR))
+            float innerAnchorWindowHalfWidth = clampedMouthDiameterPixels * INNER_ENTRY_HALF_WIDTH_FACTOR;
+            float innerAnchorWindowHalfHeight = clampedMouthDiameterPixels * INNER_ENTRY_HALF_HEIGHT_FACTOR;
+
+            if (distanceToInnerAnchor <= innerAnchorRadiusPixels
+                || isInsideAnchorWindow(innerAnchorOffset, innerAnchorWindowHalfWidth, innerAnchorWindowHalfHeight))
             {
                 return EHandAnchorState.AtInnerAnchor;
             }
@@ -168,7 +182,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             float distanceToFrontAnchor = Vector2.Distance(pointerCanvasPosition, handFrontPosition);
             Vector2 frontAnchorOffset = pointerCanvasPosition - handFrontPosition;
 
-            if (distanceToFrontAnchor <= frontAnchorRadiusPixels || isInsideAnchorWindow(frontAnchorOffset, clampedMouthDiameterPixels * FRONT_ENTRY_HALF_WIDTH_FACTOR, clampedMouthDiameterPixels * FRONT_ENTRY_HALF_HEIGHT_FACTOR))
+            float frontAnchorWindowHalfWidth = clampedMouthDiameterPixels * FRONT_ENTRY_HALF_WIDTH_FACTOR;
+            float frontAnchorWindowHalfHeight = clampedMouthDiameterPixels * FRONT_ENTRY_HALF_HEIGHT_FACTOR;
+
+            if (distanceToFrontAnchor <= frontAnchorRadiusPixels
+                || isInsideAnchorWindow(frontAnchorOffset, frontAnchorWindowHalfWidth, frontAnchorWindowHalfHeight))
             {
                 return EHandAnchorState.AtFrontAnchor;
             }
@@ -176,7 +194,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             return EHandAnchorState.OutsideMouth;
         }
 
-        private static EHandAnchorState evaluateMouthIntentAnchorState(Vector2 pointerCanvasPosition, Vector2 handFrontPosition, Vector2 handInnerPosition, float mouthDiameterPixels)
+        private static EHandAnchorState evaluateMouthIntentAnchorState(
+            Vector2 pointerCanvasPosition,
+            Vector2 handFrontPosition,
+            Vector2 handInnerPosition,
+            float mouthDiameterPixels)
         {
             float clampedMouthDiameterPixels = Mathf.Max(1.0f, mouthDiameterPixels);
             float intentLeftWidth = clampedMouthDiameterPixels * MOUTH_INTENT_LEFT_WIDTH_FACTOR;
@@ -189,7 +211,10 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             float minimumX = centerX - intentLeftWidth;
             float maximumX = centerX + intentRightWidth;
 
-            if (pointerCanvasPosition.x < minimumX || pointerCanvasPosition.x > maximumX || pointerCanvasPosition.y < minimumY || pointerCanvasPosition.y > maximumY)
+            if (pointerCanvasPosition.x < minimumX
+                || pointerCanvasPosition.x > maximumX
+                || pointerCanvasPosition.y < minimumY
+                || pointerCanvasPosition.y > maximumY)
             {
                 return EHandAnchorState.OutsideMouth;
             }
@@ -214,18 +239,18 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
             if (pointerVisualState == EPointerVisualState.Hidden || pointerScreenPositionOrNull.HasValue == false)
             {
-                setObjectActive(mPointerImage, false);
+                setObjectVisibility(mPointerImage, EUiElementVisibility.Hidden);
                 return;
             }
 
             Vector2 anchoredPosition;
             if (tryConvertScreenPointToCanvasPosition(pointerScreenPositionOrNull.Value.Value, out anchoredPosition) == false)
             {
-                setObjectActive(mPointerImage, false);
+                setObjectVisibility(mPointerImage, EUiElementVisibility.Hidden);
                 return;
             }
 
-            setObjectActive(mPointerImage, true);
+            setObjectVisibility(mPointerImage, EUiElementVisibility.Visible);
             mPointerImage.transform.SetAsLastSibling();
             RectTransform pointerRectTransform = mPointerImage.rectTransform;
             pointerRectTransform.anchorMin = new Vector2(0.5f, 0.5f);
@@ -281,7 +306,10 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             }
 
             bool isEditable = answerTranscriptInputMode == EAnswerTranscriptInputMode.ManualTextEntry;
-            setObjectActive(mAnswerInputField, isEditable);
+            EUiElementVisibility inputFieldVisibility = isEditable
+                ? EUiElementVisibility.Visible
+                : EUiElementVisibility.Hidden;
+            setObjectVisibility(mAnswerInputField, inputFieldVisibility);
             mAnswerInputField.interactable = isEditable;
 
             if (isEditable)

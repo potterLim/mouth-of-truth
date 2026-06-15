@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using MouthOfTruth.Game.App;
 using MouthOfTruth.Game.Data;
-using UnityEngine;
 
 namespace MouthOfTruth.Game.Voice
 {

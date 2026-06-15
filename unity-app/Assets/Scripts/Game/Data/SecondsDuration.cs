@@ -16,7 +16,10 @@ namespace MouthOfTruth.Game.Data
 
         public static SecondsDuration Zero => new SecondsDuration(0.0f);
 
-        public float Value { get; }
+        public float Value
+        {
+            get;
+        }
 
         public SecondsDuration Add(SecondsDuration duration)
         {

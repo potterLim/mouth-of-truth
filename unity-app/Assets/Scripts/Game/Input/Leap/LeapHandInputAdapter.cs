@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace MouthOfTruth.Game.Input.Leap
 {
     public class LeapHandInputAdapter : IHandInteractionInputAdapter, IHandInteractionFallbackGate

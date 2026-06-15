@@ -39,7 +39,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                         if (mMouthListeningAuraImage != null)
                         {
                             Color listeningAuraColor = mMouthListeningAuraImage.color;
-                            mMouthListeningAuraImage.color = new Color(listeningAuraColor.r, listeningAuraColor.g, listeningAuraColor.b, Mathf.Lerp(listeningAuraColor.a, 0.0f, easedProgress));
+                            mMouthListeningAuraImage.color = new Color(
+                                listeningAuraColor.r,
+                                listeningAuraColor.g,
+                                listeningAuraColor.b,
+                                Mathf.Lerp(listeningAuraColor.a, 0.0f, easedProgress));
                         }
 
                         if (mMouthAnalyzingAuraImage != null)
@@ -77,7 +81,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                     if (mMouthListeningAuraImage != null)
                     {
                         Color listeningAuraColor = mMouthListeningAuraImage.color;
-                        mMouthListeningAuraImage.color = new Color(listeningAuraColor.r, listeningAuraColor.g, listeningAuraColor.b, Mathf.Lerp(listeningAuraColor.a, 0.0f, easedProgress));
+                        mMouthListeningAuraImage.color = new Color(
+                            listeningAuraColor.r,
+                            listeningAuraColor.g,
+                            listeningAuraColor.b,
+                            Mathf.Lerp(listeningAuraColor.a, 0.0f, easedProgress));
                     }
 
                     if (mMouthAnalyzingAuraImage != null)
@@ -97,7 +105,6 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             disableAnalyzingPresentation();
             applyResultLayout(verdictKind);
             configureExitButtonAsTopLeftIcon();
-            setCardsVisible(false);
             if (isTempleApproachSceneActive())
             {
                 applyTempleStageBackgroundPresentation(0.38f);
@@ -106,30 +113,17 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             {
                 mBackgroundImage.sprite = mMouthChamberBackgroundSprite;
                 setBackgroundTint(STAGE_BACKGROUND_TINT);
-                setObjectActive(mBackgroundImage, true);
-                setObjectActive(mCarpetImage, false);
+                setObjectVisibility(mBackgroundImage, EUiElementVisibility.Visible);
+                setObjectVisibility(mCarpetImage, EUiElementVisibility.Hidden);
             }
 
-            setObjectActive(mTitleVignetteImage, false);
-            setObjectActive(mSceneOverlayImage, true);
+            hideCommonScreenElements();
+            setObjectVisibility(mSceneOverlayImage, EUiElementVisibility.Visible);
             setGameplayOverlayAlpha(0.38f);
-            setObjectActive(mQuestionText, false);
-            setObjectActive(mQuestionPanelImage, false);
-            setObjectActive(mStatusPanelImage, false);
-            setObjectActive(mMouthImage, true);
-            setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
-            setObjectActive(mHandImage, false);
-            setObjectActive(mRitualHandImage, false);
-            setObjectActive(mVerdictImage, true);
-            setObjectActive(mVerdictText, false);
-            setObjectActive(mResultPanelImage, false);
-            setObjectActive(mPromptText, false);
-            setObjectActive(mStatusText, false);
-            setObjectActive(mAnswerTimerText, false);
-            setObjectActive(mTryAgainButton, true);
-            setObjectActive(mBackToTitleButton, false);
-            setObjectActive(mExitButton, true);
-            setObjectActive(mAnswerInputField, false);
+            setObjectVisibility(mMouthImage, EUiElementVisibility.Visible);
+            setObjectVisibility(mVerdictImage, EUiElementVisibility.Visible);
+            setObjectVisibility(mTryAgainButton, EUiElementVisibility.Visible);
+            setObjectVisibility(mExitButton, EUiElementVisibility.Visible);
             mAnswerInputField.interactable = false;
 
             mVerdictImage.sprite = verdictKind switch
@@ -169,7 +163,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
         public async Task PlayResultRevealAnimationAsync(EVerdictKind verdictKind)
         {
-            setObjectActive(mTryAgainButton, false);
+            setObjectVisibility(mTryAgainButton, EUiElementVisibility.Hidden);
 
             if (isTempleApproachSceneActive())
             {
@@ -188,7 +182,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 await playUncertainRevealAnimationAsync();
             }
 
-            setObjectActive(mTryAgainButton, true);
+            setObjectVisibility(mTryAgainButton, EUiElementVisibility.Visible);
             setGameplayOverlayAlpha(0.38f);
             if (isTempleApproachSceneActive())
             {
@@ -321,16 +315,18 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             }
             else
             {
-                setRectTransformLayout(mMouthImage.rectTransform, RESULT_MOUTH_ANCHOR, RESULT_MOUTH_SIZE_PIXELS);
+                setRectTransformLayout(mMouthImage.rectTransform, UiRectLayout.At(RESULT_MOUTH_ANCHOR, RESULT_MOUTH_SIZE_PIXELS));
                 mMouthImage.rectTransform.localScale = Vector3.one;
             }
 
             Vector2 verdictSizePixels = verdictKind == EVerdictKind.True || verdictKind == EVerdictKind.False
                 ? RESULT_SHORT_VERDICT_SIZE_PIXELS
                 : RESULT_VERDICT_SIZE_PIXELS;
-            setRectTransformLayout(mVerdictImage.rectTransform, new Vector2(0.5f, 0.54f), verdictSizePixels);
-            setRectTransformLayout(mHandImage.rectTransform, new Vector2(0.5f, 0.18f), HELD_POINTER_CURSOR_SIZE_PIXELS);
-            setRectTransformLayout(mTryAgainButton.GetComponent<RectTransform>(), new Vector2(0.5f, 0.105f), new Vector2(360.0f, 100.0f));
+            setRectTransformLayout(mVerdictImage.rectTransform, UiRectLayout.At(new Vector2(0.5f, 0.54f), verdictSizePixels));
+            setRectTransformLayout(mHandImage.rectTransform, UiRectLayout.At(new Vector2(0.5f, 0.18f), HELD_POINTER_CURSOR_SIZE_PIXELS));
+            setRectTransformLayout(
+                mTryAgainButton.GetComponent<RectTransform>(),
+                UiRectLayout.At(new Vector2(0.5f, 0.105f), new Vector2(360.0f, 100.0f)));
             applyTopLeftExitButtonLayout();
         }
     }

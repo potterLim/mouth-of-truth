@@ -11,10 +11,19 @@ namespace MouthOfTruth.Game.Voice
             VoiceSegmentCount = voiceSegmentCount;
         }
 
-        public AnswerTranscript AnswerTranscript { get; }
+        public AnswerTranscript AnswerTranscript
+        {
+            get;
+        }
 
-        public AnswerAudioFilePath AudioFilePath { get; }
+        public AnswerAudioFilePath AudioFilePath
+        {
+            get;
+        }
 
-        public VoiceSegmentCount VoiceSegmentCount { get; }
+        public VoiceSegmentCount VoiceSegmentCount
+        {
+            get;
+        }
     }
 }

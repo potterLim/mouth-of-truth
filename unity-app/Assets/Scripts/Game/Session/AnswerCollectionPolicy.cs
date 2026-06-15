@@ -31,11 +31,20 @@ namespace MouthOfTruth.Game.Session
             MaximumAnswerDuration = maximumAnswerDuration;
         }
 
-        public SecondsDuration InitialSilenceGraceDuration { get; }
+        public SecondsDuration InitialSilenceGraceDuration
+        {
+            get;
+        }
 
-        public SecondsDuration SilenceTimeoutDuration { get; }
+        public SecondsDuration SilenceTimeoutDuration
+        {
+            get;
+        }
 
-        public SecondsDuration MaximumAnswerDuration { get; }
+        public SecondsDuration MaximumAnswerDuration
+        {
+            get;
+        }
 
         public AnswerCollectionTickResult Advance(
             SecondsDuration elapsedAnswerDuration,

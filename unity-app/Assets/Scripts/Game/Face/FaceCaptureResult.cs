@@ -8,8 +8,14 @@ namespace MouthOfTruth.Game.Face
             CapturedFrameCount = capturedFrameCount;
         }
 
-        public FaceFramesDirectoryPath FaceFramesDirectoryPath { get; }
+        public FaceFramesDirectoryPath FaceFramesDirectoryPath
+        {
+            get;
+        }
 
-        public FaceFrameCount CapturedFrameCount { get; }
+        public FaceFrameCount CapturedFrameCount
+        {
+            get;
+        }
     }
 }

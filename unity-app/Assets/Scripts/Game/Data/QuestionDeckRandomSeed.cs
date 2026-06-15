@@ -9,7 +9,10 @@ namespace MouthOfTruth.Game.Data
             Value = value;
         }
 
-        public int Value { get; }
+        public int Value
+        {
+            get;
+        }
 
         public bool Equals(QuestionDeckRandomSeed other)
         {

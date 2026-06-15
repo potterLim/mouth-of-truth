@@ -28,7 +28,10 @@ namespace MouthOfTruth.Editor
             ReleaseBuildPipeline.RecreateDirectory(distributionRootPath.Value);
             ReleaseBuildPipeline.BuildPlayerOrThrow(MAIN_SCENE_PATH, applicationPath, BuildTarget.StandaloneOSX, "Mac");
 
-            string bundledPythonRuntimeRootPath = resolveBundledPythonRuntimeRootPath(runtimeRootPath.Value, Environment.GetEnvironmentVariable(PYTHON_RUNTIME_ENVIRONMENT_VARIABLE_NAME));
+            string configuredPythonRuntimeRootPath = Environment.GetEnvironmentVariable(PYTHON_RUNTIME_ENVIRONMENT_VARIABLE_NAME);
+            string bundledPythonRuntimeRootPath = resolveBundledPythonRuntimeRootPath(
+                runtimeRootPath.Value,
+                configuredPythonRuntimeRootPath);
             ReleaseBuildPipeline.StageRuntimeSupport(runtimeRootPath.Value, distributionRootPath.Value, bundledPythonRuntimeRootPath);
             ReleaseRuntimeValidator.ValidateDistributionRuntimeAssets(distributionRootPath);
             ReleaseBuildPipeline.PruneDistributionArtifacts(distributionRootPath.Value);
@@ -103,7 +106,9 @@ namespace MouthOfTruth.Editor
 
             string archiveDirectoryPath = Path.GetDirectoryName(archivePath);
             Directory.CreateDirectory(string.IsNullOrEmpty(archiveDirectoryPath) ? runtimeRootPath : archiveDirectoryPath);
-            ReleaseBuildPipeline.RunProcess("/usr/bin/ditto", $"-c -k --norsrc --noextattr --noqtn --noacl --keepParent \"{distributionRootPath}\" \"{archivePath}\"", runtimeRootPath);
+            string archiveArguments =
+                $"-c -k --norsrc --noextattr --noqtn --noacl --keepParent \"{distributionRootPath}\" \"{archivePath}\"";
+            ReleaseBuildPipeline.RunProcess("/usr/bin/ditto", archiveArguments, runtimeRootPath);
         }
     }
 }

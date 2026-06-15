@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter, deque
-from typing import Any
+from mouth_of_truth.contracts.analysis_payloads import AnalysisSummary, FaceRecognitionPayload
 
 
 BASE_TENSE_WEIGHT = 0.82
@@ -98,7 +98,7 @@ def get_result_text(score: float) -> str:
     return "Highly unstable reaction"
 
 
-def summarize_session(recognition_results: list[dict[str, Any]]) -> dict[str, Any]:
+def summarize_session(recognition_results: list[FaceRecognitionPayload]) -> AnalysisSummary:
     """Builds one face-session summary from one sequence of recognition results."""
     if not recognition_results:
         return {

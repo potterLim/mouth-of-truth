@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from typing import Any
+from mouth_of_truth.contracts.analysis_payloads import AnalysisSummary, VoiceSegmentPayload
 
 
 BASE_TENSE_WEIGHT = 0.60
@@ -63,7 +63,7 @@ def get_voice_status_text(score: float) -> str:
     return "Highly Unstable"
 
 
-def summarize_voice_session(segment_results: list[dict[str, Any]]) -> dict[str, Any]:
+def summarize_voice_session(segment_results: list[VoiceSegmentPayload]) -> AnalysisSummary:
     """Builds one voice-session summary from one sequence of segment results."""
     if not segment_results:
         return {

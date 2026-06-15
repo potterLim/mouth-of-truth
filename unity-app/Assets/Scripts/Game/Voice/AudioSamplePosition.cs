@@ -14,7 +14,10 @@ namespace MouthOfTruth.Game.Voice
             Value = value;
         }
 
-        public int Value { get; }
+        public int Value
+        {
+            get;
+        }
 
         public bool Equals(AudioSamplePosition other)
         {

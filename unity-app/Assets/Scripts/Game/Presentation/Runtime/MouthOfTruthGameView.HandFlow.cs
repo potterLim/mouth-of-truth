@@ -23,28 +23,18 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 applyAwaitingHandInsertionLayout();
                 mBackgroundImage.sprite = mMouthChamberBackgroundSprite;
                 setBackgroundTint(STAGE_BACKGROUND_TINT);
-                setObjectActive(mBackgroundImage, true);
-                setObjectActive(mCarpetImage, false);
+                setObjectVisibility(mBackgroundImage, EUiElementVisibility.Visible);
+                setObjectVisibility(mCarpetImage, EUiElementVisibility.Hidden);
             }
 
-            setObjectActive(mSceneOverlayImage, true);
+            hideCommonScreenElements();
+            setObjectVisibility(mSceneOverlayImage, EUiElementVisibility.Visible);
             setGameplayOverlayAlpha(0.26f);
             configureExitButtonAsTopLeftIcon();
-            setObjectActive(mExitButton, true);
-            setObjectActive(mMouthImage, true);
-            setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
-            setEyeBeamImagesActive(false);
-            setObjectActive(mHandImage, false);
-            setObjectActive(mRitualHandImage, false);
-            setObjectActive(mPointerImage, false);
-            setObjectActive(mAnswerInputField, false);
-            setObjectActive(mAnswerTimerText, false);
-            setObjectActive(mQuestionPanelImage, true);
-            setObjectActive(mQuestionText, true);
-            setObjectActive(mStatusPanelImage, false);
-            setObjectActive(mPromptText, false);
-            setObjectActive(mStatusText, false);
-            setObjectActive(mResultPanelImage, false);
+            setObjectVisibility(mExitButton, EUiElementVisibility.Visible);
+            setObjectVisibility(mMouthImage, EUiElementVisibility.Visible);
+            setObjectVisibility(mQuestionPanelImage, EUiElementVisibility.Visible);
+            setObjectVisibility(mQuestionText, EUiElementVisibility.Visible);
             mAnswerInputField.text = string.Empty;
             mAnswerInputField.interactable = false;
             setText(mQuestionText, "“손을 내밀고, 진실을 답하라.”");
@@ -86,10 +76,10 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 applyAnswerStageLayout();
             }
 
-            setObjectActive(mHandImage, false);
+            setObjectVisibility(mHandImage, EUiElementVisibility.Hidden);
             setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
-            setEyeBeamImagesActive(false);
-            setObjectActive(mRitualHandImage, true);
+            setEyeBeamImagesVisibility(EUiElementVisibility.Hidden);
+            setObjectVisibility(mRitualHandImage, EUiElementVisibility.Visible);
             placeRitualHandAboveMouth();
             playInterfaceCue(mHandInsertClip, 0.58f);
             Vector2 startPosition = getHandFrontPosition() + new Vector2(0.0f, -330.0f);
@@ -123,10 +113,10 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                     }
                 });
 
-            setObjectActive(mQuestionPanelImage, false);
-            setObjectActive(mQuestionText, false);
+            setObjectVisibility(mQuestionPanelImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mQuestionText, EUiElementVisibility.Hidden);
             resetHandPromptPanelAlpha();
-            setObjectActive(mRitualHandImage, false);
+            setObjectVisibility(mRitualHandImage, EUiElementVisibility.Hidden);
             await playMouthJudgementFocusTransitionAsync();
         }
 
@@ -144,22 +134,16 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 applyAnswerStageLayout();
                 mBackgroundImage.sprite = mMouthChamberBackgroundSprite;
                 setBackgroundTint(STAGE_BACKGROUND_TINT);
-                setObjectActive(mBackgroundImage, true);
-                setObjectActive(mCarpetImage, false);
+                setObjectVisibility(mBackgroundImage, EUiElementVisibility.Visible);
+                setObjectVisibility(mCarpetImage, EUiElementVisibility.Hidden);
             }
 
-            setObjectActive(mSceneOverlayImage, true);
+            hideCommonScreenElements();
+            setObjectVisibility(mSceneOverlayImage, EUiElementVisibility.Visible);
             setGameplayOverlayAlpha(0.32f);
             configureExitButtonAsTopLeftIcon();
-            setObjectActive(mExitButton, true);
-            setObjectActive(mQuestionPanelImage, false);
-            setObjectActive(mQuestionText, false);
-            setObjectActive(mStatusPanelImage, false);
-            setObjectActive(mPromptText, false);
-            setObjectActive(mStatusText, false);
-            setObjectActive(mAnswerTimerText, false);
-            setObjectActive(mHandImage, false);
-            setObjectActive(mRitualHandImage, false);
+            setObjectVisibility(mExitButton, EUiElementVisibility.Visible);
+            setObjectVisibility(mMouthImage, EUiElementVisibility.Visible);
             if (isTempleApproachSceneActive())
             {
                 syncTempleStageMouthOverlay(0.0f);
@@ -172,7 +156,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             }
 
             setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
-            setEyeBeamImagesActive(true);
+            setEyeBeamImagesVisibility(EUiElementVisibility.Visible);
             enableAnsweringPresentation();
         }
 
@@ -190,10 +174,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 applyAnswerStageLayout();
                 mBackgroundImage.sprite = mMouthChamberBackgroundSprite;
                 setBackgroundTint(STAGE_BACKGROUND_TINT);
-                setObjectActive(mBackgroundImage, true);
-                setObjectActive(mCarpetImage, false);
+                setObjectVisibility(mBackgroundImage, EUiElementVisibility.Visible);
+                setObjectVisibility(mCarpetImage, EUiElementVisibility.Hidden);
             }
 
+            hideCommonScreenElements();
             if (isTempleApproachSceneActive())
             {
                 syncTempleStageMouthOverlay(0.0f);
@@ -206,21 +191,12 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             }
 
             mAnswerInputField.interactable = false;
-            setObjectActive(mSceneOverlayImage, true);
+            setObjectVisibility(mSceneOverlayImage, EUiElementVisibility.Visible);
             setGameplayOverlayAlpha(0.36f);
             configureExitButtonAsTopLeftIcon();
-            setObjectActive(mExitButton, true);
-            setObjectActive(mQuestionPanelImage, false);
-            setObjectActive(mQuestionText, false);
-            setObjectActive(mStatusPanelImage, false);
-            setObjectActive(mPromptText, false);
-            setObjectActive(mStatusText, false);
-            setObjectActive(mAnswerTimerText, false);
-            setObjectActive(mPointerImage, false);
-            setObjectActive(mHandImage, false);
-            setObjectActive(mRitualHandImage, false);
+            setObjectVisibility(mExitButton, EUiElementVisibility.Visible);
+            setObjectVisibility(mMouthImage, EUiElementVisibility.Visible);
             setMouthEffectVisualState(EMouthEffectVisualState.ListeningAndAnalyzing);
-            setEyeBeamImagesActive(false);
             enableAnalyzingPresentation();
         }
 
@@ -268,7 +244,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
             if (mAnalyzingDotsText != null)
             {
-                setObjectActive(mAnalyzingDotsText, false);
+                setObjectVisibility(mAnalyzingDotsText, EUiElementVisibility.Hidden);
                 setText(mAnalyzingDotsText, string.Empty);
             }
         }
@@ -276,7 +252,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
         private void disableAnsweringPresentation()
         {
             mIsAnsweringPresentationActive = false;
-            setEyeBeamImagesActive(false);
+            setEyeBeamImagesVisibility(EUiElementVisibility.Hidden);
 
             if (mQuestionPanelImage != null)
             {
@@ -290,7 +266,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
             if (mAnalyzingDotsText != null && mIsAnalyzingPresentationActive == false)
             {
-                setObjectActive(mAnalyzingDotsText, false);
+                setObjectVisibility(mAnalyzingDotsText, EUiElementVisibility.Hidden);
                 setText(mAnalyzingDotsText, string.Empty);
                 mAnalyzingDotsText.rectTransform.localScale = Vector3.one;
             }
@@ -311,7 +287,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 mMouthImage.rectTransform.localScale = Vector3.one;
             }
 
-            setObjectActive(mAnalyzingDotsText, false);
+            setObjectVisibility(mAnalyzingDotsText, EUiElementVisibility.Hidden);
             setText(mAnalyzingDotsText, string.Empty);
         }
 
@@ -323,7 +299,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
         private void disableAnalyzingPresentation(EAnalyzingPresentationResetMode analyzingPresentationResetMode)
         {
             mIsAnalyzingPresentationActive = false;
-            setEyeBeamImagesActive(false);
+            setEyeBeamImagesVisibility(EUiElementVisibility.Hidden);
 
             if (mMouthImage != null
                 && analyzingPresentationResetMode == EAnalyzingPresentationResetMode.ResetMouthLayout
@@ -338,7 +314,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
             if (mAnalyzingDotsText != null)
             {
-                setObjectActive(mAnalyzingDotsText, false);
+                setObjectVisibility(mAnalyzingDotsText, EUiElementVisibility.Hidden);
                 setText(mAnalyzingDotsText, string.Empty);
                 mAnalyzingDotsText.rectTransform.localScale = Vector3.one;
             }

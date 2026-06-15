@@ -13,10 +13,19 @@ namespace MouthOfTruth.Game.Analysis
             ReasonCodes = reasonCodes == null ? Array.Empty<AnalysisReasonCode>() : reasonCodes;
         }
 
-        public EVerdictKind VerdictKind { get; }
+        public EVerdictKind VerdictKind
+        {
+            get;
+        }
 
-        public AnswerTranscript AnswerTranscript { get; }
+        public AnswerTranscript AnswerTranscript
+        {
+            get;
+        }
 
-        public IReadOnlyList<AnalysisReasonCode> ReasonCodes { get; }
+        public IReadOnlyList<AnalysisReasonCode> ReasonCodes
+        {
+            get;
+        }
     }
 }

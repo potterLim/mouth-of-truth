@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using MouthOfTruth.Game.Data;
 using MouthOfTruth.Game.Input;
-using MouthOfTruth.Game.Presentation;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -215,7 +214,10 @@ namespace MouthOfTruth.Game.Presentation.Runtime
         private bool mBackToTitleRequested;
         private bool mExitRequested;
 
-        public bool IsFirstRunTutorialVisible { get; private set; }
+        public bool IsFirstRunTutorialVisible
+        {
+            get; private set;
+        }
 
         public SecondsDuration AnalysisFocusRampDuration => new SecondsDuration(ANALYSIS_FOCUS_RAMP_SECONDS);
 

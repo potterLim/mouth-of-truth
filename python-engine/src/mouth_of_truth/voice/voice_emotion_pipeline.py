@@ -10,8 +10,15 @@ from typing import Any
 import torch
 
 from mouth_of_truth.audio_signal import calculate_window_rms
+from mouth_of_truth.contracts.analysis_payloads import ModelPredictionPayload, VoiceAnalysisPayload, VoiceSegmentPayload
 from mouth_of_truth.voice.infer_voice import TARGET_SAMPLE_RATE, VOICE_LABELS, load_audio, load_voice_model, probs_to_dict
-from mouth_of_truth.voice.voice_score_logic import calculate_voice_base_score, calculate_voice_change_score, calculate_voice_suspicion_score, get_voice_status_text, summarize_voice_session
+from mouth_of_truth.voice.voice_score_logic import (
+    calculate_voice_base_score,
+    calculate_voice_change_score,
+    calculate_voice_suspicion_score,
+    get_voice_status_text,
+    summarize_voice_session,
+)
 
 
 SEGMENT_SECONDS = 2.0
@@ -31,7 +38,7 @@ def _clamp(value: float, min_value: float, max_value: float) -> float:
     return max(min_value, min(value, max_value))
 
 
-def run_voice_emotion_pipeline(audio_path: str) -> dict[str, Any]:
+def run_voice_emotion_pipeline(audio_path: str) -> VoiceAnalysisPayload:
     """Runs one voice-emotion analysis pipeline on one recorded answer file."""
     waveform = load_audio(audio_path)
 
@@ -56,13 +63,17 @@ def should_use_trained_voice_model() -> bool:
     return configured_value.strip().lower() in {"1", "true", "yes", "on"}
 
 
-def run_trained_voice_emotion_pipeline(audio_path: str, waveform: list[float]) -> dict[str, Any]:
+def run_trained_voice_emotion_pipeline(audio_path: str, waveform: list[float]) -> VoiceAnalysisPayload:
     """Runs the slower trained voice-emotion model for offline validation."""
     feature_extractor, model = load_voice_model()
-    segments = [segment_waveform for segment_waveform in split_audio_into_segments(waveform, TARGET_SAMPLE_RATE) if has_speech_signal(segment_waveform, TARGET_SAMPLE_RATE)]
+    segments = [
+        segment_waveform
+        for segment_waveform in split_audio_into_segments(waveform, TARGET_SAMPLE_RATE)
+        if has_speech_signal(segment_waveform, TARGET_SAMPLE_RATE)
+    ]
     segments = select_representative_segments(segments)
     history: deque[list[float]] = deque(maxlen=VOICE_HISTORY_SIZE)
-    segment_results: list[dict[str, Any]] = []
+    segment_results: list[VoiceSegmentPayload] = []
 
     analyzed_segment_index = 0
 
@@ -75,7 +86,19 @@ def run_trained_voice_emotion_pipeline(audio_path: str, waveform: list[float]) -
         base_score = calculate_voice_base_score(prediction["prob_dict"])
         suspicion_score = calculate_voice_suspicion_score(base_score, change_score)
 
-        segment_results.append({"segment_index": analyzed_segment_index, "label": prediction["label"], "confidence": prediction["confidence"], "change_score": change_score, "base_score": base_score, "suspicion_score": suspicion_score, "status_text": get_voice_status_text(suspicion_score), "prob_dict": prediction["prob_dict"]})
+        segment_results.append(
+            {
+                "segment_index": analyzed_segment_index,
+                "label": prediction["label"],
+                "confidence": prediction["confidence"],
+                "change_score": change_score,
+                "base_score": base_score,
+                "suspicion_score": suspicion_score,
+                "status_text": get_voice_status_text(suspicion_score),
+                "prob_dict": prediction["prob_dict"],
+                "probs": probabilities_data,
+            }
+        )
         analyzed_segment_index += 1
 
     return {
@@ -86,7 +109,7 @@ def run_trained_voice_emotion_pipeline(audio_path: str, waveform: list[float]) -
     }
 
 
-def build_fast_voice_segment_result(waveform: list[float], sample_rate: int) -> dict[str, Any]:
+def build_fast_voice_segment_result(waveform: list[float], sample_rate: int) -> VoiceSegmentPayload:
     """Builds one quick voice-instability summary from waveform dynamics."""
     rms_values = calculate_rms_windows(waveform, sample_rate)
     speech_rms_values = [rms_value for rms_value in rms_values if rms_value >= FAST_SPEECH_EVIDENCE_RMS_THRESHOLD]
@@ -178,7 +201,7 @@ def build_fast_voice_probability_dict(suspicion_score: float) -> dict[str, float
     return {label: raw_probabilities[label] / probability_sum for label in VOICE_LABELS}
 
 
-def build_empty_voice_analysis() -> dict[str, Any]:
+def build_empty_voice_analysis() -> VoiceAnalysisPayload:
     """Builds one empty voice-analysis payload."""
     return {
         "audio_path": "",
@@ -188,7 +211,12 @@ def build_empty_voice_analysis() -> dict[str, Any]:
     }
 
 
-def split_audio_into_segments(waveform: list[float], sample_rate: int, segment_seconds: float = SEGMENT_SECONDS, stride_seconds: float = SEGMENT_STRIDE_SECONDS) -> list[list[float]]:
+def split_audio_into_segments(
+    waveform: list[float],
+    sample_rate: int,
+    segment_seconds: float = SEGMENT_SECONDS,
+    stride_seconds: float = SEGMENT_STRIDE_SECONDS,
+) -> list[list[float]]:
     """Splits one waveform into overlapping analysis segments."""
     segment_length = int(segment_seconds * sample_rate)
     stride_length = int(stride_seconds * sample_rate)
@@ -229,7 +257,7 @@ def select_representative_segments(segments: list[list[float]], maximum_segment_
     return [segments[segment_index] for segment_index in sorted(selected_indices)]
 
 
-def predict_voice_segment(feature_extractor: Any, model: Any, segment_waveform: list[float]) -> dict[str, Any]:
+def predict_voice_segment(feature_extractor: Any, model: Any, segment_waveform: list[float]) -> ModelPredictionPayload:
     """Runs one voice-emotion prediction on one waveform segment."""
     inputs = feature_extractor(segment_waveform, sampling_rate=TARGET_SAMPLE_RATE, return_tensors="pt", padding=True)
 

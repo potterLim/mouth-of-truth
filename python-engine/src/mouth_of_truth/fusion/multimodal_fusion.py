@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
-
+from mouth_of_truth.contracts.analysis_payloads import AnalysisSummary, FusedVerdictPayload
 from mouth_of_truth.fusion.verdict_policy import get_multimodal_verdict_from_score
 
 
 FACE_WEIGHT = 0.80
 VOICE_WEIGHT = 0.20
-EmotionSummary = dict[str, Any]
-FusedVerdictPayload = dict[str, Any]
 
 
 def _clamp(value: float, min_value: float, max_value: float) -> float:
@@ -18,7 +15,7 @@ def _clamp(value: float, min_value: float, max_value: float) -> float:
     return max(min_value, min(value, max_value))
 
 
-def fuse_face_and_voice(face_result: EmotionSummary, voice_result: EmotionSummary) -> FusedVerdictPayload:
+def fuse_face_and_voice(face_result: AnalysisSummary, voice_result: AnalysisSummary) -> FusedVerdictPayload:
     """Fuses face and voice summaries into one final verdict payload."""
     face_score = float(face_result.get("avg_score", 0.0))
     voice_score = float(voice_result.get("avg_score", 0.0))

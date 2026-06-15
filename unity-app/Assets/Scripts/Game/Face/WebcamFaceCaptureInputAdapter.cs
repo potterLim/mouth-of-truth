@@ -16,7 +16,7 @@ namespace MouthOfTruth.Game.Face
         private Texture2D mCaptureTexture;
         private WebCamTexture mWebCamTexture;
         private FaceFramesDirectoryPath mActiveCaptureDirectoryPath;
-        private string mSelectedDeviceName;
+        private readonly string mSelectedDeviceName;
         private float mElapsedSinceCaptureSeconds;
         private int mCapturedFrameCount;
         private bool mIsCollecting;

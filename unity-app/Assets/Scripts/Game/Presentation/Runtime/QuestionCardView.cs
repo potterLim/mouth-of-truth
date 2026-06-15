@@ -26,9 +26,15 @@ namespace MouthOfTruth.Game.Presentation.Runtime
         private Font mPrimaryUiFont;
         private Font mKoreanFallbackFont;
 
-        public EQuestionCardSlot QuestionCardSlot { get; private set; }
+        public EQuestionCardSlot QuestionCardSlot
+        {
+            get; private set;
+        }
 
-        public bool IsHovered { get; private set; }
+        public bool IsHovered
+        {
+            get; private set;
+        }
 
         public RectTransform RectTransform => mRectTransform;
 

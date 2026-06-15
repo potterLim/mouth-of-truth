@@ -6,6 +6,7 @@ from typing import Any
 
 from ultralytics import YOLO
 
+from mouth_of_truth.contracts.analysis_payloads import ModelPredictionPayload
 from mouth_of_truth.runtime.model_paths import resolve_face_model_path
 
 
@@ -34,7 +35,7 @@ def probs_to_dict(model_names: dict[int, str], probs_data: list[float]) -> dict[
     return probability_dict
 
 
-def predict_face_crop(model: YOLO, face_crop: Any) -> dict[str, Any]:
+def predict_face_crop(model: YOLO, face_crop: Any) -> ModelPredictionPayload:
     """Runs face-emotion prediction on one cropped face image."""
     prediction_results = model.predict(face_crop, verbose=False)
 

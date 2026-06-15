@@ -9,6 +9,9 @@ namespace MouthOfTruth.Game.Input
             Value = value;
         }
 
-        public Vector2 Value { get; }
+        public Vector2 Value
+        {
+            get;
+        }
     }
 }

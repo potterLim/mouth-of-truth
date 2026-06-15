@@ -7,7 +7,7 @@ namespace MouthOfTruth.Game.Data
 {
     internal static class QuestionPoolLoader
     {
-        internal static IReadOnlyList<QuestionDefinition> LoadQuestionDefinitions(QuestionPoolFilePath questionPoolFilePath)
+        internal static IReadOnlyList<QuestionDefinition> loadQuestionDefinitions(QuestionPoolFilePath questionPoolFilePath)
         {
             if (questionPoolFilePath.IsEmpty)
             {

@@ -14,15 +14,30 @@ namespace MouthOfTruth.Game.Data
             Availability = availability;
         }
 
-        public QuestionId Id { get; }
+        public QuestionId Id
+        {
+            get;
+        }
 
-        public QuestionText Text { get; }
+        public QuestionText Text
+        {
+            get;
+        }
 
-        public QuestionCategory Category { get; }
+        public QuestionCategory Category
+        {
+            get;
+        }
 
-        public QuestionDifficulty Difficulty { get; }
+        public QuestionDifficulty Difficulty
+        {
+            get;
+        }
 
-        public EQuestionAvailability Availability { get; }
+        public EQuestionAvailability Availability
+        {
+            get;
+        }
 
         public bool IsEnabled => Availability == EQuestionAvailability.Enabled;
     }

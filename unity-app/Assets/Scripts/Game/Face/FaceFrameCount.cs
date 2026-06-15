@@ -16,7 +16,10 @@ namespace MouthOfTruth.Game.Face
 
         public static FaceFrameCount Zero => new FaceFrameCount(0);
 
-        public int Value { get; }
+        public int Value
+        {
+            get;
+        }
 
         public bool Equals(FaceFrameCount other)
         {

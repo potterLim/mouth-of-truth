@@ -18,7 +18,16 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
             mCardPresentationAnchorSet = FindAnyObjectByType<CardPresentationAnchorSet>();
             mMouthAnchorSet = FindAnyObjectByType<MouthAnchorSet>();
-            mUseWorldEnvironmentLayout = mWorldCamera != null && mCardPresentationAnchorSet != null && mCardPresentationAnchorSet.HasRequiredAnchors() && mMouthAnchorSet != null && mMouthAnchorSet.HasRequiredAnchors();
+            mUseWorldEnvironmentLayout = hasWorldEnvironmentLayoutReferences();
+        }
+
+        private bool hasWorldEnvironmentLayoutReferences()
+        {
+            return mWorldCamera != null
+                && mCardPresentationAnchorSet != null
+                && mCardPresentationAnchorSet.HasRequiredAnchors()
+                && mMouthAnchorSet != null
+                && mMouthAnchorSet.HasRequiredAnchors();
         }
 
         private void refreshWorldPresentationLayout()
@@ -173,24 +182,39 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
         private void applyStartScreenLayout()
         {
-            setRectTransformLayout(mLogoImage.rectTransform, new Vector2(0.5f, 0.55f), new Vector2(1000.0f, 560.0f));
-            setRectTransformLayout(mStartButton.GetComponent<RectTransform>(), new Vector2(0.5f, 0.13f), new Vector2(520.0f, 150.0f));
+            setRectTransformLayout(
+                mLogoImage.rectTransform,
+                UiRectLayout.At(new Vector2(0.5f, 0.55f), new Vector2(1000.0f, 560.0f)));
+            setRectTransformLayout(
+                mStartButton.GetComponent<RectTransform>(),
+                UiRectLayout.At(new Vector2(0.5f, 0.13f), new Vector2(520.0f, 150.0f)));
             applyTopLeftExitButtonLayout();
         }
 
         private void applyCardSelectionLayout()
         {
-            setRectTransformLayout(mPromptText.rectTransform, new Vector2(0.5f, 0.07f), new Vector2(1080.0f, 64.0f));
+            setRectTransformLayout(
+                mPromptText.rectTransform,
+                UiRectLayout.At(new Vector2(0.5f, 0.07f), new Vector2(1080.0f, 64.0f)));
             mPromptText.fontSize = 30;
             applyTopLeftExitButtonLayout();
+        }
+
+        private void applyQuestionPanelLayout()
+        {
+            setRectTransformLayout(
+                mQuestionPanelImage.rectTransform,
+                UiRectLayout.At(new Vector2(0.5f, 0.105f), new Vector2(1500.0f, 122.0f)));
+            setRectTransformLayout(
+                mQuestionText.rectTransform,
+                UiRectLayout.At(new Vector2(0.5f, 0.105f), new Vector2(1320.0f, 70.0f)));
         }
 
         private void applyHandPromptPanelLayout()
         {
             applyTopLeftExitButtonLayout();
-            setRectTransformLayout(mQuestionPanelImage.rectTransform, new Vector2(0.5f, 0.105f), new Vector2(1500.0f, 122.0f));
-            setRectTransformLayout(mQuestionText.rectTransform, new Vector2(0.5f, 0.105f), new Vector2(1320.0f, 70.0f));
-            setRectTransformLayout(mHandImage.rectTransform, new Vector2(0.5f, 0.21f), HELD_POINTER_CURSOR_SIZE_PIXELS);
+            applyQuestionPanelLayout();
+            setRectTransformLayout(mHandImage.rectTransform, UiRectLayout.At(new Vector2(0.5f, 0.21f), HELD_POINTER_CURSOR_SIZE_PIXELS));
             mQuestionText.fontSize = 30;
             mQuestionText.horizontalOverflow = HorizontalWrapMode.Wrap;
         }
@@ -198,10 +222,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
         private void applyNarrationLayout()
         {
             applyTopLeftExitButtonLayout();
-            setRectTransformLayout(mMouthImage.rectTransform, new Vector2(0.5f, 0.53f), new Vector2(640.0f, 640.0f));
+            setRectTransformLayout(
+                mMouthImage.rectTransform,
+                UiRectLayout.At(new Vector2(0.5f, 0.53f), new Vector2(640.0f, 640.0f)));
             mMouthImage.rectTransform.localScale = Vector3.one;
-            setRectTransformLayout(mQuestionPanelImage.rectTransform, new Vector2(0.5f, 0.105f), new Vector2(1500.0f, 122.0f));
-            setRectTransformLayout(mQuestionText.rectTransform, new Vector2(0.5f, 0.105f), new Vector2(1320.0f, 70.0f));
+            applyQuestionPanelLayout();
             mQuestionText.fontSize = 30;
             mQuestionText.alignment = TextAnchor.MiddleCenter;
             mQuestionText.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -210,11 +235,12 @@ namespace MouthOfTruth.Game.Presentation.Runtime
         private void applyAwaitingHandInsertionLayout()
         {
             applyTopLeftExitButtonLayout();
-            setRectTransformLayout(mMouthImage.rectTransform, new Vector2(0.5f, 0.56f), new Vector2(700.0f, 700.0f));
+            setRectTransformLayout(
+                mMouthImage.rectTransform,
+                UiRectLayout.At(new Vector2(0.5f, 0.56f), new Vector2(700.0f, 700.0f)));
             mMouthImage.rectTransform.localScale = Vector3.one;
-            setRectTransformLayout(mQuestionPanelImage.rectTransform, new Vector2(0.5f, 0.105f), new Vector2(1500.0f, 122.0f));
-            setRectTransformLayout(mQuestionText.rectTransform, new Vector2(0.5f, 0.105f), new Vector2(1320.0f, 70.0f));
-            setRectTransformLayout(mHandImage.rectTransform, new Vector2(0.5f, 0.22f), HELD_POINTER_CURSOR_SIZE_PIXELS);
+            applyQuestionPanelLayout();
+            setRectTransformLayout(mHandImage.rectTransform, UiRectLayout.At(new Vector2(0.5f, 0.22f), HELD_POINTER_CURSOR_SIZE_PIXELS));
             mQuestionText.fontSize = 30;
             mQuestionText.horizontalOverflow = HorizontalWrapMode.Wrap;
         }
@@ -222,11 +248,12 @@ namespace MouthOfTruth.Game.Presentation.Runtime
         private void applyAnswerStageLayout()
         {
             applyTopLeftExitButtonLayout();
-            setRectTransformLayout(mMouthImage.rectTransform, new Vector2(0.5f, 0.60f), new Vector2(760.0f, 760.0f));
+            setRectTransformLayout(
+                mMouthImage.rectTransform,
+                UiRectLayout.At(new Vector2(0.5f, 0.60f), new Vector2(760.0f, 760.0f)));
             mMouthImage.rectTransform.localScale = Vector3.one;
-            setRectTransformLayout(mQuestionPanelImage.rectTransform, new Vector2(0.5f, 0.105f), new Vector2(1500.0f, 122.0f));
-            setRectTransformLayout(mQuestionText.rectTransform, new Vector2(0.5f, 0.105f), new Vector2(1320.0f, 70.0f));
-            setRectTransformLayout(mHandImage.rectTransform, new Vector2(0.5f, 0.21f), HELD_POINTER_CURSOR_SIZE_PIXELS);
+            applyQuestionPanelLayout();
+            setRectTransformLayout(mHandImage.rectTransform, UiRectLayout.At(new Vector2(0.5f, 0.21f), HELD_POINTER_CURSOR_SIZE_PIXELS));
             mQuestionText.fontSize = 30;
             mQuestionText.horizontalOverflow = HorizontalWrapMode.Wrap;
         }
@@ -234,7 +261,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
         private void applyAnsweringFocusLayout()
         {
             applyTopLeftExitButtonLayout();
-            setRectTransformLayout(mMouthImage.rectTransform, ANSWERING_FOCUS_MOUTH_ANCHOR, ANSWERING_FOCUS_MOUTH_SIZE_PIXELS);
+            setRectTransformLayout(mMouthImage.rectTransform, UiRectLayout.At(ANSWERING_FOCUS_MOUTH_ANCHOR, ANSWERING_FOCUS_MOUTH_SIZE_PIXELS));
             mMouthImage.rectTransform.anchoredPosition = Vector2.zero;
             mMouthImage.rectTransform.localScale = Vector3.one;
             mMouthImage.color = Color.white;
@@ -274,11 +301,32 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             float beamAlpha = Mathf.Lerp(0.44f, 0.74f, Mathf.Pow(quickPulse, 1.18f));
             Vector2 beamSize = new Vector2(mouthWidth * 1.003f, beamHeight);
             Color beamColor = new Color(0.95f, 0.20f, 0.14f, beamAlpha);
-            updateEyeBeamImage(mMouthLeftEyeBeamImage, new Vector2(-(mouthWidth * 0.084f), sourceYOffset), beamSize, beamColor, -2.6f, new Vector2(0.5f, 1.0f), beamVerticalScale);
-            updateEyeBeamImage(mMouthRightEyeBeamImage, new Vector2(mouthWidth * 0.058f, sourceYOffset), beamSize, beamColor, 2.6f, new Vector2(0.5f, 1.0f), beamVerticalScale);
+            updateEyeBeamImage(
+                mMouthLeftEyeBeamImage,
+                new Vector2(-(mouthWidth * 0.084f), sourceYOffset),
+                beamSize,
+                beamColor,
+                -2.6f,
+                new Vector2(0.5f, 1.0f),
+                beamVerticalScale);
+            updateEyeBeamImage(
+                mMouthRightEyeBeamImage,
+                new Vector2(mouthWidth * 0.058f, sourceYOffset),
+                beamSize,
+                beamColor,
+                2.6f,
+                new Vector2(0.5f, 1.0f),
+                beamVerticalScale);
         }
 
-        private void updateEyeBeamImage(Image beamImage, Vector2 offsetFromMouthCenter, Vector2 sizeDelta, Color color, float rotationDegrees, Vector2 pivot, float verticalScale)
+        private void updateEyeBeamImage(
+            Image beamImage,
+            Vector2 offsetFromMouthCenter,
+            Vector2 sizeDelta,
+            Color color,
+            float rotationDegrees,
+            Vector2 pivot,
+            float verticalScale)
         {
             if (beamImage == null || beamImage.gameObject.activeSelf == false || mMouthImage == null)
             {
@@ -316,17 +364,18 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
         private void setMouthEffectVisualState(EMouthEffectVisualState mouthEffectVisualState)
         {
-            bool isListeningAuraActive = mouthEffectVisualState == EMouthEffectVisualState.ListeningAndAnalyzing;
-            bool isAnalyzingAuraActive = mouthEffectVisualState == EMouthEffectVisualState.ListeningAndAnalyzing;
-            setObjectActive(mMouthListeningAuraImage, isListeningAuraActive);
-            setObjectActive(mMouthAnalyzingAuraImage, isAnalyzingAuraActive);
+            EUiElementVisibility auraVisibility = mouthEffectVisualState == EMouthEffectVisualState.ListeningAndAnalyzing
+                ? EUiElementVisibility.Visible
+                : EUiElementVisibility.Hidden;
+            setObjectVisibility(mMouthListeningAuraImage, auraVisibility);
+            setObjectVisibility(mMouthAnalyzingAuraImage, auraVisibility);
             placeMouthEffectImagesBehindMouth();
         }
 
-        private void setEyeBeamImagesActive(bool isActive)
+        private void setEyeBeamImagesVisibility(EUiElementVisibility visibility)
         {
-            setObjectActive(mMouthLeftEyeBeamImage, isActive);
-            setObjectActive(mMouthRightEyeBeamImage, isActive);
+            setObjectVisibility(mMouthLeftEyeBeamImage, visibility);
+            setObjectVisibility(mMouthRightEyeBeamImage, visibility);
             placeEyeBeamImagesAboveMouth();
         }
 

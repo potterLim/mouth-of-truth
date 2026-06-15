@@ -18,11 +18,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             resetHandPromptPanelAlpha();
             mIsCardAbsorptionPresentationActive = false;
             mCardAbsorptionPresentationProgress = NormalizedProgress.Zero;
-            setObjectActive(mPromptText, false);
-            setObjectActive(mStatusText, false);
-            setObjectActive(mQuestionPanelImage, false);
-            setObjectActive(mQuestionText, false);
-            setObjectActive(mSceneOverlayImage, true);
+            setObjectVisibility(mPromptText, EUiElementVisibility.Hidden);
+            setObjectVisibility(mStatusText, EUiElementVisibility.Hidden);
+            setObjectVisibility(mQuestionPanelImage, EUiElementVisibility.Hidden);
+            setObjectVisibility(mQuestionText, EUiElementVisibility.Hidden);
+            setObjectVisibility(mSceneOverlayImage, EUiElementVisibility.Visible);
             setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
             setOverlayAlpha(0.12f);
             mLastAudibleHoveredCardSlotOrNull = null;
@@ -159,7 +159,10 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                     }
 
                     Vector2 basePosition = Vector2.Lerp(launchStartPosition, launchTargetPosition, suctionProgress);
-                    Vector2 inhaleOffset = new Vector2(Mathf.Sin(progressValue * Mathf.PI * 3.0f) * (1.0f - absorptionProgress) * 16.0f, Mathf.Sin(progressValue * Mathf.PI) * 34.0f * (1.0f - absorptionProgress));
+                    float remainingAbsorption = 1.0f - absorptionProgress;
+                    Vector2 inhaleOffset = new Vector2(
+                        Mathf.Sin(progressValue * Mathf.PI * 3.0f) * remainingAbsorption * 16.0f,
+                        Mathf.Sin(progressValue * Mathf.PI) * 34.0f * remainingAbsorption);
                     selectedCardView.RectTransform.anchoredPosition = basePosition + inhaleOffset;
                     NormalizedProgress selectedCardAlpha = NormalizedProgress.FromUnclamped(Mathf.Lerp(1.0f, 0.0f, absorptionProgress));
                     selectedCardView.SetScale(QuestionCardScale.Uniform(Mathf.Lerp(1.26f, 0.18f, absorptionProgress)));
@@ -168,7 +171,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
             mIsCardAbsorptionPresentationActive = false;
             mCardAbsorptionPresentationProgress = NormalizedProgress.Complete;
-            setCardsVisible(false);
+            setCardsVisibility(EUiElementVisibility.Hidden);
             if (isTempleApproachSceneVisible)
             {
                 setTempleCameraPoseCenteredOnMouth(TEMPLE_APPROACH_END_SCALE, TEMPLE_MOUTH_FOCUS_CENTER);
@@ -184,7 +187,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
         {
             int questionLength = string.IsNullOrWhiteSpace(questionText.Value) ? 0 : questionText.Value.Trim().Length;
             float weightedDuration = questionLength * CARD_FRONT_READ_HOLD_PER_CHARACTER_SECONDS;
-            return new SecondsDuration(Mathf.Clamp(CARD_FRONT_READ_HOLD_MINIMUM_SECONDS + weightedDuration, CARD_FRONT_READ_HOLD_MINIMUM_SECONDS, CARD_FRONT_READ_HOLD_MAXIMUM_SECONDS));
+            float clampedDurationSeconds = Mathf.Clamp(
+                CARD_FRONT_READ_HOLD_MINIMUM_SECONDS + weightedDuration,
+                CARD_FRONT_READ_HOLD_MINIMUM_SECONDS,
+                CARD_FRONT_READ_HOLD_MAXIMUM_SECONDS);
+            return new SecondsDuration(clampedDurationSeconds);
         }
 
         private static void ignoreAnimationProgress(NormalizedProgress progress)

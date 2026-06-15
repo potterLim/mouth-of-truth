@@ -10,8 +10,14 @@ namespace MouthOfTruth.Game.Voice
             SpeechDetectionState = speechDetectionState;
         }
 
-        public AnswerTranscript AnswerTranscript { get; }
+        public AnswerTranscript AnswerTranscript
+        {
+            get;
+        }
 
-        public ESpeechDetectionState SpeechDetectionState { get; }
+        public ESpeechDetectionState SpeechDetectionState
+        {
+            get;
+        }
     }
 }

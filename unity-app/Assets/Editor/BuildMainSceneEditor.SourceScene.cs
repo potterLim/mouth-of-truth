@@ -123,7 +123,11 @@ namespace MouthOfTruth.Editor
                 return SourceSceneCameraLayout.Invalid;
             }
 
-            return new SourceSceneCameraLayout(sourceSceneCamera.transform.position, sourceSceneCamera.transform.rotation, sourceSceneCamera.fieldOfView, sourceSceneCamera.backgroundColor);
+            return new SourceSceneCameraLayout(
+                sourceSceneCamera.transform.position,
+                sourceSceneCamera.transform.rotation,
+                sourceSceneCamera.fieldOfView,
+                sourceSceneCamera.backgroundColor);
         }
 
         private static void unpackScenePrefabInstances(Scene scene)

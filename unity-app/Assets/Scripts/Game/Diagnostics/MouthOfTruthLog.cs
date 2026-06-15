@@ -6,7 +6,7 @@ namespace MouthOfTruth.Game.Diagnostics
     {
         [Conditional("UNITY_EDITOR")]
         [Conditional("DEVELOPMENT_BUILD")]
-        internal static void LogInfo(string message)
+        internal static void logInfo(string message)
         {
             UnityEngine.Debug.Log(message);
         }

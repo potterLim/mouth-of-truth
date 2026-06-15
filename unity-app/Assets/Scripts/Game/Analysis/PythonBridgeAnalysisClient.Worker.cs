@@ -146,7 +146,7 @@ namespace MouthOfTruth.Game.Analysis
                 {
                     if (string.IsNullOrWhiteSpace(eventArguments.Data) == false)
                     {
-                        MouthOfTruthLog.LogInfo(eventArguments.Data);
+                        MouthOfTruthLog.logInfo(eventArguments.Data);
                     }
                 };
                 mWorkerProcess.BeginErrorReadLine();

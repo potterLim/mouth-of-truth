@@ -8,7 +8,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
     {
         private const int DEFAULT_SOLID_SPRITE_SIZE = 8;
 
-        internal static Task<Sprite> LoadSpriteOrNullAsync(RuntimeAssetFilePath filePath)
+        internal static Task<Sprite> loadSpriteOrNullAsync(RuntimeAssetFilePath filePath)
         {
             if (filePath.IsEmpty)
             {
@@ -31,17 +31,24 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
             texture.name = Path.GetFileNameWithoutExtension(filePath.Value);
 
-            Sprite sprite = Sprite.Create(texture, new Rect(0.0f, 0.0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100.0f, 0u, SpriteMeshType.FullRect, getImplicitBorder(filePath, texture.width, texture.height));
+            Sprite sprite = Sprite.Create(
+                texture,
+                new Rect(0.0f, 0.0f, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f),
+                100.0f,
+                0u,
+                SpriteMeshType.FullRect,
+                getImplicitBorder(filePath, texture.width, texture.height));
 
             return Task.FromResult(sprite);
         }
 
-        internal static Sprite CreateSolidSprite(Color color)
+        internal static Sprite createSolidSprite(Color color)
         {
-            return CreateSolidSprite(color, DEFAULT_SOLID_SPRITE_SIZE);
+            return createSolidSprite(color, DEFAULT_SOLID_SPRITE_SIZE);
         }
 
-        private static Sprite CreateSolidSprite(Color color, int size)
+        private static Sprite createSolidSprite(Color color, int size)
         {
             Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
             Color[] pixels = new Color[size * size];
@@ -91,7 +98,13 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             return Vector4.zero;
         }
 
-        private static Vector4 createBorder(int width, int height, float horizontalRatio, float verticalRatio, float minimumHorizontalBorderPixels, float minimumVerticalBorderPixels)
+        private static Vector4 createBorder(
+            int width,
+            int height,
+            float horizontalRatio,
+            float verticalRatio,
+            float minimumHorizontalBorderPixels,
+            float minimumVerticalBorderPixels)
         {
             float horizontalBorderPixels = Mathf.Max(minimumHorizontalBorderPixels, width * horizontalRatio);
             float verticalBorderPixels = Mathf.Max(minimumVerticalBorderPixels, height * verticalRatio);

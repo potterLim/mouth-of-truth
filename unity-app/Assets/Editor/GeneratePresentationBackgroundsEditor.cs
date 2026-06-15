@@ -43,20 +43,44 @@ namespace MouthOfTruth.Editor
             }
 
             Directory.CreateDirectory(OUTPUT_DIRECTORY_PATH);
-            renderCameraToPng(mainCamera, Path.Combine(OUTPUT_DIRECTORY_PATH, CARD_SELECTION_BACKGROUND_FILE_NAME), mainCamera.transform.position, mainCamera.transform.rotation, mainCamera.fieldOfView);
+            string cardSelectionBackgroundFilePath = Path.Combine(
+                OUTPUT_DIRECTORY_PATH,
+                CARD_SELECTION_BACKGROUND_FILE_NAME);
+            renderCameraToPng(
+                mainCamera,
+                cardSelectionBackgroundFilePath,
+                mainCamera.transform.position,
+                mainCamera.transform.rotation,
+                mainCamera.fieldOfView);
 
             Vector3 stageForward = (mouthAnchorSet.TruthMouth.position - cardPresentationAnchorSet.CenterCard.position).normalized;
             Vector3 mouthChamberLookTarget = mouthAnchorSet.TruthMouth.position + (Vector3.up * 0.35f);
             Vector3 mouthChamberCameraPosition = mouthChamberLookTarget - (stageForward * 5.35f) + (Vector3.up * 0.55f);
             Quaternion mouthChamberRotation = Quaternion.LookRotation((mouthChamberLookTarget - mouthChamberCameraPosition).normalized);
 
-            renderCameraToPng(mainCamera, Path.Combine(OUTPUT_DIRECTORY_PATH, MOUTH_CHAMBER_BACKGROUND_FILE_NAME), mouthChamberCameraPosition, mouthChamberRotation, 26.0f);
+            string mouthChamberBackgroundFilePath = Path.Combine(
+                OUTPUT_DIRECTORY_PATH,
+                MOUTH_CHAMBER_BACKGROUND_FILE_NAME);
+            renderCameraToPng(
+                mainCamera,
+                mouthChamberBackgroundFilePath,
+                mouthChamberCameraPosition,
+                mouthChamberRotation,
+                26.0f);
 
             AssetDatabase.Refresh();
-            Debug.Log("Generated presentation background images:\n" + $"- {Path.Combine(OUTPUT_DIRECTORY_PATH, CARD_SELECTION_BACKGROUND_FILE_NAME)}\n" + $"- {Path.Combine(OUTPUT_DIRECTORY_PATH, MOUTH_CHAMBER_BACKGROUND_FILE_NAME)}");
+            Debug.Log(
+                "Generated presentation background images:\n"
+                + $"- {cardSelectionBackgroundFilePath}\n"
+                + $"- {mouthChamberBackgroundFilePath}");
         }
 
-        private static void renderCameraToPng(Camera sourceCamera, string outputFilePath, Vector3 position, Quaternion rotation, float fieldOfView)
+        private static void renderCameraToPng(
+            Camera sourceCamera,
+            string outputFilePath,
+            Vector3 position,
+            Quaternion rotation,
+            float fieldOfView)
         {
             const int IMAGE_WIDTH = 1920;
             const int IMAGE_HEIGHT = 1080;

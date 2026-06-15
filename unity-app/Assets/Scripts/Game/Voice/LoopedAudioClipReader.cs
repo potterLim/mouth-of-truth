@@ -51,7 +51,10 @@ namespace MouthOfTruth.Game.Voice
             return monoSamples;
         }
 
-        public static AudioSampleCount CalculateLoopedSampleDistance(AudioSamplePosition startSamplePosition, AudioSamplePosition endSamplePosition, AudioSampleCount clipSampleCount)
+        public static AudioSampleCount CalculateLoopedSampleDistance(
+            AudioSamplePosition startSamplePosition,
+            AudioSamplePosition endSamplePosition,
+            AudioSampleCount clipSampleCount)
         {
             if (clipSampleCount.Value <= 0)
             {

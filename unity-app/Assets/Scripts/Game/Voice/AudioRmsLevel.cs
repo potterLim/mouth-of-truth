@@ -16,7 +16,10 @@ namespace MouthOfTruth.Game.Voice
 
         public static AudioRmsLevel Zero => new AudioRmsLevel(0.0f);
 
-        public float Value { get; }
+        public float Value
+        {
+            get;
+        }
 
         public bool IsAtLeast(AudioRmsLevel threshold)
         {

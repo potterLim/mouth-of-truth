@@ -151,7 +151,7 @@ namespace MouthOfTruth.Editor.Tests.Game
         }
 
         [Test]
-        public async Task DeterministicAnalysisReturnsUncertainWhenEvidenceIsMissing()
+        public async Task DeterministicAnalysisReturnsUncertainWhenEvidenceIsMissingAsync()
         {
             DeterministicAnswerAnalysisClient client = new DeterministicAnswerAnalysisClient();
             AnswerAnalysisRequest request = createAnalysisRequest("Q100", "answer", faceFrameCount: 0, voiceSegmentCount: 0);
@@ -165,7 +165,7 @@ namespace MouthOfTruth.Editor.Tests.Game
         }
 
         [Test]
-        public async Task DeterministicAnalysisUsesStableParityWhenEvidenceIsPresent()
+        public async Task DeterministicAnalysisUsesStableParityWhenEvidenceIsPresentAsync()
         {
             DeterministicAnswerAnalysisClient client = new DeterministicAnswerAnalysisClient();
             AnswerAnalysisRequest firstRequest = createAnalysisRequest("Q101", "same answer", faceFrameCount: 4, voiceSegmentCount: 1);
@@ -177,6 +177,40 @@ namespace MouthOfTruth.Editor.Tests.Game
             Assert.That(firstResult.VerdictKind, Is.EqualTo(secondResult.VerdictKind));
             Assert.That(firstResult.VerdictKind, Is.Not.EqualTo(EVerdictKind.Uncertain));
             Assert.That(firstResult.ReasonCodes, Is.Empty);
+        }
+
+        [Test]
+        public void AnswerAnalysisRuntimeConfigurationDefaultsToAutoFailFast()
+        {
+            EAnswerAnalysisMode analysisMode = AnswerAnalysisRuntimeConfiguration.ParseAnalysisMode(string.Empty);
+            EAnswerAnalysisFailurePolicy failurePolicy = AnswerAnalysisRuntimeConfiguration.ParseFailurePolicy(string.Empty);
+
+            Assert.That(analysisMode, Is.EqualTo(EAnswerAnalysisMode.Auto));
+            Assert.That(failurePolicy, Is.EqualTo(EAnswerAnalysisFailurePolicy.FailFast));
+        }
+
+        [Test]
+        public void AnswerAnalysisRuntimeConfigurationParsesExplicitValues()
+        {
+            EAnswerAnalysisMode pythonAnalysisMode = AnswerAnalysisRuntimeConfiguration.ParseAnalysisMode("python");
+            EAnswerAnalysisMode deterministicAnalysisMode = AnswerAnalysisRuntimeConfiguration.ParseAnalysisMode("deterministic");
+            EAnswerAnalysisFailurePolicy fallbackPolicy =
+                AnswerAnalysisRuntimeConfiguration.ParseFailurePolicy("fallback-to-deterministic");
+
+            Assert.That(pythonAnalysisMode, Is.EqualTo(EAnswerAnalysisMode.Python));
+            Assert.That(deterministicAnalysisMode, Is.EqualTo(EAnswerAnalysisMode.Deterministic));
+            Assert.That(
+                fallbackPolicy,
+                Is.EqualTo(EAnswerAnalysisFailurePolicy.FallBackToDeterministic));
+        }
+
+        [Test]
+        public void AnswerAnalysisRuntimeConfigurationRejectsUnsupportedValues()
+        {
+            Assert.Throws<InvalidOperationException>(
+                () => AnswerAnalysisRuntimeConfiguration.ParseAnalysisMode("silent"));
+            Assert.Throws<InvalidOperationException>(
+                () => AnswerAnalysisRuntimeConfiguration.ParseFailurePolicy("silent"));
         }
 
         [Test]

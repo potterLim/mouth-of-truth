@@ -27,23 +27,50 @@ namespace MouthOfTruth.Game.Session
             ElapsedSilenceDuration = elapsedSilenceDuration;
         }
 
-        public EGameFlowState CurrentState { get; }
+        public EGameFlowState CurrentState
+        {
+            get;
+        }
 
-        public QuestionRoundSelection CurrentRoundSelection { get; }
+        public QuestionRoundSelection CurrentRoundSelection
+        {
+            get;
+        }
 
-        public EQuestionCardSlot? SelectedQuestionCardSlotOrNull { get; }
+        public EQuestionCardSlot? SelectedQuestionCardSlotOrNull
+        {
+            get;
+        }
 
-        public QuestionDefinition SelectedQuestionDefinitionOrNull { get; }
+        public QuestionDefinition SelectedQuestionDefinitionOrNull
+        {
+            get;
+        }
 
-        public EVerdictKind? CurrentVerdictKindOrNull { get; }
+        public EVerdictKind? CurrentVerdictKindOrNull
+        {
+            get;
+        }
 
-        public AnswerTranscript CurrentAnswerTranscript { get; }
+        public AnswerTranscript CurrentAnswerTranscript
+        {
+            get;
+        }
 
-        public SecondsDuration HoveredCardDwellDuration { get; }
+        public SecondsDuration HoveredCardDwellDuration
+        {
+            get;
+        }
 
-        public SecondsDuration ElapsedAnswerDuration { get; }
+        public SecondsDuration ElapsedAnswerDuration
+        {
+            get;
+        }
 
-        public SecondsDuration ElapsedSilenceDuration { get; }
+        public SecondsDuration ElapsedSilenceDuration
+        {
+            get;
+        }
 
         public bool IsAnswerPaused => CurrentState == EGameFlowState.AnswerPaused;
     }

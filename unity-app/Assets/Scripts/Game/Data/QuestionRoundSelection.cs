@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace MouthOfTruth.Game.Data
@@ -10,7 +9,10 @@ namespace MouthOfTruth.Game.Data
             QuestionsBySlot = questionsBySlot;
         }
 
-        public IReadOnlyDictionary<EQuestionCardSlot, QuestionDefinition> QuestionsBySlot { get; }
+        public IReadOnlyDictionary<EQuestionCardSlot, QuestionDefinition> QuestionsBySlot
+        {
+            get;
+        }
 
         public QuestionDefinition GetQuestionBySlot(EQuestionCardSlot questionCardSlot)
         {

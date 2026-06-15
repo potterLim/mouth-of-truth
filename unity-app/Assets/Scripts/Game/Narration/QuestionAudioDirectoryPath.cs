@@ -11,7 +11,10 @@ namespace MouthOfTruth.Game.Narration
 
         public static QuestionAudioDirectoryPath Empty => new QuestionAudioDirectoryPath(string.Empty);
 
-        public string Value { get; }
+        public string Value
+        {
+            get;
+        }
 
         public bool IsEmpty => string.IsNullOrWhiteSpace(Value);
 

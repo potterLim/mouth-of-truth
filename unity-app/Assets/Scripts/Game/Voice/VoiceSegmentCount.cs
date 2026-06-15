@@ -16,7 +16,10 @@ namespace MouthOfTruth.Game.Voice
 
         public static VoiceSegmentCount Zero => new VoiceSegmentCount(0);
 
-        public int Value { get; }
+        public int Value
+        {
+            get;
+        }
 
         public bool Equals(VoiceSegmentCount other)
         {

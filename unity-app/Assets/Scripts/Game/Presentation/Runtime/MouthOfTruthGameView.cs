@@ -11,21 +11,21 @@ namespace MouthOfTruth.Game.Presentation.Runtime
     {
         public async Task InitializeAsync()
         {
-            MouthOfTruthLog.LogInfo("MouthOfTruthGameView initialization started.");
+            MouthOfTruthLog.logInfo("MouthOfTruthGameView initialization started.");
             ensureEventSystemExists();
             loadUiFonts();
             buildCanvas();
             cacheWorldPresentationReferences();
             buildAudioSources();
-            MouthOfTruthLog.LogInfo("MouthOfTruthGameView loading sprites.");
+            MouthOfTruthLog.logInfo("MouthOfTruthGameView loading sprites.");
             await loadSpritesAsync();
-            MouthOfTruthLog.LogInfo("MouthOfTruthGameView loading audio.");
+            MouthOfTruthLog.logInfo("MouthOfTruthGameView loading audio.");
             await loadAudioClipsAsync();
-            MouthOfTruthLog.LogInfo("MouthOfTruthGameView applying theme.");
+            MouthOfTruthLog.logInfo("MouthOfTruthGameView applying theme.");
             applyTheme();
             refreshWorldPresentationLayout();
             ShowStartScreen();
-            setObjectActive(mLoadingOverlayImage, false);
+            setObjectVisibility(mLoadingOverlayImage, EUiElementVisibility.Hidden);
         }
 
         public void ShowStartScreen()
@@ -39,31 +39,13 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             configureExitButtonAsTopLeftIcon();
             mBackgroundImage.sprite = mTitleBackgroundSprite;
             setBackgroundTint(TITLE_BACKGROUND_TINT);
-            setObjectActive(mLogoImage, true);
-            setObjectActive(mTitleVignetteImage, true);
-            setObjectActive(mSceneOverlayImage, false);
-            setObjectActive(mStartButton, true);
-            setObjectActive(mExitButton, true);
-            setObjectActive(mBackgroundImage, true);
-            setObjectActive(mCarpetImage, false);
-            setObjectActive(mQuestionText, false);
-            setObjectActive(mQuestionPanelImage, false);
-            setObjectActive(mStatusPanelImage, false);
-            setObjectActive(mResultPanelImage, false);
-            setObjectActive(mPromptText, false);
-            setObjectActive(mStatusText, false);
-            setObjectActive(mAnswerTimerText, false);
-            setObjectActive(mAnswerInputField, false);
-            setObjectActive(mMouthImage, false);
-            setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
-            setObjectActive(mHandImage, false);
-            setObjectActive(mRitualHandImage, false);
-            setObjectActive(mPointerImage, false);
-            setObjectActive(mVerdictImage, false);
-            setObjectActive(mVerdictText, false);
-            setObjectActive(mTryAgainButton, false);
-            setObjectActive(mBackToTitleButton, false);
-            setCardsVisible(false);
+            hideCommonScreenElements();
+            setObjectVisibility(mLogoImage, EUiElementVisibility.Visible);
+            setObjectVisibility(mTitleVignetteImage, EUiElementVisibility.Visible);
+            setObjectVisibility(mStartButton, EUiElementVisibility.Visible);
+            setObjectVisibility(mExitButton, EUiElementVisibility.Visible);
+            setObjectVisibility(mBackgroundImage, EUiElementVisibility.Visible);
+            setObjectVisibility(mCarpetImage, EUiElementVisibility.Hidden);
             hideFirstRunTutorialPresentation();
             setText(mPromptText, string.Empty);
             setText(mStatusText, string.Empty);
@@ -85,39 +67,24 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             configureExitButtonAsTopLeftIcon();
             mBackgroundImage.sprite = mCardSelectionBackgroundSprite;
             setBackgroundTint(STAGE_BACKGROUND_TINT);
+            hideCommonScreenElements();
             bool isTempleApproachSceneVisible = mTempleApproachCameraObject != null;
-            setObjectActive(mBackgroundImage, isTempleApproachSceneVisible == false);
-            setObjectActive(mCarpetImage, isTempleApproachSceneVisible == false);
+            EUiElementVisibility stageBackdropVisibility = isTempleApproachSceneVisible
+                ? EUiElementVisibility.Hidden
+                : EUiElementVisibility.Visible;
+            setObjectVisibility(mBackgroundImage, stageBackdropVisibility);
+            setObjectVisibility(mCarpetImage, stageBackdropVisibility);
 
             if (isTempleApproachSceneVisible)
             {
                 setTempleApproachMouthAlpha(CARD_SELECTION_DIM_MOUTH_ALPHA);
             }
 
-            setObjectActive(mLogoImage, false);
-            setObjectActive(mTitleVignetteImage, false);
-            setObjectActive(mSceneOverlayImage, true);
+            setObjectVisibility(mSceneOverlayImage, EUiElementVisibility.Visible);
             setOverlayTint(STAGE_OVERLAY_TINT, TEMPLE_APPROACH_STAGE_OVERLAY_ALPHA);
-            setObjectActive(mStartButton, false);
-            setObjectActive(mExitButton, true);
-            setObjectActive(mQuestionText, false);
-            setObjectActive(mQuestionPanelImage, false);
-            setObjectActive(mStatusPanelImage, false);
-            setObjectActive(mResultPanelImage, false);
-            setObjectActive(mPromptText, true);
-            setObjectActive(mStatusText, false);
-            setObjectActive(mAnswerTimerText, false);
-            setObjectActive(mAnswerInputField, false);
-            setObjectActive(mMouthImage, false);
-            setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
-            setObjectActive(mHandImage, false);
-            setObjectActive(mRitualHandImage, false);
-            setObjectActive(mPointerImage, false);
-            setObjectActive(mVerdictImage, false);
-            setObjectActive(mVerdictText, false);
-            setObjectActive(mTryAgainButton, false);
-            setObjectActive(mBackToTitleButton, false);
-            setCardsVisible(true);
+            setObjectVisibility(mExitButton, EUiElementVisibility.Visible);
+            setObjectVisibility(mPromptText, EUiElementVisibility.Visible);
+            setCardsVisibility(EUiElementVisibility.Visible);
 
             foreach (KeyValuePair<EQuestionCardSlot, QuestionCardView> pair in mCardViews)
             {
@@ -138,8 +105,8 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
         public async Task PlayCardSelectionEntranceAsync()
         {
-            setObjectActive(mPromptText, false);
-            setObjectActive(mSceneOverlayImage, true);
+            setObjectVisibility(mPromptText, EUiElementVisibility.Hidden);
+            setObjectVisibility(mSceneOverlayImage, EUiElementVisibility.Visible);
             setOverlayTint(STAGE_OVERLAY_TINT, TEMPLE_APPROACH_STAGE_OVERLAY_ALPHA);
 
             foreach (KeyValuePair<EQuestionCardSlot, QuestionCardView> pair in mCardViews)
@@ -178,7 +145,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             }
 
             setOverlayTint(STAGE_OVERLAY_TINT, CARD_SELECTION_SETTLED_OVERLAY_ALPHA);
-            setObjectActive(mPromptText, true);
+            setObjectVisibility(mPromptText, EUiElementVisibility.Visible);
         }
 
         public void UpdateCardHoverVisual(EQuestionCardSlot? hoveredQuestionCardSlotOrNull, NormalizedProgress hoverProgress)

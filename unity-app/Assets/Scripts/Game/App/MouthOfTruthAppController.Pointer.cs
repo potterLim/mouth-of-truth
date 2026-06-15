@@ -1,4 +1,6 @@
+using MouthOfTruth.Game.Data;
 using MouthOfTruth.Game.Input;
+using MouthOfTruth.Game.Presentation.Runtime;
 using MouthOfTruth.Game.Session;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
@@ -49,8 +51,11 @@ namespace MouthOfTruth.Game.App
             bool shouldShowPointer = pointerScreenPositionOrNull.HasValue
                 && isCinematicTransition == false
                 && (mGameStateMachine.CurrentState == EGameFlowState.StartScreen || mGameView.IsFirstRunTutorialVisible || mGameStateMachine.CurrentState == EGameFlowState.AwaitingCardSelection || mGameStateMachine.CurrentState == EGameFlowState.ShowingResult || mGameStateMachine.CurrentState == EGameFlowState.AwaitingHandInsertion || mGameStateMachine.CurrentState == EGameFlowState.AnswerPaused || mGameStateMachine.CurrentState == EGameFlowState.Answering);
+            EPointerVisualState pointerVisualState = shouldShowPointer
+                ? EPointerVisualState.Visible
+                : EPointerVisualState.Hidden;
 
-            mGameView.UpdatePointerVisual(shouldShowPointer, pointerScreenPositionOrNull);
+            mGameView.UpdatePointerVisual(pointerVisualState, pointerScreenPositionOrNull);
         }
 
         private bool updatePointerActivationGuard(Vector2? pointerScreenPositionOrNull)
@@ -91,8 +96,8 @@ namespace MouthOfTruth.Game.App
             }
 
             mLastObservedHandAnchorState = EHandAnchorState.OutsideMouth;
-            mGameView?.UpdateCardHoverVisual(null, 0.0f);
-            mGameView?.UpdateActionButtonHoverVisual(null, 0.0f);
+            mGameView?.UpdateCardHoverVisual(null, NormalizedProgress.Zero);
+            mGameView?.UpdateActionButtonHoverVisual(null, NormalizedProgress.Zero);
         }
 
         private static void applyRuntimeCursorPresentation(bool isFocused)
@@ -155,7 +160,7 @@ namespace MouthOfTruth.Game.App
             resetPointerPresentationRebase();
             resetHandPromptDismissalTracking();
             mGameStateMachine?.ResetCardSelectionHover();
-            mGameView.UpdateActionButtonHoverVisual(null, 0.0f);
+            mGameView.UpdateActionButtonHoverVisual(null, NormalizedProgress.Zero);
         }
 
         private Vector2? getPresentedPointerScreenPositionOrNull(Vector2? pointerScreenPositionOrNull)
@@ -196,7 +201,12 @@ namespace MouthOfTruth.Game.App
             return mPresentedPointerScreenPositionOrNull;
         }
 
-        private void beginBottomCenterPointerSettle(float durationSeconds = POST_CARD_SELECTION_POINTER_SETTLE_SECONDS)
+        private void beginBottomCenterPointerSettle()
+        {
+            beginBottomCenterPointerSettle(POST_CARD_SELECTION_POINTER_SETTLE_SECONDS);
+        }
+
+        private void beginBottomCenterPointerSettle(float durationSeconds)
         {
             mPointerPresentationOverrideRemainingSeconds = Mathf.Max(0.0f, durationSeconds);
             mPresentedPointerScreenPositionOrNull = getBottomCenterPointerScreenPosition();

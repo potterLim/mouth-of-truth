@@ -31,7 +31,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                     }
                 }
 
-                return EvaluateQuestionCardIntentSlotOrNull(pointerScreenPositionOrNull.Value, Screen.width, Screen.height);
+                return evaluateQuestionCardIntentSlotOrNull(pointerScreenPositionOrNull.Value, Screen.width, Screen.height);
             }
 
             foreach (KeyValuePair<EQuestionCardSlot, QuestionCardView> pair in mCardViews)
@@ -77,7 +77,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             return null;
         }
 
-        public void UpdateActionButtonHoverVisual(EUiActionTarget? hoveredUiActionTargetOrNull, float hoverProgress)
+        public void UpdateActionButtonHoverVisual(EUiActionTarget? hoveredUiActionTargetOrNull, NormalizedProgress hoverProgress)
         {
             if (hoveredUiActionTargetOrNull != mLastHoveredUiActionTargetOrNull)
             {
@@ -112,17 +112,17 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             Vector2 handDetectionOffset = getHandDetectionOffset(mouthDiameterPixels);
             Vector2 handFrontPosition = getHandFrontPosition() + handDetectionOffset;
             Vector2 handInnerPosition = getHandInnerPosition() + handDetectionOffset;
-            EHandAnchorState exactAnchorState = EvaluateHandAnchorState(pointerCanvasPosition, handFrontPosition, handInnerPosition, mouthDiameterPixels);
+            EHandAnchorState exactAnchorState = evaluateHandAnchorState(pointerCanvasPosition, handFrontPosition, handInnerPosition, mouthDiameterPixels);
 
             if (exactAnchorState != EHandAnchorState.OutsideMouth)
             {
                 return exactAnchorState;
             }
 
-            return EvaluateMouthIntentAnchorState(pointerCanvasPosition, handFrontPosition, handInnerPosition, mouthDiameterPixels);
+            return evaluateMouthIntentAnchorState(pointerCanvasPosition, handFrontPosition, handInnerPosition, mouthDiameterPixels);
         }
 
-        public static EQuestionCardSlot? EvaluateQuestionCardIntentSlotOrNull(Vector2 screenPosition, float screenWidth, float screenHeight)
+        private static EQuestionCardSlot? evaluateQuestionCardIntentSlotOrNull(Vector2 screenPosition, float screenWidth, float screenHeight)
         {
             if (screenWidth <= 0.0f || screenHeight <= 0.0f)
             {
@@ -150,7 +150,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             return EQuestionCardSlot.CenterCard;
         }
 
-        public static EHandAnchorState EvaluateHandAnchorState(Vector2 pointerCanvasPosition, Vector2 handFrontPosition, Vector2 handInnerPosition, float mouthDiameterPixels)
+        private static EHandAnchorState evaluateHandAnchorState(Vector2 pointerCanvasPosition, Vector2 handFrontPosition, Vector2 handInnerPosition, float mouthDiameterPixels)
         {
             float clampedMouthDiameterPixels = Mathf.Max(1.0f, mouthDiameterPixels);
             float frontAnchorRadiusPixels = clampedMouthDiameterPixels * FRONT_ANCHOR_RADIUS_FACTOR;
@@ -174,7 +174,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             return EHandAnchorState.OutsideMouth;
         }
 
-        public static EHandAnchorState EvaluateMouthIntentAnchorState(Vector2 pointerCanvasPosition, Vector2 handFrontPosition, Vector2 handInnerPosition, float mouthDiameterPixels)
+        private static EHandAnchorState evaluateMouthIntentAnchorState(Vector2 pointerCanvasPosition, Vector2 handFrontPosition, Vector2 handInnerPosition, float mouthDiameterPixels)
         {
             float clampedMouthDiameterPixels = Mathf.Max(1.0f, mouthDiameterPixels);
             float intentLeftWidth = clampedMouthDiameterPixels * MOUTH_INTENT_LEFT_WIDTH_FACTOR;
@@ -203,14 +203,14 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             return new Vector2(0.0f, Mathf.Max(1.0f, mouthDiameterPixels) * HAND_DETECTION_VERTICAL_OFFSET_FACTOR);
         }
 
-        public void UpdatePointerVisual(bool isVisible, Vector2? pointerScreenPositionOrNull)
+        public void UpdatePointerVisual(EPointerVisualState pointerVisualState, Vector2? pointerScreenPositionOrNull)
         {
             if (mPointerImage == null)
             {
                 return;
             }
 
-            if (isVisible == false || pointerScreenPositionOrNull.HasValue == false)
+            if (pointerVisualState == EPointerVisualState.Hidden || pointerScreenPositionOrNull.HasValue == false)
             {
                 setObjectActive(mPointerImage, false);
                 return;
@@ -258,7 +258,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             SetAnswerTranscriptText(AnswerTranscript.Empty);
         }
 
-        public void SetAnswerTranscriptPlaceholder(string placeholderText)
+        public void SetAnswerTranscriptPlaceholder(AnswerTranscriptPlaceholderText placeholderText)
         {
             if (mAnswerInputField == null)
             {
@@ -267,18 +267,18 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
             if (mAnswerInputField.placeholder is Text placeholderLabel)
             {
-                string safePlaceholderText = string.IsNullOrEmpty(placeholderText) ? string.Empty : placeholderText;
-                setText(placeholderLabel, safePlaceholderText);
+                setText(placeholderLabel, placeholderText.Value);
             }
         }
 
-        public void SetAnswerTranscriptEditable(bool isEditable)
+        public void SetAnswerTranscriptInputMode(EAnswerTranscriptInputMode answerTranscriptInputMode)
         {
             if (mAnswerInputField == null)
             {
                 return;
             }
 
+            bool isEditable = answerTranscriptInputMode == EAnswerTranscriptInputMode.ManualTextEntry;
             setObjectActive(mAnswerInputField, isEditable);
             mAnswerInputField.interactable = isEditable;
 

@@ -4,23 +4,23 @@ using UnityEngine;
 
 namespace MouthOfTruth.Game.Presentation.Runtime
 {
-    public static class RuntimeSpriteLoader
+    internal static class RuntimeSpriteLoader
     {
         private const int DEFAULT_SOLID_SPRITE_SIZE = 8;
 
-        public static Task<Sprite> LoadSpriteOrNullAsync(string filePath)
+        internal static Task<Sprite> LoadSpriteOrNullAsync(RuntimeAssetFilePath filePath)
         {
-            if (string.IsNullOrWhiteSpace(filePath))
+            if (filePath.IsEmpty)
             {
                 return Task.FromResult<Sprite>(null);
             }
 
-            if (File.Exists(filePath) == false)
+            if (File.Exists(filePath.Value) == false)
             {
                 return Task.FromResult<Sprite>(null);
             }
 
-            byte[] imageBytes = File.ReadAllBytes(filePath);
+            byte[] imageBytes = File.ReadAllBytes(filePath.Value);
             Texture2D texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
 
             if (texture.LoadImage(imageBytes) == false)
@@ -29,19 +29,19 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 return Task.FromResult<Sprite>(null);
             }
 
-            texture.name = Path.GetFileNameWithoutExtension(filePath);
+            texture.name = Path.GetFileNameWithoutExtension(filePath.Value);
 
             Sprite sprite = Sprite.Create(texture, new Rect(0.0f, 0.0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100.0f, 0u, SpriteMeshType.FullRect, getImplicitBorder(filePath, texture.width, texture.height));
 
             return Task.FromResult(sprite);
         }
 
-        public static Sprite CreateSolidSprite(Color color)
+        internal static Sprite CreateSolidSprite(Color color)
         {
             return CreateSolidSprite(color, DEFAULT_SOLID_SPRITE_SIZE);
         }
 
-        public static Sprite CreateSolidSprite(Color color, int size)
+        private static Sprite CreateSolidSprite(Color color, int size)
         {
             Texture2D texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
             Color[] pixels = new Color[size * size];
@@ -57,10 +57,9 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             return Sprite.Create(texture, new Rect(0.0f, 0.0f, size, size), new Vector2(0.5f, 0.5f), 100.0f);
         }
 
-        private static Vector4 getImplicitBorder(string filePath, int width, int height)
+        private static Vector4 getImplicitBorder(RuntimeAssetFilePath filePath, int width, int height)
         {
-            string safeFilePath = string.IsNullOrEmpty(filePath) ? string.Empty : filePath;
-            string normalizedFilePath = safeFilePath
+            string normalizedFilePath = filePath.Value
                 .Replace('\\', '/')
                 .ToLowerInvariant();
 

@@ -6,21 +6,21 @@ using UnityEngine;
 
 namespace MouthOfTruth.Game.Presentation.Runtime
 {
-    public static class RuntimeAudioClipLoader
+    internal static class RuntimeAudioClipLoader
     {
         private const int PCM_AUDIO_FORMAT = 1;
         private const int EXTENSIBLE_AUDIO_FORMAT = 0xFFFE;
 
-        public static Task<AudioClip> LoadClipOrNullAsync(string filePath)
+        internal static Task<AudioClip> LoadClipOrNullAsync(RuntimeAssetFilePath filePath)
         {
-            if (string.IsNullOrWhiteSpace(filePath) || File.Exists(filePath) == false)
+            if (filePath.IsEmpty || File.Exists(filePath.Value) == false)
             {
                 return Task.FromResult<AudioClip>(null);
             }
 
-            if (string.Equals(Path.GetExtension(filePath), ".wav", StringComparison.OrdinalIgnoreCase) == false)
+            if (string.Equals(Path.GetExtension(filePath.Value), ".wav", StringComparison.OrdinalIgnoreCase) == false)
             {
-                Debug.LogWarning($"Runtime audio loading expects wav assets: '{filePath}'.");
+                Debug.LogWarning($"Runtime audio loading expects wav assets: '{filePath.Value}'.");
                 return Task.FromResult<AudioClip>(null);
             }
 
@@ -30,14 +30,14 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             }
             catch (Exception exception)
             {
-                Debug.LogWarning($"Failed to load wav audio clip from '{filePath}': {exception.Message}");
+                Debug.LogWarning($"Failed to load wav audio clip from '{filePath.Value}': {exception.Message}");
                 return Task.FromResult<AudioClip>(null);
             }
         }
 
-        private static AudioClip loadWaveClip(string filePath)
+        private static AudioClip loadWaveClip(RuntimeAssetFilePath filePath)
         {
-            byte[] fileBytes = File.ReadAllBytes(filePath);
+            byte[] fileBytes = File.ReadAllBytes(filePath.Value);
 
             if (readAscii(fileBytes, 0, 4) != "RIFF" || readAscii(fileBytes, 8, 4) != "WAVE")
             {
@@ -82,7 +82,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
             float[] samples = decodeWaveSamples(fileBytes, dataOffset, dataSize, bitsPerSample, audioFormat);
             int sampleCount = samples.Length / channels;
-            AudioClip audioClip = AudioClip.Create(Path.GetFileNameWithoutExtension(filePath), sampleCount, channels, sampleRate, false);
+            AudioClip audioClip = AudioClip.Create(Path.GetFileNameWithoutExtension(filePath.Value), sampleCount, channels, sampleRate, false);
             audioClip.SetData(samples, 0);
             return audioClip;
         }

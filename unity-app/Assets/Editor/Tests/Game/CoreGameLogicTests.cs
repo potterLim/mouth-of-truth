@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MouthOfTruth.Game.Analysis;
@@ -91,6 +92,14 @@ namespace MouthOfTruth.Editor.Tests.Game
         }
 
         [Test]
+        public void NormalizedProgressClampsUntrustedPresentationValues()
+        {
+            Assert.That(NormalizedProgress.FromUnclamped(-0.5f).Value, Is.EqualTo(0.0f));
+            Assert.That(NormalizedProgress.FromUnclamped(1.5f).Value, Is.EqualTo(1.0f));
+            Assert.That(NormalizedProgress.FromUnclamped(float.NaN).Value, Is.EqualTo(0.0f));
+        }
+
+        [Test]
         public void GameStateMachineMovesThroughQuestionSelectionAndAnswerStart()
         {
             MouthOfTruthGameStateMachine stateMachine = createStateMachine(cardDwellSeconds: 0.5f);
@@ -131,7 +140,9 @@ namespace MouthOfTruth.Editor.Tests.Game
             AnswerAnalysisResult result = await client.AnalyzeAsync(request, CancellationToken.None);
 
             Assert.That(result.VerdictKind, Is.EqualTo(EVerdictKind.Uncertain));
-            Assert.That(result.ReasonCodes, Is.EquivalentTo(new[] { "insufficient_face_data", "insufficient_voice_data" }));
+            Assert.That(
+                result.ReasonCodes.Select(reasonCode => reasonCode.Value),
+                Is.EquivalentTo(new[] { "insufficient_face_data", "insufficient_voice_data" }));
         }
 
         [Test]
@@ -243,7 +254,7 @@ namespace MouthOfTruth.Editor.Tests.Game
 
         private static MouthOfTruthGameStateMachine createStateMachine(float cardDwellSeconds)
         {
-            QuestionDeckService questionDeckService = new QuestionDeckService(createQuestions(), randomSeedOrNull: 42);
+            QuestionDeckService questionDeckService = new QuestionDeckService(createQuestions(), new QuestionDeckRandomSeed(42));
             CardDwellSelectionTracker cardDwellSelectionTracker = new CardDwellSelectionTracker(new SecondsDuration(cardDwellSeconds));
             AnswerCollectionPolicy answerCollectionPolicy = new AnswerCollectionPolicy();
             return new MouthOfTruthGameStateMachine(questionDeckService, cardDwellSelectionTracker, answerCollectionPolicy);

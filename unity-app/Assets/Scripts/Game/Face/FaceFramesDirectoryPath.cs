@@ -13,7 +13,18 @@ namespace MouthOfTruth.Game.Face
 
         public static FaceFramesDirectoryPath Empty => new FaceFramesDirectoryPath(string.Empty);
 
-        public string Value => mValue ?? string.Empty;
+        public string Value
+        {
+            get
+            {
+                if (mValue == null)
+                {
+                    return string.Empty;
+                }
+
+                return mValue;
+            }
+        }
 
         public bool IsEmpty => string.IsNullOrWhiteSpace(Value);
 

@@ -33,9 +33,9 @@ namespace MouthOfTruth.Game.Narration
 
         public async Task SpeakQuestionAsync(QuestionDefinition questionDefinition, CancellationToken cancellationToken)
         {
-            string audioFilePath = getQuestionAudioFilePath(questionDefinition);
+            RuntimeAssetFilePath audioFilePath = getQuestionAudioFilePath(questionDefinition);
 
-            if (string.IsNullOrWhiteSpace(audioFilePath))
+            if (audioFilePath.IsEmpty)
             {
                 await mFallbackNarrationService.SpeakQuestionAsync(questionDefinition, cancellationToken);
                 return;
@@ -73,26 +73,26 @@ namespace MouthOfTruth.Game.Narration
             }
         }
 
-        private string getQuestionAudioFilePath(QuestionDefinition questionDefinition)
+        private RuntimeAssetFilePath getQuestionAudioFilePath(QuestionDefinition questionDefinition)
         {
             if (questionDefinition == null || string.IsNullOrWhiteSpace(questionDefinition.Id.Value))
             {
-                return string.Empty;
+                return RuntimeAssetFilePath.Empty;
             }
 
             if (mQuestionAudioDirectoryPath.IsEmpty)
             {
-                return string.Empty;
+                return RuntimeAssetFilePath.Empty;
             }
 
             string candidateFilePath = Path.Combine(mQuestionAudioDirectoryPath.Value, $"{questionDefinition.Id.Value}.wav");
 
             if (File.Exists(candidateFilePath))
             {
-                return candidateFilePath;
+                return new RuntimeAssetFilePath(candidateFilePath);
             }
 
-            return string.Empty;
+            return RuntimeAssetFilePath.Empty;
         }
     }
 }

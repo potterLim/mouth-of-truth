@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using MouthOfTruth.Game.Analysis;
 using MouthOfTruth.Game.Data;
 using MouthOfTruth.Game.Input;
 using MouthOfTruth.Game.Presentation;
@@ -199,7 +198,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
         private float mAnalyzingPresentationStartedAtSeconds;
         private float mHandPromptPanelDismissalStartedAtSeconds;
         private float mHandPromptPanelDismissalStartAlpha = 1.0f;
-        private float mCardAbsorptionPresentationProgress;
+        private NormalizedProgress mCardAbsorptionPresentationProgress;
         private float mLastCardHoverCueTimeSeconds = -999.0f;
 
         private bool mStartRequested;
@@ -215,7 +214,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
         public bool IsCardAbsorptionPresentationActive => mIsCardAbsorptionPresentationActive;
 
-        public float CardAbsorptionPresentationProgress => mCardAbsorptionPresentationProgress;
+        public NormalizedProgress CardAbsorptionPresentationProgress => mCardAbsorptionPresentationProgress;
 
         public SecondsDuration HandPromptPanelHoldDuration => new SecondsDuration(getHandPromptPanelHoldSeconds());
 
@@ -404,7 +403,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             {
                 pair.Value.SetBack(mCardBackSprite);
                 pair.Value.ResetTransformState();
-                pair.Value.SetVisualState(false, false, 0.0f);
+                pair.Value.SetVisualState(EQuestionCardVisualState.Normal, NormalizedProgress.Zero);
                 pair.Value.ResetHoverState();
             }
 
@@ -425,7 +424,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
             foreach (KeyValuePair<EQuestionCardSlot, QuestionCardView> pair in mCardViews)
             {
-                pair.Value.SetAlpha(0.0f);
+                pair.Value.SetAlpha(NormalizedProgress.Zero);
                 pair.Value.SetScale(0.92f);
             }
 
@@ -440,7 +439,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                     foreach (KeyValuePair<EQuestionCardSlot, QuestionCardView> pair in mCardViews)
                     {
                         float cardProgress = easeOut(Mathf.Clamp01((progress - getCardEntranceDelay(pair.Key)) / 0.70f));
-                        pair.Value.SetAlpha(cardProgress);
+                        pair.Value.SetAlpha(NormalizedProgress.FromUnclamped(cardProgress));
                         pair.Value.SetScale(Mathf.Lerp(0.92f, 1.0f, cardProgress));
                     }
                 });
@@ -454,7 +453,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
             foreach (KeyValuePair<EQuestionCardSlot, QuestionCardView> pair in mCardViews)
             {
-                pair.Value.SetAlpha(1.0f);
+                pair.Value.SetAlpha(NormalizedProgress.Complete);
                 pair.Value.SetScale(1.0f);
             }
 
@@ -462,7 +461,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             setObjectActive(mPromptText, true);
         }
 
-        public void UpdateCardHoverVisual(EQuestionCardSlot? hoveredQuestionCardSlotOrNull, float hoverProgress)
+        public void UpdateCardHoverVisual(EQuestionCardSlot? hoveredQuestionCardSlotOrNull, NormalizedProgress hoverProgress)
         {
             if (hoveredQuestionCardSlotOrNull != mLastAudibleHoveredCardSlotOrNull)
             {
@@ -480,7 +479,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             foreach (KeyValuePair<EQuestionCardSlot, QuestionCardView> pair in mCardViews)
             {
                 bool isHovered = hoveredQuestionCardSlotOrNull == pair.Key;
-                pair.Value.SetVisualState(false, false, isHovered ? hoverProgress : 0.0f);
+                pair.Value.SetVisualState(EQuestionCardVisualState.Normal, isHovered ? hoverProgress : NormalizedProgress.Zero);
             }
         }
 
@@ -489,7 +488,10 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             foreach (KeyValuePair<EQuestionCardSlot, QuestionCardView> pair in mCardViews)
             {
                 bool isSelected = pair.Key == selectedQuestionCardSlot;
-                pair.Value.SetVisualState(isDimmed: isSelected == false, isSelected, 0.0f);
+                EQuestionCardVisualState questionCardVisualState = isSelected
+                    ? EQuestionCardVisualState.Selected
+                    : EQuestionCardVisualState.Dimmed;
+                pair.Value.SetVisualState(questionCardVisualState, NormalizedProgress.Zero);
                 pair.Value.gameObject.SetActive(isSelected);
             }
 
@@ -507,86 +509,6 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             RectTransform cardRectTransform = questionCardView.RectTransform;
             Vector3 worldCenter = cardRectTransform.TransformPoint(cardRectTransform.rect.center);
             return RectTransformUtility.WorldToScreenPoint(mCanvas.worldCamera, worldCenter);
-        }
-
-        public async Task PlayAnalysisCompleteTransitionAsync()
-        {
-            if (mIsAnalyzingPresentationActive == false)
-            {
-                return;
-            }
-
-            if (isTempleApproachSceneActive())
-            {
-                TempleCameraTransition templeCameraTransition = captureTempleCameraTransition(TEMPLE_RESULT_FOCUS_SCALE, TEMPLE_MOUTH_FOCUS_CENTER);
-
-                await animateOverTimeAsync(
-                    0.54f,
-                    progress =>
-                    {
-                        float easedProgress = easeInOut(progress);
-                        float pulse = Mathf.Sin(progress * Mathf.PI);
-                        float shakeFalloff = 1.0f - easedProgress;
-                        float residualShake = Mathf.Sin(progress * Mathf.PI * 7.0f) * shakeFalloff * 4.2f;
-                        float residualVerticalShake = Mathf.Sin(progress * Mathf.PI * 8.0f) * shakeFalloff * 1.8f;
-                        float cameraScale = templeCameraTransition.GetScale(TEMPLE_RESULT_FOCUS_SCALE, easedProgress) + (pulse * 0.020f);
-                        Vector2 cameraPosition = templeCameraTransition.GetPosition(easedProgress);
-                        setTempleCameraPose(cameraScale, cameraPosition.y + residualVerticalShake, cameraPosition.x + residualShake);
-                        setOverlayTint(new Color(0.022f, 0.016f, 0.014f, 1.0f), Mathf.Lerp(0.39f, 0.38f, easedProgress));
-                        setTempleApproachMouthColor(new Color(1.0f, 0.94f, 0.84f, Mathf.Lerp(0.90f, 1.0f, easedProgress)));
-
-                        if (mMouthListeningAuraImage != null)
-                        {
-                            Color listeningAuraColor = mMouthListeningAuraImage.color;
-                            mMouthListeningAuraImage.color = new Color(listeningAuraColor.r, listeningAuraColor.g, listeningAuraColor.b, Mathf.Lerp(listeningAuraColor.a, 0.0f, easedProgress));
-                        }
-
-                        if (mMouthAnalyzingAuraImage != null)
-                        {
-                            Color auraColor = mMouthAnalyzingAuraImage.color;
-                            mMouthAnalyzingAuraImage.color = new Color(auraColor.r, auraColor.g, auraColor.b, Mathf.Lerp(auraColor.a, 0.0f, easedProgress));
-                        }
-                    });
-
-                disableAnalyzingPresentation(preserveMouthLayout: true);
-                return;
-            }
-
-            RectTransform mouthRectTransform = mMouthImage.rectTransform;
-            Vector2 startAnchor = mouthRectTransform.anchorMin;
-            Vector2 startPosition = mouthRectTransform.anchoredPosition;
-            Vector2 startSize = mouthRectTransform.sizeDelta;
-            Vector3 startScale = mouthRectTransform.localScale;
-
-            await animateOverTimeAsync(
-                0.54f,
-                progress =>
-                {
-                    float easedProgress = easeInOut(progress);
-                    float pulse = Mathf.Sin(progress * Mathf.PI);
-                    Vector2 currentAnchor = Vector2.Lerp(startAnchor, RESULT_MOUTH_ANCHOR, easedProgress);
-                    mouthRectTransform.anchorMin = currentAnchor;
-                    mouthRectTransform.anchorMax = currentAnchor;
-                    mouthRectTransform.anchoredPosition = Vector2.Lerp(startPosition, Vector2.zero, easedProgress);
-                    mouthRectTransform.sizeDelta = Vector2.Lerp(startSize, RESULT_MOUTH_SIZE_PIXELS, easedProgress);
-                    mouthRectTransform.localScale = Vector3.Lerp(startScale, Vector3.one, easedProgress) * (1.0f + (pulse * 0.035f));
-                    setOverlayTint(new Color(0.022f, 0.016f, 0.014f, 1.0f), Mathf.Lerp(0.46f, 0.38f, easedProgress));
-                    mMouthImage.color = new Color(1.0f, 0.93f, 0.82f, Mathf.Lerp(0.62f, 0.88f, easedProgress));
-
-                    if (mMouthListeningAuraImage != null)
-                    {
-                        Color listeningAuraColor = mMouthListeningAuraImage.color;
-                        mMouthListeningAuraImage.color = new Color(listeningAuraColor.r, listeningAuraColor.g, listeningAuraColor.b, Mathf.Lerp(listeningAuraColor.a, 0.0f, easedProgress));
-                    }
-
-                    if (mMouthAnalyzingAuraImage != null)
-                    {
-                        Color auraColor = mMouthAnalyzingAuraImage.color;
-                        mMouthAnalyzingAuraImage.color = new Color(auraColor.r, auraColor.g, auraColor.b, Mathf.Lerp(auraColor.a, 0.0f, easedProgress));
-                    }
-                });
-
-            disableAnalyzingPresentation(preserveMouthLayout: true);
         }
 
         private async Task playMouthJudgementFocusTransitionAsync()
@@ -634,467 +556,6 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                     setOverlayTint(new Color(0.025f, 0.015f, 0.012f, 1.0f), Mathf.Lerp(0.36f, 0.46f, easedProgress));
                     mMouthImage.color = Color.Lerp(startColor, new Color(1.0f, 0.92f, 0.78f, 0.98f), easedProgress);
                 });
-        }
-
-        public void ShowResult(EVerdictKind verdictKind)
-        {
-            resetHandPromptPanelAlpha();
-            disableAnsweringPresentation();
-            disableAnalyzingPresentation();
-            applyResultLayout(verdictKind);
-            configureExitButtonAsTopLeftIcon();
-            setCardsVisible(false);
-            if (isTempleApproachSceneActive())
-            {
-                applyTempleStageBackgroundPresentation(0.38f);
-            }
-            else
-            {
-                mBackgroundImage.sprite = mMouthChamberBackgroundSprite;
-                setBackgroundTint(STAGE_BACKGROUND_TINT);
-                setObjectActive(mBackgroundImage, true);
-                setObjectActive(mCarpetImage, false);
-            }
-
-            setObjectActive(mTitleVignetteImage, false);
-            setObjectActive(mSceneOverlayImage, true);
-            setGameplayOverlayAlpha(0.38f);
-            setObjectActive(mQuestionText, false);
-            setObjectActive(mQuestionPanelImage, false);
-            setObjectActive(mStatusPanelImage, false);
-            setObjectActive(mMouthImage, true);
-            setMouthEffectImagesActive(false, false);
-            setObjectActive(mHandImage, false);
-            setObjectActive(mRitualHandImage, false);
-            setObjectActive(mVerdictImage, true);
-            setObjectActive(mVerdictText, false);
-            setObjectActive(mResultPanelImage, false);
-            setObjectActive(mPromptText, false);
-            setObjectActive(mStatusText, false);
-            setObjectActive(mAnswerTimerText, false);
-            setObjectActive(mTryAgainButton, true);
-            setObjectActive(mBackToTitleButton, false);
-            setObjectActive(mExitButton, true);
-            setObjectActive(mAnswerInputField, false);
-            mAnswerInputField.interactable = false;
-
-            mVerdictImage.sprite = verdictKind switch
-            {
-                EVerdictKind.True => mVerdictTrueSprite,
-                EVerdictKind.False => mVerdictFalseSprite,
-                _ => mVerdictUncertainSprite,
-            };
-            string verdictText = verdictKind switch
-            {
-                EVerdictKind.True => "TRUE",
-                EVerdictKind.False => "FALSE",
-                _ => "UNCERTAIN",
-            };
-            setText(mVerdictText, verdictText);
-            if (isTempleApproachSceneActive() == false)
-            {
-                applyMouthAnchoredLayout();
-            }
-
-            if (isTempleApproachSceneActive())
-            {
-                setTempleApproachMouthColor(Color.white);
-                syncTempleStageMouthOverlay(0.0f);
-            }
-            else
-            {
-                mMouthImage.color = Color.white;
-                mMouthImage.rectTransform.localScale = Vector3.one;
-            }
-
-            mVerdictImage.color = Color.white;
-            mVerdictImage.rectTransform.localRotation = Quaternion.identity;
-            mVerdictImage.rectTransform.localScale = Vector3.one;
-            playVerdictCue(verdictKind);
-        }
-
-        public async Task PlayResultRevealAnimationAsync(EVerdictKind verdictKind)
-        {
-            setObjectActive(mTryAgainButton, false);
-
-            if (isTempleApproachSceneActive())
-            {
-                await playTempleResultRevealAnimationAsync(verdictKind);
-            }
-            else if (verdictKind == EVerdictKind.True)
-            {
-                await playTrueRevealAnimationAsync();
-            }
-            else if (verdictKind == EVerdictKind.False)
-            {
-                await playFalseRevealAnimationAsync();
-            }
-            else
-            {
-                await playUncertainRevealAnimationAsync();
-            }
-
-            setObjectActive(mTryAgainButton, true);
-            setGameplayOverlayAlpha(0.38f);
-            if (isTempleApproachSceneActive())
-            {
-                setTempleApproachMouthColor(Color.white);
-                syncTempleStageMouthOverlay(0.0f);
-            }
-            else
-            {
-                mMouthImage.color = Color.white;
-                mMouthImage.rectTransform.localScale = Vector3.one;
-            }
-
-            mVerdictImage.color = Color.white;
-            mVerdictImage.rectTransform.localRotation = Quaternion.identity;
-            mVerdictImage.rectTransform.localScale = Vector3.one;
-        }
-
-        private async Task playTempleResultRevealAnimationAsync(EVerdictKind verdictKind)
-        {
-            mVerdictImage.color = new Color(1.0f, 1.0f, 1.0f, 0.0f);
-            Color overlayTint = verdictKind switch
-            {
-                EVerdictKind.True => new Color(0.05f, 0.11f, 0.06f, 1.0f),
-                EVerdictKind.False => new Color(0.22f, 0.006f, 0.006f, 1.0f),
-                _ => new Color(0.055f, 0.055f, 0.075f, 1.0f),
-            };
-            Color mouthTint = verdictKind switch
-            {
-                EVerdictKind.True => new Color(0.88f, 1.0f, 0.82f, 1.0f),
-                EVerdictKind.False => new Color(1.0f, 0.68f, 0.58f, 1.0f),
-                _ => new Color(0.74f, 0.76f, 0.82f, 1.0f),
-            };
-
-            await animateOverTimeAsync(
-                verdictKind == EVerdictKind.False ? 0.88f : 0.72f,
-                progress =>
-                {
-                    float easedProgress = easeOut(progress);
-                    float pulse = Mathf.Sin(progress * Mathf.PI);
-                    float falloff = 1.0f - easedProgress;
-                    float residualShake = Mathf.Sin(progress * Mathf.PI * 8.0f) * falloff;
-                    float shake = verdictKind == EVerdictKind.False
-                        ? Mathf.Sin(progress * Mathf.PI * 12.0f) * falloff
-                        : residualShake * 0.45f;
-                    float verticalShake = Mathf.Sin(progress * Mathf.PI * 7.0f) * falloff * 0.72f;
-                    setTempleCameraPoseCenteredOnMouth(TEMPLE_RESULT_FOCUS_SCALE + (pulse * 0.018f), TEMPLE_MOUTH_FOCUS_CENTER, shake * 1.4f, verticalShake);
-                    setOverlayTint(overlayTint, Mathf.Lerp(0.48f, 0.38f, easedProgress));
-                    setTempleApproachMouthColor(Color.Lerp(Color.white, mouthTint, 1.0f - easedProgress * 0.25f));
-                    mVerdictImage.color = new Color(1.0f, 1.0f, 1.0f, easedProgress);
-                    mVerdictImage.rectTransform.localRotation = Quaternion.Euler(0.0f, 0.0f, shake * 2.4f);
-                    mVerdictImage.rectTransform.localScale = Vector3.one * Mathf.Lerp(0.92f + (pulse * 0.08f), 1.0f, easedProgress);
-                });
-        }
-
-        private async Task playTrueRevealAnimationAsync()
-        {
-            mVerdictImage.color = new Color(1.0f, 1.0f, 1.0f, 0.0f);
-
-            await animateOverTimeAsync(
-                0.68f,
-                progress =>
-                {
-                    float easedProgress = easeOut(progress);
-                    float glow = Mathf.Sin(easedProgress * Mathf.PI);
-                    setOverlayTint(new Color(0.05f, 0.11f, 0.06f, 1.0f), Mathf.Lerp(0.46f, 0.32f, easedProgress));
-                    mMouthImage.rectTransform.localScale = Vector3.one * Mathf.Lerp(1.025f, 1.0f, easedProgress);
-                    mMouthImage.color = new Color(0.88f, 1.0f, 0.82f, Mathf.Lerp(0.86f, 1.0f, easedProgress));
-                    mVerdictImage.color = new Color(1.0f, 1.0f, 1.0f, easedProgress);
-                    mVerdictImage.rectTransform.localScale = Vector3.one * Mathf.Lerp(0.90f, 1.0f + (glow * 0.02f), easedProgress);
-                });
-        }
-
-        private async Task playFalseRevealAnimationAsync()
-        {
-            mVerdictImage.color = new Color(1.0f, 1.0f, 1.0f, 0.0f);
-
-            await animateOverTimeAsync(
-                0.32f,
-                progress =>
-                {
-                    float easedProgress = easeInOut(progress);
-                    setOverlayTint(new Color(0.28f, 0.012f, 0.008f, 1.0f), Mathf.Lerp(0.42f, 0.70f, easedProgress));
-                    mMouthImage.color = new Color(1.0f, 0.68f, 0.58f, Mathf.Lerp(0.88f, 1.0f, easedProgress));
-                    mMouthImage.rectTransform.localScale = Vector3.one * Mathf.Lerp(1.0f, 1.22f, easedProgress);
-                });
-
-            await animateOverTimeAsync(
-                0.56f,
-                progress =>
-                {
-                    float easedProgress = easeOut(progress);
-                    float shake = Mathf.Sin(progress * Mathf.PI * 14.0f) * (1.0f - easedProgress);
-                    setOverlayTint(new Color(0.22f, 0.006f, 0.006f, 1.0f), Mathf.Lerp(0.70f, 0.40f, easedProgress));
-                    mMouthImage.color = new Color(1.0f, Mathf.Lerp(0.60f, 1.0f, easedProgress), Mathf.Lerp(0.54f, 1.0f, easedProgress), 1.0f);
-                    mMouthImage.rectTransform.localScale = Vector3.one * Mathf.Lerp(1.22f, 1.0f, easedProgress);
-                    mVerdictImage.color = new Color(1.0f, 1.0f, 1.0f, easedProgress);
-                    mVerdictImage.rectTransform.localRotation = Quaternion.Euler(0.0f, 0.0f, shake * 2.5f);
-                    mVerdictImage.rectTransform.localScale = Vector3.one * Mathf.Lerp(1.34f, 1.0f, easedProgress);
-                });
-        }
-
-        private async Task playUncertainRevealAnimationAsync()
-        {
-            mVerdictImage.color = new Color(1.0f, 1.0f, 1.0f, 0.0f);
-
-            await animateOverTimeAsync(
-                0.72f,
-                progress =>
-                {
-                    float easedProgress = easeInOut(progress);
-                    float wobble = Mathf.Sin(progress * Mathf.PI * 7.0f) * (1.0f - easedProgress);
-                    float flickerAlpha = Mathf.Lerp(0.25f, 1.0f, easedProgress)
-                        + (Mathf.Sin(progress * Mathf.PI * 9.0f) * 0.08f * (1.0f - easedProgress));
-                    setOverlayTint(new Color(0.055f, 0.055f, 0.075f, 1.0f), Mathf.Lerp(0.48f, 0.40f, easedProgress));
-                    mMouthImage.color = new Color(0.74f, 0.76f, 0.82f, Mathf.Lerp(0.74f, 1.0f, easedProgress));
-                    mMouthImage.rectTransform.localScale = Vector3.one * Mathf.Lerp(0.985f, 1.0f, easedProgress);
-                    mVerdictImage.color = new Color(1.0f, 1.0f, 1.0f, Mathf.Clamp01(flickerAlpha));
-                    mVerdictImage.rectTransform.localRotation = Quaternion.Euler(0.0f, 0.0f, wobble * 2.5f);
-                    mVerdictImage.rectTransform.localScale = Vector3.one * Mathf.Lerp(0.96f, 1.0f, easedProgress);
-                });
-        }
-
-        private async Task loadSpritesAsync()
-        {
-            mCardBackSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.QuestionCardBackPath);
-            if (mCardBackSprite == null)
-            {
-                mCardBackSprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.43f, 0.63f, 0.95f, 1.0f));
-            }
-
-            mCardFrontSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.QuestionCardFrontPath);
-            if (mCardFrontSprite == null)
-            {
-                mCardFrontSprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.96f, 0.93f, 0.88f, 1.0f));
-            }
-
-            mButtonFrameSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.PrimaryButtonFramePath);
-            if (mButtonFrameSprite == null)
-            {
-                mButtonFrameSprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.38f, 0.21f, 0.11f, 1.0f));
-            }
-
-            mStartButtonSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.StartButtonPath);
-            if (mStartButtonSprite == null)
-            {
-                mStartButtonSprite = mButtonFrameSprite;
-            }
-
-            mTryAgainButtonSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.TryAgainButtonPath);
-            if (mTryAgainButtonSprite == null)
-            {
-                mTryAgainButtonSprite = mButtonFrameSprite;
-            }
-
-            mEndGameButtonSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.EndGameButtonPath);
-            if (mEndGameButtonSprite == null)
-            {
-                mEndGameButtonSprite = mButtonFrameSprite;
-            }
-
-            mExitIconButtonSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.ExitIconButtonPath);
-            if (mExitIconButtonSprite == null)
-            {
-                mExitIconButtonSprite = mButtonFrameSprite;
-            }
-
-            mPointerCursorSprite = createPointerCursorSprite();
-            mRitualHandSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.RitualHandInsertPath);
-            if (mRitualHandSprite == null)
-            {
-                mRitualHandSprite = mPointerCursorSprite;
-            }
-
-            mLeapMotionDeviceSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.LeapMotionDevicePath);
-            if (mLeapMotionDeviceSprite == null)
-            {
-                mLeapMotionDeviceSprite = RuntimeSpriteLoader.CreateSolidSprite(Color.clear);
-            }
-
-            mVerdictTrueSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.TrueVerdictPath);
-            if (mVerdictTrueSprite == null)
-            {
-                mVerdictTrueSprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.45f, 0.80f, 0.54f, 1.0f));
-            }
-
-            mVerdictFalseSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.FalseVerdictPath);
-            if (mVerdictFalseSprite == null)
-            {
-                mVerdictFalseSprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.84f, 0.38f, 0.43f, 1.0f));
-            }
-
-            mVerdictUncertainSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.UncertainVerdictPath);
-            if (mVerdictUncertainSprite == null)
-            {
-                mVerdictUncertainSprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.80f, 0.69f, 0.36f, 1.0f));
-            }
-
-            mTitleVignetteSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.TitleVignettePath);
-            if (mTitleVignetteSprite == null)
-            {
-                mTitleVignetteSprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.0f, 0.0f, 0.0f, 0.30f));
-            }
-
-            mQuestionPanelSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.QuestionPanelFramePath);
-            if (mQuestionPanelSprite == null)
-            {
-                mQuestionPanelSprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.15f, 0.10f, 0.07f, 0.90f));
-            }
-
-            mStatusPanelSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.StatusPanelFramePath);
-            if (mStatusPanelSprite == null)
-            {
-                mStatusPanelSprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.08f, 0.05f, 0.03f, 0.76f));
-            }
-
-            mResultPanelSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.ResultPanelFramePath);
-            if (mResultPanelSprite == null)
-            {
-                mResultPanelSprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.17f, 0.10f, 0.08f, 0.90f));
-            }
-
-            mCardGlowSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.CardSelectionGlowPath);
-            if (mCardGlowSprite == null)
-            {
-                mCardGlowSprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.90f, 0.72f, 0.25f, 0.35f));
-            }
-
-            mDwellFillSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.CardSelectionProgressFillPath);
-            if (mDwellFillSprite == null)
-            {
-                mDwellFillSprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.95f, 0.82f, 0.33f, 0.95f));
-            }
-
-            mTitleBackgroundSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.TitleBackgroundPath);
-            if (mTitleBackgroundSprite == null)
-            {
-                mTitleBackgroundSprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.12f, 0.09f, 0.07f, 1.0f));
-            }
-
-            mCardSelectionBackgroundSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.CardSelectionBackgroundPath);
-            if (mCardSelectionBackgroundSprite == null)
-            {
-                mCardSelectionBackgroundSprite = mTitleBackgroundSprite;
-            }
-
-            mMouthChamberBackgroundSprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.MouthChamberBackgroundPath);
-            if (mMouthChamberBackgroundSprite == null)
-            {
-                mMouthChamberBackgroundSprite = mCardSelectionBackgroundSprite == null
-                    ? mTitleBackgroundSprite
-                    : mCardSelectionBackgroundSprite;
-            }
-
-            mCarpetImage.sprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.FloorRunnerPath);
-            if (mCarpetImage.sprite == null)
-            {
-                mCarpetImage.sprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.44f, 0.03f, 0.05f, 1.0f));
-            }
-
-            mLogoImage.sprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.TitleLogoPath);
-            if (mLogoImage.sprite == null)
-            {
-                mLogoImage.sprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.82f, 0.71f, 0.52f, 1.0f));
-            }
-
-            mMouthImage.sprite = await RuntimeSpriteLoader.LoadSpriteOrNullAsync(MouthOfTruthAssetCatalog.TruthMouthFacePath);
-            if (mMouthImage.sprite == null)
-            {
-                mMouthImage.sprite = RuntimeSpriteLoader.CreateSolidSprite(new Color(0.85f, 0.83f, 0.78f, 1.0f));
-            }
-
-            mBackgroundImage.sprite = mTitleBackgroundSprite;
-        }
-
-        private void loadUiFonts()
-        {
-            mUiFont = Resources.Load<Font>(MouthOfTruthAssetCatalog.UiFontResourceName);
-            if (mUiFont == null)
-            {
-                mUiFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            }
-
-            mKoreanFallbackFont = Resources.Load<Font>(MouthOfTruthAssetCatalog.KoreanFallbackFontResourceName);
-            if (mKoreanFallbackFont == null)
-            {
-                mKoreanFallbackFont = mUiFont;
-            }
-        }
-
-        private void applyTheme()
-        {
-            mBackgroundImage.type = Image.Type.Sliced;
-            mBackgroundImage.preserveAspect = true;
-            mSceneOverlayImage.color = new Color(SCENE_OVERLAY_COLOR.r, SCENE_OVERLAY_COLOR.g, SCENE_OVERLAY_COLOR.b, 0.0f);
-            mSceneOverlayImage.raycastTarget = false;
-            mCarpetImage.preserveAspect = true;
-            mCarpetImage.raycastTarget = false;
-            mTitleVignetteImage.sprite = mTitleVignetteSprite;
-            mTitleVignetteImage.type = Image.Type.Sliced;
-            mTitleVignetteImage.raycastTarget = false;
-            mLogoImage.preserveAspect = true;
-            mLogoImage.raycastTarget = false;
-            mMouthImage.preserveAspect = true;
-            mMouthImage.raycastTarget = false;
-            mHandImage.sprite = mPointerCursorSprite;
-            mHandImage.preserveAspect = true;
-            mHandImage.raycastTarget = false;
-            mRitualHandImage.sprite = mRitualHandSprite;
-            mRitualHandImage.preserveAspect = true;
-            mRitualHandImage.raycastTarget = false;
-            mPointerImage.sprite = mPointerCursorSprite;
-            mPointerImage.preserveAspect = true;
-            mPointerImage.raycastTarget = false;
-            mTutorialHandImage.sprite = mRitualHandSprite;
-            mTutorialHandImage.preserveAspect = true;
-            mTutorialHandImage.raycastTarget = false;
-            mTutorialLeapMotionDeviceImage.sprite = mLeapMotionDeviceSprite;
-            mTutorialLeapMotionDeviceImage.preserveAspect = true;
-            mTutorialLeapMotionDeviceImage.raycastTarget = false;
-            mTutorialOverlayImage.raycastTarget = false;
-            mTutorialDevicePanelImage.type = Image.Type.Sliced;
-            mTutorialDevicePanelImage.raycastTarget = false;
-            mVerdictImage.preserveAspect = true;
-            mVerdictImage.raycastTarget = false;
-            mQuestionPanelImage.sprite = mQuestionPanelSprite;
-            mQuestionPanelImage.type = Image.Type.Sliced;
-            mQuestionPanelImage.raycastTarget = false;
-            mStatusPanelImage.sprite = mStatusPanelSprite;
-            mStatusPanelImage.type = Image.Type.Sliced;
-            mStatusPanelImage.raycastTarget = false;
-            mResultPanelImage.sprite = mResultPanelSprite;
-            mResultPanelImage.type = Image.Type.Sliced;
-            mResultPanelImage.raycastTarget = false;
-            if (mAnswerInputField?.image != null)
-            {
-                mAnswerInputField.image.sprite = mStatusPanelSprite;
-                mAnswerInputField.image.type = Image.Type.Sliced;
-                mAnswerInputField.image.color = new Color(1.0f, 1.0f, 1.0f, 0.96f);
-            }
-
-            mStartButton.image.sprite = mStartButtonSprite;
-            mTryAgainButton.image.sprite = mTryAgainButtonSprite;
-            mBackToTitleButton.image.sprite = mButtonFrameSprite;
-            mExitButton.image.sprite = mExitIconButtonSprite;
-            mStartButton.image.type = Image.Type.Simple;
-            mTryAgainButton.image.type = Image.Type.Simple;
-            mBackToTitleButton.image.type = Image.Type.Sliced;
-            mExitButton.image.type = Image.Type.Simple;
-            mStartButton.image.preserveAspect = true;
-            mTryAgainButton.image.preserveAspect = true;
-            mExitButton.image.preserveAspect = true;
-            setButtonLabelVisible(mStartButton, false);
-            setButtonLabelVisible(mTryAgainButton, false);
-            setButtonLabelVisible(mExitButton, false);
-
-            foreach (KeyValuePair<EQuestionCardSlot, QuestionCardView> pair in mCardViews)
-            {
-                pair.Value.SetBack(mCardBackSprite);
-                pair.Value.SetDecorSprites(mCardGlowSprite, mDwellFillSprite);
-            }
         }
 
         private void cacheWorldPresentationReferences()
@@ -1461,27 +922,6 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             }
         }
 
-        private void applyResultLayout(EVerdictKind verdictKind)
-        {
-            if (isTempleApproachSceneActive())
-            {
-                syncTempleStageMouthOverlay(0.0f);
-            }
-            else
-            {
-                setRectTransformLayout(mMouthImage.rectTransform, RESULT_MOUTH_ANCHOR, RESULT_MOUTH_SIZE_PIXELS);
-                mMouthImage.rectTransform.localScale = Vector3.one;
-            }
-
-            Vector2 verdictSizePixels = verdictKind == EVerdictKind.True || verdictKind == EVerdictKind.False
-                ? RESULT_SHORT_VERDICT_SIZE_PIXELS
-                : RESULT_VERDICT_SIZE_PIXELS;
-            setRectTransformLayout(mVerdictImage.rectTransform, new Vector2(0.5f, 0.54f), verdictSizePixels);
-            setRectTransformLayout(mHandImage.rectTransform, new Vector2(0.5f, 0.18f), HELD_POINTER_CURSOR_SIZE_PIXELS);
-            setRectTransformLayout(mTryAgainButton.GetComponent<RectTransform>(), new Vector2(0.5f, 0.105f), new Vector2(360.0f, 100.0f));
-            applyTopLeftExitButtonLayout();
-        }
-
         private void applyTopLeftExitButtonLayout()
         {
             setRectTransformLayout(mExitButton.GetComponent<RectTransform>(), new Vector2(0.06f, 0.90f), new Vector2(78.0f, 78.0f));
@@ -1751,14 +1191,14 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 && screenPosition.y <= maximumY + expansionPixels;
         }
 
-        private void updateButtonVisual(Button button, bool isHovered, float hoverProgress)
+        private void updateButtonVisual(Button button, bool isHovered, NormalizedProgress hoverProgress)
         {
             if (button == null)
             {
                 return;
             }
 
-            float effectiveHoverProgress = isHovered ? Mathf.Clamp01(hoverProgress) : 0.0f;
+            float effectiveHoverProgress = isHovered ? hoverProgress.Value : 0.0f;
             RectTransform rectTransform = button.GetComponent<RectTransform>();
             rectTransform.localScale = Vector3.one * Mathf.Lerp(1.0f, 1.06f, effectiveHoverProgress);
 

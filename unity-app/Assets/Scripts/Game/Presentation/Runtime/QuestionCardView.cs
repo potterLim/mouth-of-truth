@@ -147,17 +147,20 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             applyQuestionTextLayout(questionText.Value);
         }
 
-        public void SetVisualState(bool isDimmed, bool isSelected, float hoverProgress)
+        public void SetVisualState(EQuestionCardVisualState questionCardVisualState, NormalizedProgress hoverProgress)
         {
+            bool isSelected = questionCardVisualState == EQuestionCardVisualState.Selected;
+            bool isDimmed = questionCardVisualState == EQuestionCardVisualState.Dimmed;
+
             float targetScale = isSelected
                 ? 1.12f
-                : Mathf.Lerp(1.0f, HOVER_MAX_SCALE, hoverProgress);
+                : Mathf.Lerp(1.0f, HOVER_MAX_SCALE, hoverProgress.Value);
 
             mRectTransform.localScale = Vector3.one * targetScale;
             mCanvasGroup.alpha = isDimmed ? 0.22f : 1.0f;
-            mGlowImage.color = new Color(0.90f, 0.72f, 0.25f, Mathf.Clamp01(hoverProgress) * 0.7f + (isSelected ? 0.2f : 0.0f));
+            mGlowImage.color = new Color(0.90f, 0.72f, 0.25f, hoverProgress.Value * 0.7f + (isSelected ? 0.2f : 0.0f));
 
-            float progressWidth = Mathf.Clamp01(hoverProgress);
+            float progressWidth = hoverProgress.Value;
             mProgressImage.rectTransform.anchorMax = new Vector2(progressWidth, 1.0f);
             mProgressImage.enabled = progressWidth > 0.0f && isSelected == false;
         }
@@ -175,9 +178,9 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mCanvasGroup.alpha = 1.0f;
         }
 
-        public void SetAlpha(float alpha)
+        public void SetAlpha(NormalizedProgress alpha)
         {
-            mCanvasGroup.alpha = Mathf.Clamp01(alpha);
+            mCanvasGroup.alpha = alpha.Value;
         }
 
         public void SetScale(float scale)

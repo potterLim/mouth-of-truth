@@ -20,7 +20,7 @@ namespace MouthOfTruth.Game.App
             deleteDirectoryIfInsideDirectory(faceFramesDirectoryPath.Value, FaceFrameWorkspacePaths.GetFaceFramesDirectoryPath());
         }
 
-        public static bool IsPathInsideDirectory(string candidatePath, string directoryPath)
+        private static bool isPathInsideDirectory(string candidatePath, string directoryPath)
         {
             if (string.IsNullOrWhiteSpace(candidatePath) || string.IsNullOrWhiteSpace(directoryPath))
             {
@@ -68,7 +68,7 @@ namespace MouthOfTruth.Game.App
                 return;
             }
 
-            if (IsPathInsideDirectory(filePath, allowedDirectoryPath) == false)
+            if (isPathInsideDirectory(filePath, allowedDirectoryPath) == false)
             {
                 Debug.LogWarning("Skipped deleting session artifact outside the allowed directory: " + filePath);
                 return;
@@ -91,7 +91,7 @@ namespace MouthOfTruth.Game.App
                 return;
             }
 
-            if (IsPathInsideDirectory(directoryPath, allowedDirectoryPath) == false)
+            if (isPathInsideDirectory(directoryPath, allowedDirectoryPath) == false)
             {
                 Debug.LogWarning("Skipped deleting session artifact directory outside the allowed directory: " + directoryPath);
                 return;

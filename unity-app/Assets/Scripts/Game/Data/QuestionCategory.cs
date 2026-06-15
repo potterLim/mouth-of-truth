@@ -13,7 +13,18 @@ namespace MouthOfTruth.Game.Data
 
         public static QuestionCategory Empty => new QuestionCategory(string.Empty);
 
-        public string Value => mValue ?? string.Empty;
+        public string Value
+        {
+            get
+            {
+                if (mValue == null)
+                {
+                    return string.Empty;
+                }
+
+                return mValue;
+            }
+        }
 
         public bool Equals(QuestionCategory other)
         {

@@ -8,11 +8,16 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 {
     public partial class MouthOfTruthGameView
     {
-        public async Task PlayQuestionRevealAsync(EQuestionCardSlot selectedQuestionCardSlot, QuestionDefinition questionDefinition, Func<Task> questionNarrationTaskFactoryOrNull = null)
+        public Task PlayQuestionRevealAsync(EQuestionCardSlot selectedQuestionCardSlot, QuestionDefinition questionDefinition)
+        {
+            return PlayQuestionRevealAsync(selectedQuestionCardSlot, questionDefinition, null);
+        }
+
+        public async Task PlayQuestionRevealAsync(EQuestionCardSlot selectedQuestionCardSlot, QuestionDefinition questionDefinition, Func<Task> questionNarrationTaskFactoryOrNull)
         {
             resetHandPromptPanelAlpha();
             mIsCardAbsorptionPresentationActive = false;
-            mCardAbsorptionPresentationProgress = 0.0f;
+            mCardAbsorptionPresentationProgress = NormalizedProgress.Zero;
             setObjectActive(mPromptText, false);
             setObjectActive(mStatusText, false);
             setObjectActive(mQuestionPanelImage, false);
@@ -28,7 +33,10 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             foreach (KeyValuePair<EQuestionCardSlot, QuestionCardView> pair in mCardViews)
             {
                 bool isSelected = pair.Key == selectedQuestionCardSlot;
-                pair.Value.SetVisualState(isDimmed: isSelected == false, isSelected, 0.0f);
+                EQuestionCardVisualState questionCardVisualState = isSelected
+                    ? EQuestionCardVisualState.Selected
+                    : EQuestionCardVisualState.Dimmed;
+                pair.Value.SetVisualState(questionCardVisualState, NormalizedProgress.Zero);
                 pair.Value.gameObject.SetActive(isSelected);
             }
 
@@ -103,7 +111,10 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 });
 
             bool isTempleApproachSceneVisible = mTempleApproachCameraObject != null;
-            prepareCardLaunchPresentation(isTempleApproachSceneVisible);
+            ECardLaunchPresentationMode cardLaunchPresentationMode = isTempleApproachSceneVisible
+                ? ECardLaunchPresentationMode.TempleApproach
+                : ECardLaunchPresentationMode.MouthChamber;
+            prepareCardLaunchPresentation(cardLaunchPresentationMode);
             Vector2 launchStartPosition = selectedCardView.RectTransform.anchoredPosition;
             TempleCameraTransition templeCameraTransition = default;
             if (isTempleApproachSceneVisible)
@@ -117,13 +128,13 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             }
 
             mIsCardAbsorptionPresentationActive = true;
-            mCardAbsorptionPresentationProgress = 0.0f;
+            mCardAbsorptionPresentationProgress = NormalizedProgress.Zero;
 
             await animateOverTimeAsync(
                 CARD_TO_MOUTH_ABSORPTION_SECONDS,
                 progress =>
                 {
-                    mCardAbsorptionPresentationProgress = progress;
+                    mCardAbsorptionPresentationProgress = NormalizedProgress.FromUnclamped(progress);
                     float cameraProgress = easeInOut(progress);
                     float suctionProgress = easeIn(Mathf.Clamp01(progress * 1.04f));
                     float absorptionProgress = easeIn(Mathf.Clamp01((progress - 0.48f) / 0.52f));
@@ -148,12 +159,13 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                     Vector2 basePosition = Vector2.Lerp(launchStartPosition, launchTargetPosition, suctionProgress);
                     Vector2 inhaleOffset = new Vector2(Mathf.Sin(progress * Mathf.PI * 3.0f) * (1.0f - absorptionProgress) * 16.0f, Mathf.Sin(progress * Mathf.PI) * 34.0f * (1.0f - absorptionProgress));
                     selectedCardView.RectTransform.anchoredPosition = basePosition + inhaleOffset;
+                    NormalizedProgress selectedCardAlpha = NormalizedProgress.FromUnclamped(Mathf.Lerp(1.0f, 0.0f, absorptionProgress));
                     selectedCardView.SetScale(Mathf.Lerp(1.26f, 0.18f, absorptionProgress));
-                    selectedCardView.SetAlpha(Mathf.Lerp(1.0f, 0.0f, absorptionProgress));
+                    selectedCardView.SetAlpha(selectedCardAlpha);
                 });
 
             mIsCardAbsorptionPresentationActive = false;
-            mCardAbsorptionPresentationProgress = 1.0f;
+            mCardAbsorptionPresentationProgress = NormalizedProgress.Complete;
             setCardsVisible(false);
             if (isTempleApproachSceneVisible)
             {
@@ -161,7 +173,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 setTempleApproachMouthAlpha(1.0f);
             }
 
-            selectedCardView.SetAlpha(1.0f);
+            selectedCardView.SetAlpha(NormalizedProgress.Complete);
             selectedCardView.ResetTransformState();
             await animateOverTimeAsync(HAND_PROMPT_AFTER_CARD_LAUNCH_DELAY_SECONDS, _ => { });
         }

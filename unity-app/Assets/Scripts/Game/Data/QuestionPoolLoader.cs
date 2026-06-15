@@ -5,21 +5,21 @@ using UnityEngine;
 
 namespace MouthOfTruth.Game.Data
 {
-    public static class QuestionPoolLoader
+    internal static class QuestionPoolLoader
     {
-        public static IReadOnlyList<QuestionDefinition> LoadQuestionDefinitions(string filePath)
+        internal static IReadOnlyList<QuestionDefinition> LoadQuestionDefinitions(QuestionPoolFilePath questionPoolFilePath)
         {
-            if (string.IsNullOrWhiteSpace(filePath))
+            if (questionPoolFilePath.IsEmpty)
             {
-                throw new ArgumentException("Question pool file path cannot be empty.", nameof(filePath));
+                throw new ArgumentException("Question pool file path cannot be empty.", nameof(questionPoolFilePath));
             }
 
-            if (File.Exists(filePath) == false)
+            if (File.Exists(questionPoolFilePath.Value) == false)
             {
-                throw new FileNotFoundException("Question pool JSON file was not found.", filePath);
+                throw new FileNotFoundException("Question pool JSON file was not found.", questionPoolFilePath.Value);
             }
 
-            string jsonText = File.ReadAllText(filePath);
+            string jsonText = File.ReadAllText(questionPoolFilePath.Value);
             QuestionPoolJsonDocument questionPoolJsonDocument = JsonUtility.FromJson<QuestionPoolJsonDocument>(jsonText);
 
             if (questionPoolJsonDocument == null || questionPoolJsonDocument.questions == null)

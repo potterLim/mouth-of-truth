@@ -12,7 +12,12 @@ namespace MouthOfTruth.Game.Data
         private readonly List<QuestionDefinition> mAllEnabledQuestionDefinitions;
         private readonly Queue<QuestionDefinition> mRemainingQuestionDefinitions;
 
-        public QuestionDeckService(IReadOnlyList<QuestionDefinition> questionDefinitions, int? randomSeedOrNull = null)
+        public QuestionDeckService(IReadOnlyList<QuestionDefinition> questionDefinitions)
+            : this(questionDefinitions, null)
+        {
+        }
+
+        public QuestionDeckService(IReadOnlyList<QuestionDefinition> questionDefinitions, QuestionDeckRandomSeed? randomSeedOrNull)
         {
             if (questionDefinitions == null)
             {
@@ -29,7 +34,7 @@ namespace MouthOfTruth.Game.Data
             }
 
             mRandom = randomSeedOrNull.HasValue
-                ? new Random(randomSeedOrNull.Value)
+                ? new Random(randomSeedOrNull.Value.Value)
                 : new Random();
             mRemainingQuestionDefinitions = new Queue<QuestionDefinition>();
             refillDeckExcluding(Array.Empty<QuestionDefinition>());

@@ -2,22 +2,14 @@ using System;
 
 namespace MouthOfTruth.Game.Data
 {
-    public readonly struct AnswerTranscript : IEquatable<AnswerTranscript>
+    internal readonly struct QuestionPoolFilePath : IEquatable<QuestionPoolFilePath>
     {
         private readonly string mValue;
 
-        public AnswerTranscript(string value)
+        public QuestionPoolFilePath(string value)
         {
-            if (value == null)
-            {
-                mValue = string.Empty;
-                return;
-            }
-
-            mValue = value;
+            mValue = string.IsNullOrWhiteSpace(value) ? string.Empty : value;
         }
-
-        public static AnswerTranscript Empty => new AnswerTranscript(string.Empty);
 
         public string Value
         {
@@ -34,19 +26,14 @@ namespace MouthOfTruth.Game.Data
 
         public bool IsEmpty => string.IsNullOrWhiteSpace(Value);
 
-        public AnswerTranscript Trimmed()
-        {
-            return new AnswerTranscript(Value.Trim());
-        }
-
-        public bool Equals(AnswerTranscript other)
+        public bool Equals(QuestionPoolFilePath other)
         {
             return string.Equals(Value, other.Value, StringComparison.Ordinal);
         }
 
         public override bool Equals(object obj)
         {
-            return obj is AnswerTranscript other && Equals(other);
+            return obj is QuestionPoolFilePath other && Equals(other);
         }
 
         public override int GetHashCode()

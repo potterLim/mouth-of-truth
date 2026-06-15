@@ -10,8 +10,6 @@ namespace MouthOfTruth.Game.Analysis
     {
         private const int MINIMUM_FACE_RECOGNITION_COUNT = 4;
         private const int MINIMUM_VOICE_SEGMENT_COUNT = 1;
-        private const string INSUFFICIENT_FACE_DATA_REASON_CODE = "insufficient_face_data";
-        private const string INSUFFICIENT_VOICE_DATA_REASON_CODE = "insufficient_voice_data";
 
         public Task WarmUpAsync(CancellationToken cancellationToken)
         {
@@ -30,16 +28,16 @@ namespace MouthOfTruth.Game.Analysis
 
             bool hasFaceSignal = answerAnalysisRequest.FaceFrameCount.Value >= MINIMUM_FACE_RECOGNITION_COUNT;
             bool hasVoiceSignal = answerAnalysisRequest.VoiceSegmentCount.Value >= MINIMUM_VOICE_SEGMENT_COUNT;
-            List<string> reasonCodes = new List<string>();
+            List<AnalysisReasonCode> reasonCodes = new List<AnalysisReasonCode>();
 
             if (hasFaceSignal == false)
             {
-                reasonCodes.Add(INSUFFICIENT_FACE_DATA_REASON_CODE);
+                reasonCodes.Add(AnalysisReasonCode.InsufficientFaceData);
             }
 
             if (hasVoiceSignal == false)
             {
-                reasonCodes.Add(INSUFFICIENT_VOICE_DATA_REASON_CODE);
+                reasonCodes.Add(AnalysisReasonCode.InsufficientVoiceData);
             }
 
             if (hasFaceSignal == false || hasVoiceSignal == false)

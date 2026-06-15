@@ -18,7 +18,18 @@ namespace MouthOfTruth.Game.Data
 
         public static QuestionId Fallback => new QuestionId("question");
 
-        public string Value => mValue ?? string.Empty;
+        public string Value
+        {
+            get
+            {
+                if (mValue == null)
+                {
+                    return string.Empty;
+                }
+
+                return mValue;
+            }
+        }
 
         public bool Equals(QuestionId other)
         {

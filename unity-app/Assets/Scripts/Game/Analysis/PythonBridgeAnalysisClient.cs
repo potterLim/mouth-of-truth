@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -78,12 +79,7 @@ namespace MouthOfTruth.Game.Analysis
                     throw new InvalidDataException("Python analysis returned an unexpected request identifier.");
                 }
 
-                string[] reasonCodes = bridgeAnalysisResultFileData.ReasonCodes;
-                if (reasonCodes == null)
-                {
-                    reasonCodes = Array.Empty<string>();
-                }
-
+                IReadOnlyList<AnalysisReasonCode> reasonCodes = parseReasonCodes(bridgeAnalysisResultFileData.ReasonCodes);
                 return new AnswerAnalysisResult(parseVerdictKind(bridgeAnalysisResultFileData.Verdict), new AnswerTranscript(bridgeAnalysisResultFileData.AnswerTranscript), reasonCodes);
             }
             finally
@@ -111,6 +107,28 @@ namespace MouthOfTruth.Game.Analysis
             }
 
             return EVerdictKind.Uncertain;
+        }
+
+        private static IReadOnlyList<AnalysisReasonCode> parseReasonCodes(string[] reasonCodeTexts)
+        {
+            if (reasonCodeTexts == null || reasonCodeTexts.Length == 0)
+            {
+                return Array.Empty<AnalysisReasonCode>();
+            }
+
+            List<AnalysisReasonCode> reasonCodes = new List<AnalysisReasonCode>();
+
+            foreach (string reasonCodeText in reasonCodeTexts)
+            {
+                if (string.IsNullOrWhiteSpace(reasonCodeText))
+                {
+                    continue;
+                }
+
+                reasonCodes.Add(new AnalysisReasonCode(reasonCodeText));
+            }
+
+            return reasonCodes;
         }
 
         private async Task runPythonAnalysisAsync(CancellationToken cancellationToken)

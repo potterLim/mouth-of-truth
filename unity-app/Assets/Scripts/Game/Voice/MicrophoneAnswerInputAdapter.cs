@@ -9,7 +9,7 @@ namespace MouthOfTruth.Game.Voice
 {
     public class MicrophoneAnswerInputAdapter : IAnswerCaptureInputAdapter
     {
-        private const int SAMPLE_RATE = 16000;
+        private static readonly AudioSampleRate MICROPHONE_SAMPLE_RATE = new AudioSampleRate(16000);
         private const int MAX_SEGMENT_DURATION_SECONDS = 20;
         private const float SPEECH_WINDOW_SECONDS = 0.20f;
         private const float SPEECH_ACTIVITY_RMS_THRESHOLD = 0.0085f;
@@ -31,10 +31,10 @@ namespace MouthOfTruth.Game.Voice
             mSelectedDeviceName = selectDefaultDeviceName();
         }
 
-        public bool RequiresManualTextEntry => false;
+        public EAnswerTranscriptInputMode TranscriptInputMode => EAnswerTranscriptInputMode.AutomaticCapture;
 
-        public string TranscriptPlaceholderText =>
-            "음성 입력이 자동으로 수집됩니다.";
+        public AnswerTranscriptPlaceholderText TranscriptPlaceholderText =>
+            new AnswerTranscriptPlaceholderText("음성 입력이 자동으로 수집됩니다.");
 
         public void Reset()
         {
@@ -106,7 +106,7 @@ namespace MouthOfTruth.Game.Voice
             }
 
             AnswerAudioFilePath audioFilePath = AnswerAudioWorkspacePaths.BuildAudioFilePath(questionId);
-            WaveFileWriter.WriteMono16BitPcm(audioFilePath.Value, mergedSamples, SAMPLE_RATE);
+            WaveFileWriter.WriteMono16BitPcm(audioFilePath, mergedSamples, MICROPHONE_SAMPLE_RATE);
 
             return Task.FromResult(new AnswerCaptureResult(AnswerTranscript.Empty, audioFilePath, new VoiceSegmentCount(mRecordedSegmentCount)));
         }
@@ -145,7 +145,7 @@ namespace MouthOfTruth.Game.Voice
                 return;
             }
 
-            mActiveRecordingClip = Microphone.Start(mSelectedDeviceName, true, MAX_SEGMENT_DURATION_SECONDS, SAMPLE_RATE);
+            mActiveRecordingClip = Microphone.Start(mSelectedDeviceName, true, MAX_SEGMENT_DURATION_SECONDS, MICROPHONE_SAMPLE_RATE.Value);
 
             if (mActiveRecordingClip == null)
             {
@@ -223,7 +223,7 @@ namespace MouthOfTruth.Game.Voice
                 return false;
             }
 
-            int windowSampleCount = Mathf.Max(1, Mathf.CeilToInt(SAMPLE_RATE * SPEECH_WINDOW_SECONDS));
+            int windowSampleCount = Mathf.Max(1, Mathf.CeilToInt(MICROPHONE_SAMPLE_RATE.Value * SPEECH_WINDOW_SECONDS));
             int strideSampleCount = Mathf.Max(1, windowSampleCount / 2);
 
             if (monoSamples.Length <= windowSampleCount)
@@ -291,7 +291,7 @@ namespace MouthOfTruth.Game.Voice
 
             int currentSamplePosition = Mathf.Clamp(Microphone.GetPosition(mSelectedDeviceName), 0, mActiveRecordingClip.samples);
             int availableSampleCount = calculateLoopedSampleDistance(mSegmentStartSamplePosition, currentSamplePosition, mActiveRecordingClip.samples);
-            int windowSampleCount = Mathf.Min(availableSampleCount, Mathf.CeilToInt(SAMPLE_RATE * SPEECH_WINDOW_SECONDS));
+            int windowSampleCount = Mathf.Min(availableSampleCount, Mathf.CeilToInt(MICROPHONE_SAMPLE_RATE.Value * SPEECH_WINDOW_SECONDS));
 
             if (windowSampleCount <= 0)
             {

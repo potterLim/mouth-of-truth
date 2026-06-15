@@ -25,10 +25,10 @@ namespace MouthOfTruth.Game.Voice
             mGameView = gameView;
         }
 
-        public bool RequiresManualTextEntry => true;
+        public EAnswerTranscriptInputMode TranscriptInputMode => EAnswerTranscriptInputMode.ManualTextEntry;
 
-        public string TranscriptPlaceholderText =>
-            "답변을 입력하세요. 입력이 멈추면 3초 뒤 자동 종료됩니다.";
+        public AnswerTranscriptPlaceholderText TranscriptPlaceholderText =>
+            new AnswerTranscriptPlaceholderText("답변을 입력하세요. 입력이 멈추면 3초 뒤 자동 종료됩니다.");
 
         public void Reset()
         {

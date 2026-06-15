@@ -314,12 +314,19 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             setText(mAnalyzingDotsText, string.Empty);
         }
 
-        private void disableAnalyzingPresentation(bool preserveMouthLayout = false)
+        private void disableAnalyzingPresentation()
+        {
+            disableAnalyzingPresentation(EAnalyzingPresentationResetMode.ResetMouthLayout);
+        }
+
+        private void disableAnalyzingPresentation(EAnalyzingPresentationResetMode analyzingPresentationResetMode)
         {
             mIsAnalyzingPresentationActive = false;
             setEyeBeamImagesActive(false);
 
-            if (mMouthImage != null && preserveMouthLayout == false && isTempleApproachSceneActive() == false)
+            if (mMouthImage != null
+                && analyzingPresentationResetMode == EAnalyzingPresentationResetMode.ResetMouthLayout
+                && isTempleApproachSceneActive() == false)
             {
                 mMouthImage.rectTransform.anchoredPosition = getMouthAnchorPosition();
                 mMouthImage.color = Color.white;

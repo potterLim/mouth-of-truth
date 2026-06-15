@@ -106,12 +106,14 @@ namespace MouthOfTruth.Game.Presentation.Runtime
         {
             try
             {
-                if (File.Exists(MouthOfTruthAssetCatalog.FirstRunTutorialSequencePath) == false)
+                RuntimeAssetFilePath firstRunTutorialSequencePath = MouthOfTruthAssetCatalog.FirstRunTutorialSequencePath;
+
+                if (File.Exists(firstRunTutorialSequencePath.Value) == false)
                 {
                     return FIRST_RUN_TUTORIAL_FALLBACK_DURATION_SECONDS;
                 }
 
-                string jsonText = File.ReadAllText(MouthOfTruthAssetCatalog.FirstRunTutorialSequencePath);
+                string jsonText = File.ReadAllText(firstRunTutorialSequencePath.Value);
                 TutorialSequenceMetadata metadata = JsonUtility.FromJson<TutorialSequenceMetadata>(jsonText);
 
                 if (metadata == null || metadata.fr <= 0.0f || metadata.op <= metadata.ip)

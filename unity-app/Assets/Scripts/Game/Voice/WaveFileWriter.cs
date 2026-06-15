@@ -4,11 +4,11 @@ using UnityEngine;
 
 namespace MouthOfTruth.Game.Voice
 {
-    public static class WaveFileWriter
+    internal static class WaveFileWriter
     {
-        public static string WriteMono16BitPcm(string outputFilePath, float[] monoSamples, int sampleRate)
+        internal static void WriteMono16BitPcm(AnswerAudioFilePath outputFilePath, float[] monoSamples, AudioSampleRate sampleRate)
         {
-            if (string.IsNullOrWhiteSpace(outputFilePath))
+            if (outputFilePath.IsEmpty)
             {
                 throw new ArgumentException("Output file path is required.", nameof(outputFilePath));
             }
@@ -18,24 +18,19 @@ namespace MouthOfTruth.Game.Voice
                 throw new ArgumentNullException(nameof(monoSamples));
             }
 
-            if (sampleRate <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(sampleRate));
-            }
-
-            string directoryPath = Path.GetDirectoryName(outputFilePath);
+            string directoryPath = Path.GetDirectoryName(outputFilePath.Value);
 
             if (string.IsNullOrWhiteSpace(directoryPath) == false)
             {
                 Directory.CreateDirectory(directoryPath);
             }
 
-            using (FileStream fileStream = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write))
+            using (FileStream fileStream = new FileStream(outputFilePath.Value, FileMode.Create, FileAccess.Write))
             using (BinaryWriter binaryWriter = new BinaryWriter(fileStream))
             {
                 int bytesPerSample = sizeof(short);
                 int channelCount = 1;
-                int byteRate = sampleRate * channelCount * bytesPerSample;
+                int byteRate = sampleRate.Value * channelCount * bytesPerSample;
                 int dataChunkSize = monoSamples.Length * bytesPerSample;
 
                 binaryWriter.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));
@@ -45,7 +40,7 @@ namespace MouthOfTruth.Game.Voice
                 binaryWriter.Write(16);
                 binaryWriter.Write((short)1);
                 binaryWriter.Write((short)channelCount);
-                binaryWriter.Write(sampleRate);
+                binaryWriter.Write(sampleRate.Value);
                 binaryWriter.Write(byteRate);
                 binaryWriter.Write((short)(channelCount * bytesPerSample));
                 binaryWriter.Write((short)(bytesPerSample * 8));
@@ -59,7 +54,6 @@ namespace MouthOfTruth.Game.Voice
                 }
             }
 
-            return outputFilePath;
         }
     }
 }

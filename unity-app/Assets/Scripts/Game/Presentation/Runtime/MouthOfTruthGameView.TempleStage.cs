@@ -125,9 +125,9 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mTempleApproachMouthImage = null;
         }
 
-        private void prepareCardLaunchPresentation(bool preserveTempleApproachScene)
+        private void prepareCardLaunchPresentation(ECardLaunchPresentationMode cardLaunchPresentationMode)
         {
-            if (preserveTempleApproachScene)
+            if (cardLaunchPresentationMode == ECardLaunchPresentationMode.TempleApproach)
             {
                 setObjectActive(mBackgroundImage, false);
                 setObjectActive(mCarpetImage, false);
@@ -244,7 +244,12 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 getTempleCameraPositionForCenteredMouth(targetScale, targetMouthCenter));
         }
 
-        private void setTempleCameraPose(float scale, float yOffset, float xOffset = 0.0f)
+        private void setTempleCameraPose(float scale, float yOffset)
+        {
+            setTempleCameraPose(scale, yOffset, 0.0f);
+        }
+
+        private void setTempleCameraPose(float scale, float yOffset, float xOffset)
         {
             if (mTempleApproachCameraRectTransform == null)
             {
@@ -256,7 +261,12 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             syncTempleStageMouthOverlay(0.0f);
         }
 
-        private void setTempleCameraPoseCenteredOnMouth(float scale, Vector2 targetMouthCenter, float xOffset = 0.0f, float yOffset = 0.0f)
+        private void setTempleCameraPoseCenteredOnMouth(float scale, Vector2 targetMouthCenter)
+        {
+            setTempleCameraPoseCenteredOnMouth(scale, targetMouthCenter, 0.0f, 0.0f);
+        }
+
+        private void setTempleCameraPoseCenteredOnMouth(float scale, Vector2 targetMouthCenter, float xOffset, float yOffset)
         {
             Vector2 centeredPosition = getTempleCameraPositionForCenteredMouth(scale, targetMouthCenter);
             setTempleCameraPose(scale, centeredPosition.y + yOffset, centeredPosition.x + xOffset);
@@ -338,7 +348,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             return size.x > 1.0f && size.y > 1.0f;
         }
 
-        private struct TempleCameraTransition
+        private readonly struct TempleCameraTransition
         {
             private readonly float mStartScale;
             private readonly Vector2 mStartPosition;

@@ -1,23 +1,17 @@
 using System;
 
-namespace MouthOfTruth.Game.Data
+namespace MouthOfTruth.Game.Presentation.Runtime
 {
-    public readonly struct AnswerTranscript : IEquatable<AnswerTranscript>
+    internal readonly struct RuntimeAssetFilePath : IEquatable<RuntimeAssetFilePath>
     {
         private readonly string mValue;
 
-        public AnswerTranscript(string value)
+        public RuntimeAssetFilePath(string value)
         {
-            if (value == null)
-            {
-                mValue = string.Empty;
-                return;
-            }
-
-            mValue = value;
+            mValue = string.IsNullOrWhiteSpace(value) ? string.Empty : value;
         }
 
-        public static AnswerTranscript Empty => new AnswerTranscript(string.Empty);
+        public static RuntimeAssetFilePath Empty => new RuntimeAssetFilePath(string.Empty);
 
         public string Value
         {
@@ -34,19 +28,14 @@ namespace MouthOfTruth.Game.Data
 
         public bool IsEmpty => string.IsNullOrWhiteSpace(Value);
 
-        public AnswerTranscript Trimmed()
-        {
-            return new AnswerTranscript(Value.Trim());
-        }
-
-        public bool Equals(AnswerTranscript other)
+        public bool Equals(RuntimeAssetFilePath other)
         {
             return string.Equals(Value, other.Value, StringComparison.Ordinal);
         }
 
         public override bool Equals(object obj)
         {
-            return obj is AnswerTranscript other && Equals(other);
+            return obj is RuntimeAssetFilePath other && Equals(other);
         }
 
         public override int GetHashCode()

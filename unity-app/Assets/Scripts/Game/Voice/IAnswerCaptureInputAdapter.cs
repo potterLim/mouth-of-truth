@@ -6,9 +6,9 @@ namespace MouthOfTruth.Game.Voice
 {
     public interface IAnswerCaptureInputAdapter
     {
-        bool RequiresManualTextEntry { get; }
+        EAnswerTranscriptInputMode TranscriptInputMode { get; }
 
-        string TranscriptPlaceholderText { get; }
+        AnswerTranscriptPlaceholderText TranscriptPlaceholderText { get; }
 
         void Reset();
 

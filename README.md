@@ -117,7 +117,7 @@ Windows PowerShell:
 
 ## 릴리스 자동화
 
-Release workflow를 수동 실행하고 `v0.1.1` 같은 tag 이름을 입력하면 macOS/Windows 빌드를 만들고 draft GitHub Release에 asset을 업로드합니다.
+Release workflow를 수동 실행하고 `v0.1.1` 같은 tag 이름을 입력하면 입력값과 필수 secrets를 검증한 뒤 macOS/Windows 빌드를 만들고 draft GitHub Release에 asset을 업로드합니다.
 
 모델과 Unity Asset Store 자산은 공개 Git에 넣지 않습니다. 비공개 asset bundle URL과 접근 토큰을 GitHub Actions secret으로 제공하며 빌드 중 필수 모델의 SHA-256을 확인합니다.
 

@@ -448,14 +448,15 @@ GitHub Release에는 검증된 실행 묶음만 올립니다. macOS에서 만든
 흐름:
 
 1. GitHub Actions에서 Release workflow를 수동 실행하고 `v0.1.1` 같은 tag 이름을 입력합니다.
-2. GitHub Actions가 macOS와 Windows job을 실행합니다.
-3. 각 job이 비공개 asset bundle을 복원합니다.
-4. Python 소스 컴파일 검사와 unit test를 실행한 뒤 Python 런타임을 OS별로 패키징합니다.
-5. Unity EditMode 테스트를 실행하고 결과 XML을 artifact로 남깁니다.
-6. Unity release build를 실행합니다.
-7. `MouthOfTruth-macos.zip`, `MouthOfTruth-windows.zip`과 checksum을 artifact로 모읍니다.
-8. draft GitHub Release를 만들고 asset을 업로드합니다.
-9. GitHub에서 release note와 asset을 확인한 뒤 publish합니다.
+2. workflow가 tag 형식, 원격 tag 존재 여부, 기존 release 존재 여부, 필수 secrets를 먼저 검증합니다.
+3. GitHub Actions가 macOS와 Windows job을 실행하고 입력한 tag를 checkout합니다.
+4. 각 job이 비공개 asset bundle을 복원합니다.
+5. Python 소스 컴파일 검사와 unit test를 실행한 뒤 Python 런타임을 OS별로 패키징합니다.
+6. Unity EditMode 테스트를 실행하고 결과 XML을 artifact로 남깁니다.
+7. Unity release build를 실행합니다.
+8. `MouthOfTruth-macos.zip`, `MouthOfTruth-windows.zip`과 checksum을 artifact로 모읍니다.
+9. draft GitHub Release를 만들고 asset을 업로드합니다.
+10. GitHub에서 release note와 asset을 확인한 뒤 publish합니다.
 
 필요한 GitHub Actions secrets:
 
@@ -493,6 +494,14 @@ dist/ci-assets/mouth-of-truth-ci-assets.tar.gz.sha256
 ```
 
 이 파일은 모델과 Unity Asset Store 원본 자산을 포함하므로 Git에 commit하거나 public release asset으로 올리지 않습니다. 사내 저장소, private object storage, 만료 시간이 있는 pre-signed URL 같은 비공개 경로에 둡니다.
+
+GitHub private repository의 release asset을 비공개 경로로 사용할 수도 있습니다. 이 경우 `MOUTH_OF_TRUTH_CI_ASSET_BUNDLE_URL`에는 release asset API URL을 넣고 `MOUTH_OF_TRUTH_CI_ASSET_BUNDLE_TOKEN`에는 해당 private repository를 읽을 수 있는 최소 권한 토큰을 넣습니다. workflow는 `Accept: application/octet-stream` 헤더를 사용해 private GitHub release asset 다운로드를 지원합니다.
+
+GitHub release asset API URL 형식:
+
+```text
+https://api.github.com/repos/<owner>/<private-asset-repository>/releases/assets/<asset-id>
+```
 
 릴리스 tag 이름은 GitHub Actions의 Release workflow 수동 실행 입력값으로 전달합니다. 현재 workflow에는 tag push 트리거가 없으므로 `git push origin v0.1.1`만으로 릴리스가 시작되지 않습니다.
 

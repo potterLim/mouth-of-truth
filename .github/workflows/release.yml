@@ -17,14 +17,75 @@ env:
   RELEASE_TAG: ${{ github.event.inputs.tag_name || github.ref_name }}
 
 jobs:
+  validate-release-inputs:
+    name: Validate release inputs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate tag and required secrets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ASSET_BUNDLE_URL: ${{ secrets.MOUTH_OF_TRUTH_CI_ASSET_BUNDLE_URL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          missing_inputs=()
+
+          if [[ -z "${RELEASE_TAG}" ]]; then
+            missing_inputs+=("release tag input")
+          fi
+
+          if [[ -z "${ASSET_BUNDLE_URL}" ]]; then
+            missing_inputs+=("MOUTH_OF_TRUTH_CI_ASSET_BUNDLE_URL")
+          fi
+
+          if [[ -z "${UNITY_EMAIL}" ]]; then
+            missing_inputs+=("UNITY_EMAIL")
+          fi
+
+          if [[ -z "${UNITY_LICENSE}" ]]; then
+            missing_inputs+=("UNITY_LICENSE")
+          fi
+
+          if [[ -z "${UNITY_PASSWORD}" ]]; then
+            missing_inputs+=("UNITY_PASSWORD")
+          fi
+
+          if (( ${#missing_inputs[@]} > 0 )); then
+            printf 'Missing release input or secret: %s\n' "${missing_inputs[@]}" >&2
+            exit 1
+          fi
+
+          if [[ ! "${RELEASE_TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must use semantic version format, for example v0.1.1: ${RELEASE_TAG}" >&2
+            exit 1
+          fi
+
+          if ! gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "Release tag does not exist on GitHub: ${RELEASE_TAG}" >&2
+            exit 1
+          fi
+
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            echo "Release ${RELEASE_TAG} already exists. Delete it or use a new tag." >&2
+            exit 1
+          fi
+
+          echo "Release inputs are valid."
+
   build-macos:
     name: Build macOS
     runs-on: macos-14
+    needs: validate-release-inputs
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Restore private release assets
         shell: bash
@@ -41,17 +102,19 @@ jobs:
 
           ASSET_BUNDLE_PATH="${RUNNER_TEMP}/mouth-of-truth-ci-assets.tar.gz"
 
+          curl_arguments=(
+            --fail
+            --location
+            --retry 3
+            --header "Accept: application/octet-stream"
+            --output "${ASSET_BUNDLE_PATH}"
+          )
+
           if [[ -n "${ASSET_BUNDLE_TOKEN}" ]]; then
-            curl --fail --location --retry 3 \
-              --header "Authorization: Bearer ${ASSET_BUNDLE_TOKEN}" \
-              --output "${ASSET_BUNDLE_PATH}" \
-              "${ASSET_BUNDLE_URL}"
-          else
-            curl --fail --location --retry 3 \
-              --output "${ASSET_BUNDLE_PATH}" \
-              "${ASSET_BUNDLE_URL}"
+            curl_arguments+=(--header "Authorization: Bearer ${ASSET_BUNDLE_TOKEN}")
           fi
 
+          curl "${curl_arguments[@]}" "${ASSET_BUNDLE_URL}"
           tools/restore-model-assets.sh "${ASSET_BUNDLE_PATH}"
           test -d unity-app/Assets/ThirdParty/Environment/DungeonModularPack
           test -d unity-app/Assets/ThirdParty/Environment/PersianCarpetUrp
@@ -92,7 +155,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: unity-editmode-test-results-macos
-          path: ${{ steps.unity-editmode-tests.outputs.artifactsPath }}
+          path: unity-editmode-test-results
 
       - name: Build macOS release
         uses: game-ci/unity-builder@v4
@@ -126,11 +189,13 @@ jobs:
   build-windows:
     name: Build Windows
     runs-on: windows-2022
+    needs: validate-release-inputs
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Restore private release assets
         shell: pwsh
@@ -143,7 +208,9 @@ jobs:
           }
 
           $assetBundlePath = Join-Path $env:RUNNER_TEMP "mouth-of-truth-ci-assets.tar.gz"
-          $headers = @{}
+          $headers = @{
+              Accept = "application/octet-stream"
+          }
 
           if ([string]::IsNullOrWhiteSpace($env:ASSET_BUNDLE_TOKEN) -eq $false) {
               $headers.Authorization = "Bearer $env:ASSET_BUNDLE_TOKEN"
@@ -197,7 +264,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: unity-editmode-test-results-windows
-          path: ${{ steps.unity-editmode-tests.outputs.artifactsPath }}
+          path: unity-editmode-test-results
 
       - name: Build Windows release
         uses: game-ci/unity-builder@v4
@@ -281,6 +348,5 @@ jobs:
           gh release create "${RELEASE_TAG}" \
             release-assets/* \
             --draft \
-            --target "${GITHUB_SHA}" \
             --title "${RELEASE_TITLE}" \
             --notes-file "${RELEASE_NOTES_PATH}"

@@ -36,6 +36,7 @@ namespace MouthOfTruth.Game.App
         private bool mIsInitialized;
         private bool mIsTransitionBusy;
         private bool mHasShownFirstRunTutorial;
+        private bool mHasCleanedSessionArtifactsOnExit;
         private string mLastObservedTranscript = string.Empty;
 
         private void Awake()
@@ -56,6 +57,7 @@ namespace MouthOfTruth.Game.App
             {
                 Debug.Log("MouthOfTruthAppController started.");
                 mLifecycleCancellationTokenSource = new CancellationTokenSource();
+                tryCleanAllSessionArtifacts("startup");
                 mAnswerAnalysisClient = createAnalysisClient();
                 _ = warmUpAnalysisClientAsync();
                 mGameView = GetComponent<MouthOfTruthGameView>();
@@ -117,13 +119,13 @@ namespace MouthOfTruth.Game.App
 
             if (mGameView.ConsumeStartRequested())
             {
-                _ = startGameAsync();
+                runObservedAsync(startGameAsync, "start game");
                 return;
             }
 
             if (mGameView.ConsumeTryAgainRequested())
             {
-                _ = restartGameAsync();
+                runObservedAsync(restartGameAsync, "restart game");
                 return;
             }
 
@@ -162,12 +164,19 @@ namespace MouthOfTruth.Game.App
 
         private void OnDestroy()
         {
+            mLifecycleCancellationTokenSource?.Cancel();
             mAnswerCaptureInputAdapter?.CancelCollection();
             mFaceCaptureInputAdapter?.CancelCollection();
             (mAnswerAnalysisClient as IDisposable)?.Dispose();
-            mLifecycleCancellationTokenSource?.Cancel();
             mLifecycleCancellationTokenSource?.Dispose();
+            cleanSessionArtifactsOnExit();
             restoreSystemCursor();
+        }
+
+        private void OnApplicationQuit()
+        {
+            mLifecycleCancellationTokenSource?.Cancel();
+            cleanSessionArtifactsOnExit();
         }
 
         private void OnApplicationFocus(bool hasFocus)
@@ -221,31 +230,43 @@ namespace MouthOfTruth.Game.App
         private async Task startGameAsync()
         {
             mIsTransitionBusy = true;
-            bool shouldShowFirstRunTutorial = mHasShownFirstRunTutorial == false;
-            mHasShownFirstRunTutorial = true;
-            mGameStateMachine.StartGame();
-            resetInteractionSelectionState();
-
-            if (shouldShowFirstRunTutorial)
+            try
             {
-                await mGameView.PlayFirstRunTutorialAsync();
-            }
+                bool shouldShowFirstRunTutorial = mHasShownFirstRunTutorial == false;
+                mHasShownFirstRunTutorial = true;
+                mGameStateMachine.StartGame();
+                resetInteractionSelectionState();
 
-            await playCardSelectionPresentationAsync();
-            mGameStateMachine.MarkCardPresentationCompleted();
-            mIsTransitionBusy = false;
+                if (shouldShowFirstRunTutorial)
+                {
+                    await mGameView.PlayFirstRunTutorialAsync();
+                }
+
+                await playCardSelectionPresentationAsync();
+                mGameStateMachine.MarkCardPresentationCompleted();
+            }
+            finally
+            {
+                mIsTransitionBusy = false;
+            }
         }
 
         private async Task restartGameAsync()
         {
             mIsTransitionBusy = true;
-            mGameStateMachine.TryAgain();
-            resetAnswerTracking();
-            resetInteractionSelectionState();
-            await playCardSelectionPresentationAsync();
-            beginBottomCenterPointerSettle();
-            mGameStateMachine.MarkCardPresentationCompleted();
-            mIsTransitionBusy = false;
+            try
+            {
+                mGameStateMachine.TryAgain();
+                resetAnswerTracking();
+                resetInteractionSelectionState();
+                await playCardSelectionPresentationAsync();
+                beginBottomCenterPointerSettle();
+                mGameStateMachine.MarkCardPresentationCompleted();
+            }
+            finally
+            {
+                mIsTransitionBusy = false;
+            }
         }
 
         private async Task playCardSelectionPresentationAsync()
@@ -273,7 +294,9 @@ namespace MouthOfTruth.Game.App
                 return;
             }
 
-            _ = revealQuestionAsync(confirmedQuestionCardSlotOrNull.Value, mGameStateMachine.CreateSnapshot().SelectedQuestionDefinition);
+            EQuestionCardSlot confirmedQuestionCardSlot = confirmedQuestionCardSlotOrNull.Value;
+            QuestionDefinition selectedQuestionDefinition = mGameStateMachine.CreateSnapshot().SelectedQuestionDefinition;
+            runObservedAsync(() => revealQuestionAsync(confirmedQuestionCardSlot, selectedQuestionDefinition), "reveal question");
         }
 
         private void updateHandInsertion(Vector2? pointerScreenPositionOrNull)
@@ -290,7 +313,7 @@ namespace MouthOfTruth.Game.App
             }
 
             mLastObservedHandAnchorState = handAnchorState;
-            _ = insertHandAsync();
+            runObservedAsync(insertHandAsync, "insert hand");
         }
 
         private void updateAnswering(Vector2? pointerScreenPositionOrNull)
@@ -309,7 +332,7 @@ namespace MouthOfTruth.Game.App
 
             if (shouldFinishAnswer)
             {
-                _ = analyzeAnswerAsync();
+                runObservedAsync(analyzeAnswerAsync, "analyze answer");
             }
         }
 
@@ -333,11 +356,11 @@ namespace MouthOfTruth.Game.App
             switch (confirmedUiActionTargetOrNull.Value)
             {
                 case EUiActionTarget.StartGame:
-                    _ = startGameAsync();
+                    runObservedAsync(startGameAsync, "start game");
                     return true;
 
                 case EUiActionTarget.TryAgain:
-                    _ = restartGameAsync();
+                    runObservedAsync(restartGameAsync, "restart game");
                     return true;
 
                 case EUiActionTarget.BackToTitle:
@@ -389,99 +412,130 @@ namespace MouthOfTruth.Game.App
         private async Task revealQuestionAsync(EQuestionCardSlot selectedQuestionCardSlot, QuestionDefinition selectedQuestionDefinition)
         {
             mIsTransitionBusy = true;
-            mGameView.UpdatePointerVisual(false, null);
-            mGameView.UpdateActionButtonHoverVisual(null, 0.0f);
-            await mGameView.PlayQuestionRevealAsync(selectedQuestionCardSlot, selectedQuestionDefinition, () => mQuestionNarrationService.SpeakQuestionAsync(selectedQuestionDefinition, mLifecycleCancellationTokenSource.Token));
-            await mGameView.PrepareTempleGameplayBackdropAsync();
-            mGameStateMachine.MarkQuestionRevealCompleted();
-            mGameStateMachine.MarkQuestionNarrationCompleted();
-            mGameView.ShowAwaitingHandInsertion();
-            beginBottomCenterPointerSettle(mGameView.HandPromptPanelHoldDurationSeconds);
-            mGameView.SetAnswerTranscriptEditable(mAnswerCaptureInputAdapter.RequiresManualTextEntry);
-            resetAnswerTracking();
-            mIsTransitionBusy = false;
+            try
+            {
+                mGameView.UpdatePointerVisual(false, null);
+                mGameView.UpdateActionButtonHoverVisual(null, 0.0f);
+                await mGameView.PlayQuestionRevealAsync(selectedQuestionCardSlot, selectedQuestionDefinition, () => mQuestionNarrationService.SpeakQuestionAsync(selectedQuestionDefinition, mLifecycleCancellationTokenSource.Token));
+                await mGameView.PrepareTempleGameplayBackdropAsync();
+                mGameStateMachine.MarkQuestionRevealCompleted();
+                mGameStateMachine.MarkQuestionNarrationCompleted();
+                mGameView.ShowAwaitingHandInsertion();
+                beginBottomCenterPointerSettle(mGameView.HandPromptPanelHoldDurationSeconds);
+                mGameView.SetAnswerTranscriptEditable(mAnswerCaptureInputAdapter.RequiresManualTextEntry);
+                resetAnswerTracking();
+            }
+            finally
+            {
+                mIsTransitionBusy = false;
+            }
         }
 
         private async Task insertHandAsync()
         {
             mIsTransitionBusy = true;
-            resetPointerPresentationRebase();
-            bool isResumingAnswer = mGameStateMachine.CurrentState == EGameFlowState.AnswerPaused;
-
-            if (mGameStateMachine.CurrentState == EGameFlowState.AwaitingHandInsertion)
-            {
-                mGameStateMachine.NotifyHandReachedFrontAnchor();
-            }
-
-            await mGameView.AnimateHandInsertionAsync();
-            mGameStateMachine.NotifyHandReachedInnerAnchor();
-            GameSessionSnapshot snapshot = mGameStateMachine.CreateSnapshot();
             try
             {
-                beginOrResumeAnswerCapture(isResumingAnswer);
-            }
-            catch (Exception exception)
-            {
-                Debug.LogWarning("Falling back to keyboard answer entry because microphone capture failed.\n" + exception);
-                mAnswerCaptureInputAdapter = new KeyboardTranscriptAnswerInputAdapter(mGameView);
-                mGameView.SetAnswerTranscriptPlaceholder(mAnswerCaptureInputAdapter.TranscriptPlaceholderText);
-                mAnswerCaptureInputAdapter.Reset();
-                beginOrResumeAnswerCapture(isResumingAnswer: false);
-            }
-            beginOrResumeFaceCapture(snapshot.SelectedQuestionDefinition?.ID, isResumingAnswer);
+                resetPointerPresentationRebase();
+                bool isResumingAnswer = mGameStateMachine.CurrentState == EGameFlowState.AnswerPaused;
 
-            mGameView.ShowAnswering();
-            mGameView.SetAnswerTranscriptEditable(mAnswerCaptureInputAdapter.RequiresManualTextEntry);
-            mLastObservedHandAnchorState = EHandAnchorState.AtInnerAnchor;
-            mIsTransitionBusy = false;
+                if (mGameStateMachine.CurrentState == EGameFlowState.AwaitingHandInsertion)
+                {
+                    mGameStateMachine.NotifyHandReachedFrontAnchor();
+                }
+
+                await mGameView.AnimateHandInsertionAsync();
+                mGameStateMachine.NotifyHandReachedInnerAnchor();
+                GameSessionSnapshot snapshot = mGameStateMachine.CreateSnapshot();
+                try
+                {
+                    beginOrResumeAnswerCapture(isResumingAnswer);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogWarning("Falling back to keyboard answer entry because microphone capture failed.\n" + exception);
+                    mAnswerCaptureInputAdapter = new KeyboardTranscriptAnswerInputAdapter(mGameView);
+                    mGameView.SetAnswerTranscriptPlaceholder(mAnswerCaptureInputAdapter.TranscriptPlaceholderText);
+                    mAnswerCaptureInputAdapter.Reset();
+                    beginOrResumeAnswerCapture(isResumingAnswer: false);
+                }
+                beginOrResumeFaceCapture(snapshot.SelectedQuestionDefinition?.ID, isResumingAnswer);
+
+                mGameView.ShowAnswering();
+                mGameView.SetAnswerTranscriptEditable(mAnswerCaptureInputAdapter.RequiresManualTextEntry);
+                mLastObservedHandAnchorState = EHandAnchorState.AtInnerAnchor;
+            }
+            finally
+            {
+                mIsTransitionBusy = false;
+            }
         }
 
         private async Task analyzeAnswerAsync()
         {
             mIsTransitionBusy = true;
-            mGameView.ShowAnalyzing();
-            float analysisPresentationStartedAtSeconds = Time.unscaledTime + mGameView.AnalysisFocusRampDurationSeconds;
-            GameSessionSnapshot snapshot = mGameStateMachine.CreateSnapshot();
-            System.Diagnostics.Stopwatch captureStopwatch = System.Diagnostics.Stopwatch.StartNew();
-            Task<AnswerCaptureResult> answerCaptureTask = mAnswerCaptureInputAdapter.CompleteCollectionAsync(snapshot.SelectedQuestionDefinition?.ID, mLifecycleCancellationTokenSource.Token);
-            Task<FaceCaptureResult> faceCaptureTask = mFaceCaptureInputAdapter.CompleteCollectionAsync(mLifecycleCancellationTokenSource.Token);
-            await Task.WhenAll(answerCaptureTask, faceCaptureTask);
-            captureStopwatch.Stop();
-            Debug.Log($"Answer capture finalization completed in {captureStopwatch.ElapsedMilliseconds} ms.");
-            AnswerCaptureResult answerCaptureResult = answerCaptureTask.Result;
-            FaceCaptureResult faceCaptureResult = faceCaptureTask.Result;
-
-            if (string.IsNullOrWhiteSpace(answerCaptureResult.TranscriptText) == false)
-            {
-                applyTranscriptUpdate(answerCaptureResult.TranscriptText);
-                snapshot = mGameStateMachine.CreateSnapshot();
-            }
-
-            AnswerAnalysisRequest answerAnalysisRequest = buildAnalysisRequest(snapshot, answerCaptureResult, faceCaptureResult);
-            AnswerAnalysisResult answerAnalysisResult;
-
+            AnswerCaptureResult answerCaptureResult = null;
+            FaceCaptureResult faceCaptureResult = null;
             try
             {
-                System.Diagnostics.Stopwatch analysisStopwatch = System.Diagnostics.Stopwatch.StartNew();
-                answerAnalysisResult = await mAnswerAnalysisClient.AnalyzeAsync(answerAnalysisRequest, mLifecycleCancellationTokenSource.Token);
-                analysisStopwatch.Stop();
-                Debug.Log($"Answer analysis completed in {analysisStopwatch.ElapsedMilliseconds} ms.");
-            }
-            catch (Exception exception)
-            {
-                Debug.LogWarning("Primary answer analysis failed. Falling back to deterministic analysis.\n" + exception);
-                answerAnalysisResult = await new DeterministicAnswerAnalysisClient().AnalyzeAsync(answerAnalysisRequest, mLifecycleCancellationTokenSource.Token);
-            }
+                mGameView.ShowAnalyzing();
+                float analysisPresentationStartedAtSeconds = Time.unscaledTime + mGameView.AnalysisFocusRampDurationSeconds;
+                GameSessionSnapshot snapshot = mGameStateMachine.CreateSnapshot();
+                System.Diagnostics.Stopwatch captureStopwatch = System.Diagnostics.Stopwatch.StartNew();
+                Task<AnswerCaptureResult> answerCaptureTask = mAnswerCaptureInputAdapter.CompleteCollectionAsync(snapshot.SelectedQuestionDefinition?.ID, mLifecycleCancellationTokenSource.Token);
+                Task<FaceCaptureResult> faceCaptureTask = mFaceCaptureInputAdapter.CompleteCollectionAsync(mLifecycleCancellationTokenSource.Token);
+                await Task.WhenAll(answerCaptureTask, faceCaptureTask);
+                captureStopwatch.Stop();
+                Debug.Log($"Answer capture finalization completed in {captureStopwatch.ElapsedMilliseconds} ms.");
+                answerCaptureResult = answerCaptureTask.Result;
+                faceCaptureResult = faceCaptureTask.Result;
 
-            float elapsedAnalysisPresentationSeconds = Time.unscaledTime - analysisPresentationStartedAtSeconds;
-            await waitForRealtimeSecondsAsync(MINIMUM_ANALYSIS_PRESENTATION_SECONDS - elapsedAnalysisPresentationSeconds, mLifecycleCancellationTokenSource.Token);
-            await mGameView.PlayAnalysisCompleteTransitionAsync();
-            applyTranscriptUpdate(answerAnalysisResult.AnswerTranscript);
-            snapshot = mGameStateMachine.CreateSnapshot();
-            mGameStateMachine.CompleteAnalysis(answerAnalysisResult);
-            mGameView.ShowResult(answerAnalysisResult.VerdictKind, snapshot.CurrentAnswerTranscript);
-            await mGameView.PlayResultRevealAnimationAsync(answerAnalysisResult.VerdictKind);
-            mIsTransitionBusy = false;
+                if (string.IsNullOrWhiteSpace(answerCaptureResult.TranscriptText) == false)
+                {
+                    applyTranscriptUpdate(answerCaptureResult.TranscriptText);
+                    snapshot = mGameStateMachine.CreateSnapshot();
+                }
+
+                AnswerAnalysisRequest answerAnalysisRequest = buildAnalysisRequest(snapshot, answerCaptureResult, faceCaptureResult);
+                AnswerAnalysisResult answerAnalysisResult;
+
+                try
+                {
+                    System.Diagnostics.Stopwatch analysisStopwatch = System.Diagnostics.Stopwatch.StartNew();
+                    answerAnalysisResult = await mAnswerAnalysisClient.AnalyzeAsync(answerAnalysisRequest, mLifecycleCancellationTokenSource.Token);
+                    analysisStopwatch.Stop();
+                    Debug.Log($"Answer analysis completed in {analysisStopwatch.ElapsedMilliseconds} ms.");
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogWarning("Primary answer analysis failed. Falling back to deterministic analysis.\n" + exception);
+                    answerAnalysisResult = await new DeterministicAnswerAnalysisClient().AnalyzeAsync(answerAnalysisRequest, mLifecycleCancellationTokenSource.Token);
+                }
+
+                float elapsedAnalysisPresentationSeconds = Time.unscaledTime - analysisPresentationStartedAtSeconds;
+                await waitForRealtimeSecondsAsync(MINIMUM_ANALYSIS_PRESENTATION_SECONDS - elapsedAnalysisPresentationSeconds, mLifecycleCancellationTokenSource.Token);
+                await mGameView.PlayAnalysisCompleteTransitionAsync();
+                applyTranscriptUpdate(answerAnalysisResult.AnswerTranscript);
+                snapshot = mGameStateMachine.CreateSnapshot();
+                mGameStateMachine.CompleteAnalysis(answerAnalysisResult);
+                mGameView.ShowResult(answerAnalysisResult.VerdictKind, snapshot.CurrentAnswerTranscript);
+                await mGameView.PlayResultRevealAnimationAsync(answerAnalysisResult.VerdictKind);
+            }
+            finally
+            {
+                if (answerCaptureResult != null || faceCaptureResult != null)
+                {
+                    string answerAudioFilePath = answerCaptureResult == null ? string.Empty : answerCaptureResult.AudioFilePath;
+                    string faceFramesDirectoryPath = faceCaptureResult == null ? string.Empty : faceCaptureResult.FaceFramesDirectoryPath;
+                    MouthOfTruthSessionArtifactCleaner.CleanAnalysisArtifacts(answerAudioFilePath, faceFramesDirectoryPath);
+                }
+
+                mIsTransitionBusy = false;
+            }
         }
 
         private static async Task waitForRealtimeSecondsAsync(float durationSeconds, CancellationToken cancellationToken)
@@ -513,11 +567,80 @@ namespace MouthOfTruth.Game.App
         private void resetAnswerTracking()
         {
             mLastObservedTranscript = string.Empty;
-            mGameView.ClearAnswerTranscript();
-            mAnswerCaptureInputAdapter.Reset();
+            mGameView?.ClearAnswerTranscript();
+            mAnswerCaptureInputAdapter?.Reset();
             mFaceCaptureInputAdapter?.Reset();
             mLastObservedHandAnchorState = EHandAnchorState.OutsideMouth;
             resetHandPromptDismissalTracking();
+        }
+
+        private void runObservedAsync(Func<Task> asyncOperation, string operationName)
+        {
+            _ = runObservedTaskAsync(asyncOperation, operationName);
+        }
+
+        private async Task runObservedTaskAsync(Func<Task> asyncOperation, string operationName)
+        {
+            if (asyncOperation == null)
+            {
+                return;
+            }
+
+            try
+            {
+                await asyncOperation();
+            }
+            catch (OperationCanceledException)
+            {
+                mIsTransitionBusy = false;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("MouthOfTruth transition failed while trying to " + operationName + ". Returning to the start screen.\n" + exception);
+                recoverToStartScreenAfterTransitionFailure();
+            }
+        }
+
+        private void recoverToStartScreenAfterTransitionFailure()
+        {
+            mIsTransitionBusy = false;
+            mAnswerCaptureInputAdapter?.CancelCollection();
+            mFaceCaptureInputAdapter?.CancelCollection();
+
+            try
+            {
+                resetAnswerTracking();
+                resetInteractionSelectionState();
+                mGameStateMachine?.OpenStartScreen();
+                mGameView?.ShowStartScreen();
+            }
+            catch (Exception recoveryException)
+            {
+                Debug.LogError("MouthOfTruth transition recovery failed.\n" + recoveryException);
+            }
+        }
+
+        private void tryCleanAllSessionArtifacts(string reason)
+        {
+            try
+            {
+                MouthOfTruthSessionArtifactCleaner.CleanAllSessionArtifacts();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning("Session artifact cleanup failed during " + reason + ".\n" + exception);
+            }
+        }
+
+        private void cleanSessionArtifactsOnExit()
+        {
+            if (mHasCleanedSessionArtifactsOnExit)
+            {
+                return;
+            }
+
+            mHasCleanedSessionArtifactsOnExit = true;
+            tryCleanAllSessionArtifacts("application exit");
         }
 
         private IQuestionNarrationService createNarrationService()

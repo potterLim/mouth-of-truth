@@ -1,11 +1,18 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using MouthOfTruth.Game.Analysis;
+using MouthOfTruth.Game.App;
 using MouthOfTruth.Game.Data;
+using MouthOfTruth.Game.Face;
 using MouthOfTruth.Game.Input;
 using MouthOfTruth.Game.Session;
+using MouthOfTruth.Game.Voice;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace MouthOfTruth.Editor.Tests.Game
 {
@@ -142,6 +149,98 @@ namespace MouthOfTruth.Editor.Tests.Game
             Assert.That(firstResult.ReasonCodes, Is.Empty);
         }
 
+        [Test]
+        public void SessionArtifactCleanerDeletesAnalysisArtifactsInsideWorkspace()
+        {
+            string previousRuntimeRoot = Environment.GetEnvironmentVariable("MOUTH_OF_TRUTH_RUNTIME_ROOT");
+            string temporaryRuntimeRoot = createTemporaryRuntimeRoot();
+
+            try
+            {
+                Environment.SetEnvironmentVariable("MOUTH_OF_TRUTH_RUNTIME_ROOT", temporaryRuntimeRoot);
+                string audioFilePath = AnswerAudioWorkspacePaths.BuildAudioFilePath("Q_TEST");
+                string faceDirectoryPath = FaceFrameWorkspacePaths.BuildCaptureDirectoryPath("Q_TEST");
+                Directory.CreateDirectory(Path.GetDirectoryName(audioFilePath));
+                Directory.CreateDirectory(faceDirectoryPath);
+                File.WriteAllText(audioFilePath, "audio");
+                File.WriteAllText(Path.Combine(faceDirectoryPath, "frame_00001.jpg"), "face");
+
+                MouthOfTruthSessionArtifactCleaner.CleanAnalysisArtifacts(audioFilePath, faceDirectoryPath);
+
+                Assert.That(File.Exists(audioFilePath), Is.False);
+                Assert.That(Directory.Exists(faceDirectoryPath), Is.False);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("MOUTH_OF_TRUTH_RUNTIME_ROOT", previousRuntimeRoot);
+                Directory.Delete(temporaryRuntimeRoot, recursive: true);
+            }
+        }
+
+        [Test]
+        public void SessionArtifactCleanerDoesNotDeletePathsOutsideWorkspace()
+        {
+            string previousRuntimeRoot = Environment.GetEnvironmentVariable("MOUTH_OF_TRUTH_RUNTIME_ROOT");
+            string temporaryRuntimeRoot = createTemporaryRuntimeRoot();
+            string outsideDirectoryPath = Path.Combine(Path.GetTempPath(), "mouth-of-truth-outside-" + Guid.NewGuid().ToString("N"));
+
+            try
+            {
+                Environment.SetEnvironmentVariable("MOUTH_OF_TRUTH_RUNTIME_ROOT", temporaryRuntimeRoot);
+                Directory.CreateDirectory(outsideDirectoryPath);
+                string outsideFilePath = Path.Combine(outsideDirectoryPath, "answer.wav");
+                string outsideFaceDirectoryPath = Path.Combine(outsideDirectoryPath, "face");
+                Directory.CreateDirectory(outsideFaceDirectoryPath);
+                File.WriteAllText(outsideFilePath, "audio");
+                File.WriteAllText(Path.Combine(outsideFaceDirectoryPath, "frame_00001.jpg"), "face");
+                LogAssert.Expect(LogType.Warning, "Skipped deleting session artifact outside the allowed directory: " + outsideFilePath);
+                LogAssert.Expect(LogType.Warning, "Skipped deleting session artifact directory outside the allowed directory: " + outsideFaceDirectoryPath);
+
+                MouthOfTruthSessionArtifactCleaner.CleanAnalysisArtifacts(outsideFilePath, outsideFaceDirectoryPath);
+
+                Assert.That(File.Exists(outsideFilePath), Is.True);
+                Assert.That(Directory.Exists(outsideFaceDirectoryPath), Is.True);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("MOUTH_OF_TRUTH_RUNTIME_ROOT", previousRuntimeRoot);
+                Directory.Delete(temporaryRuntimeRoot, recursive: true);
+
+                if (Directory.Exists(outsideDirectoryPath))
+                {
+                    Directory.Delete(outsideDirectoryPath, recursive: true);
+                }
+            }
+        }
+
+        [Test]
+        public void SessionArtifactCleanerClearsPreviousRunDirectories()
+        {
+            string previousRuntimeRoot = Environment.GetEnvironmentVariable("MOUTH_OF_TRUTH_RUNTIME_ROOT");
+            string temporaryRuntimeRoot = createTemporaryRuntimeRoot();
+
+            try
+            {
+                Environment.SetEnvironmentVariable("MOUTH_OF_TRUTH_RUNTIME_ROOT", temporaryRuntimeRoot);
+                string audioDirectoryPath = AnswerAudioWorkspacePaths.GetAudioDirectoryPath();
+                string faceDirectoryPath = FaceFrameWorkspacePaths.GetFaceFramesDirectoryPath();
+                Directory.CreateDirectory(audioDirectoryPath);
+                Directory.CreateDirectory(Path.Combine(faceDirectoryPath, "Q_TEST"));
+                File.WriteAllText(Path.Combine(audioDirectoryPath, "answer.wav"), "audio");
+                File.WriteAllText(Path.Combine(faceDirectoryPath, "Q_TEST", "frame_00001.jpg"), "face");
+
+                MouthOfTruthSessionArtifactCleaner.CleanAllSessionArtifacts();
+
+                Assert.That(Directory.GetFiles(audioDirectoryPath), Is.Empty);
+                Assert.That(Directory.GetDirectories(faceDirectoryPath), Is.Empty);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("MOUTH_OF_TRUTH_RUNTIME_ROOT", previousRuntimeRoot);
+                Directory.Delete(temporaryRuntimeRoot, recursive: true);
+            }
+        }
+
         private static MouthOfTruthGameStateMachine createStateMachine(float cardDwellSeconds)
         {
             QuestionDeckService questionDeckService = new QuestionDeckService(createQuestions(), randomSeedOrNull: 42);
@@ -164,6 +263,13 @@ namespace MouthOfTruth.Editor.Tests.Game
         private static QuestionDefinition createQuestion(string id)
         {
             return new QuestionDefinition(id, "Question text", "test", difficulty: 1, isEnabled: true);
+        }
+
+        private static string createTemporaryRuntimeRoot()
+        {
+            string temporaryRuntimeRoot = Path.Combine(Path.GetTempPath(), "mouth-of-truth-tests-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(temporaryRuntimeRoot);
+            return temporaryRuntimeRoot;
         }
     }
 }

@@ -27,8 +27,7 @@ namespace MouthOfTruth.Game.Analysis
 
         public Task WarmUpAsync(CancellationToken cancellationToken)
         {
-            _ = cancellationToken;
-            return ensureWorkerReadyAsync();
+            return ensureWorkerReadyAsync(cancellationToken);
         }
 
         public async Task<AnswerAnalysisResult> AnalyzeAsync(AnswerAnalysisRequest answerAnalysisRequest, CancellationToken cancellationToken)
@@ -135,7 +134,7 @@ namespace MouthOfTruth.Game.Analysis
 
         private async Task runPythonWorkerAnalysisAsync(CancellationToken cancellationToken)
         {
-            await ensureWorkerReadyAsync().ConfigureAwait(false);
+            await ensureWorkerReadyAsync(cancellationToken).ConfigureAwait(false);
 
             if (mIsWorkerReady == false)
             {
@@ -162,8 +161,10 @@ namespace MouthOfTruth.Game.Analysis
             throw new InvalidOperationException("Python analysis worker failed.\n" + response.ErrorMessage);
         }
 
-        private Task ensureWorkerReadyAsync()
+        private Task ensureWorkerReadyAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (mIsWorkerReady || isWorkerAvailable() == false)
             {
                 return Task.CompletedTask;
@@ -171,18 +172,18 @@ namespace MouthOfTruth.Game.Analysis
 
             lock (mWorkerReadyLock)
             {
-                if (mWorkerReadyTask == null)
+                if (mWorkerReadyTask == null || mWorkerReadyTask.IsCanceled || mWorkerReadyTask.IsFaulted)
                 {
-                    mWorkerReadyTask = readWorkerReadyAsync();
+                    mWorkerReadyTask = readWorkerReadyAsync(cancellationToken);
                 }
 
                 return mWorkerReadyTask;
             }
         }
 
-        private async Task readWorkerReadyAsync()
+        private async Task readWorkerReadyAsync(CancellationToken cancellationToken)
         {
-            BridgeWorkerResponseFileData readyResponse = await readWorkerResponseAsync(WORKER_STARTUP_TIMEOUT_MILLISECONDS, CancellationToken.None).ConfigureAwait(false);
+            BridgeWorkerResponseFileData readyResponse = await readWorkerResponseAsync(WORKER_STARTUP_TIMEOUT_MILLISECONDS, cancellationToken).ConfigureAwait(false);
 
             if (string.Equals(readyResponse.Status, "ready", StringComparison.OrdinalIgnoreCase) == false)
             {
@@ -340,19 +341,14 @@ namespace MouthOfTruth.Game.Analysis
                 Task<string> standardOutputTask = process.StandardOutput.ReadToEndAsync();
                 Task<string> standardErrorTask = process.StandardError.ReadToEndAsync();
 
-                bool exitedWithinTimeout = await Task.Run(() => process.WaitForExit(DEFAULT_TIMEOUT_MILLISECONDS), cancellationToken).ConfigureAwait(false);
-
-                if (exitedWithinTimeout == false)
+                try
                 {
-                    try
-                    {
-                        process.Kill();
-                    }
-                    catch (InvalidOperationException)
-                    {
-                    }
-
-                    throw new TimeoutException("Timed out while waiting for the Python analysis process.");
+                    await waitForProcessExitAsync(process, DEFAULT_TIMEOUT_MILLISECONDS, cancellationToken).ConfigureAwait(false);
+                }
+                catch
+                {
+                    killProcessIfRunning(process);
+                    throw;
                 }
 
                 string standardOutput = await standardOutputTask.ConfigureAwait(false);
@@ -362,6 +358,37 @@ namespace MouthOfTruth.Game.Analysis
                 {
                     throw new InvalidOperationException("Python analysis failed.\n" + $"stdout:\n{standardOutput}\n" + $"stderr:\n{standardError}");
                 }
+            }
+        }
+
+        private static async Task waitForProcessExitAsync(Process process, int timeoutMilliseconds, CancellationToken cancellationToken)
+        {
+            Stopwatch timeoutStopwatch = Stopwatch.StartNew();
+
+            while (process.HasExited == false)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (timeoutStopwatch.ElapsedMilliseconds >= timeoutMilliseconds)
+                {
+                    throw new TimeoutException("Timed out while waiting for the Python analysis process.");
+                }
+
+                await Task.Delay(50, cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        private static void killProcessIfRunning(Process process)
+        {
+            try
+            {
+                if (process != null && process.HasExited == false)
+                {
+                    process.Kill();
+                }
+            }
+            catch (InvalidOperationException)
+            {
             }
         }
 

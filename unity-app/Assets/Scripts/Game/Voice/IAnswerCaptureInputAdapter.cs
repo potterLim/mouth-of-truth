@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using MouthOfTruth.Game.Data;
 
 namespace MouthOfTruth.Game.Voice
 {
@@ -19,8 +20,8 @@ namespace MouthOfTruth.Game.Voice
 
         void CancelCollection();
 
-        AnswerCaptureFrameSnapshot Update(float deltaTimeSeconds);
+        AnswerCaptureFrameSnapshot Update(SecondsDuration deltaTime);
 
-        Task<AnswerCaptureResult> CompleteCollectionAsync(string questionID, CancellationToken cancellationToken);
+        Task<AnswerCaptureResult> CompleteCollectionAsync(QuestionId questionId, CancellationToken cancellationToken);
     }
 }

@@ -130,7 +130,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mProgressImage.type = Image.Type.Sliced;
         }
 
-        public void SetFront(Sprite cardFrontSprite, string questionText)
+        public void SetFront(Sprite cardFrontSprite, QuestionText questionText)
         {
             if (cardFrontSprite != null)
             {
@@ -143,8 +143,8 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mQuestionText.color = QUESTION_TEXT_INK_COLOR;
             mQuestionText.material = Graphic.defaultGraphicMaterial;
             mCanvasGroup.alpha = 1.0f;
-            setQuestionText(questionText);
-            applyQuestionTextLayout(questionText);
+            setQuestionText(questionText.Value);
+            applyQuestionTextLayout(questionText.Value);
         }
 
         public void SetVisualState(bool isDimmed, bool isSelected, float hoverProgress)

@@ -1,72 +1,77 @@
 using System;
+using MouthOfTruth.Game.Data;
+using MouthOfTruth.Game.Voice;
 
 namespace MouthOfTruth.Game.Session
 {
     public class AnswerCollectionPolicy
     {
-        public AnswerCollectionPolicy(float initialSilenceGraceSeconds = 2.6f, float silenceTimeoutSeconds = 1.2f, float maximumAnswerDurationSeconds = 8.0f)
+        public AnswerCollectionPolicy()
+            : this(new SecondsDuration(2.6f), new SecondsDuration(1.2f), new SecondsDuration(8.0f))
         {
-            if (initialSilenceGraceSeconds < 0.0f)
-            {
-                throw new ArgumentOutOfRangeException(nameof(initialSilenceGraceSeconds));
-            }
-
-            if (silenceTimeoutSeconds <= 0.0f)
-            {
-                throw new ArgumentOutOfRangeException(nameof(silenceTimeoutSeconds));
-            }
-
-            if (maximumAnswerDurationSeconds <= 0.0f)
-            {
-                throw new ArgumentOutOfRangeException(nameof(maximumAnswerDurationSeconds));
-            }
-
-            InitialSilenceGraceSeconds = initialSilenceGraceSeconds;
-            SilenceTimeoutSeconds = silenceTimeoutSeconds;
-            MaximumAnswerDurationSeconds = maximumAnswerDurationSeconds;
         }
 
-        public float InitialSilenceGraceSeconds { get; }
-
-        public float SilenceTimeoutSeconds { get; }
-
-        public float MaximumAnswerDurationSeconds { get; }
-
-        public AnswerCollectionTickResult Advance(float elapsedAnswerSeconds, float elapsedSilenceSeconds, float deltaTimeSeconds, bool isSpeechDetected)
+        public AnswerCollectionPolicy(SecondsDuration initialSilenceGraceDuration, SecondsDuration silenceTimeoutDuration, SecondsDuration maximumAnswerDuration)
         {
-            if (deltaTimeSeconds < 0.0f)
+            if (silenceTimeoutDuration.Value <= 0.0f)
             {
-                throw new ArgumentOutOfRangeException(nameof(deltaTimeSeconds));
+                throw new ArgumentOutOfRangeException(nameof(silenceTimeoutDuration));
             }
 
-            float nextElapsedAnswerSeconds = elapsedAnswerSeconds + deltaTimeSeconds;
-            float nextElapsedSilenceSeconds = isSpeechDetected
-                ? 0.0f
-                : elapsedSilenceSeconds + deltaTimeSeconds;
+            if (maximumAnswerDuration.Value <= 0.0f)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maximumAnswerDuration));
+            }
 
-            bool shouldFinishForSilence = nextElapsedAnswerSeconds >= InitialSilenceGraceSeconds && nextElapsedSilenceSeconds >= SilenceTimeoutSeconds;
-            bool shouldFinishForTimeout = nextElapsedAnswerSeconds >= MaximumAnswerDurationSeconds;
+            InitialSilenceGraceDuration = initialSilenceGraceDuration;
+            SilenceTimeoutDuration = silenceTimeoutDuration;
+            MaximumAnswerDuration = maximumAnswerDuration;
+        }
 
-            return new AnswerCollectionTickResult(nextElapsedAnswerSeconds, nextElapsedSilenceSeconds, shouldFinishForSilence, shouldFinishForTimeout);
+        public SecondsDuration InitialSilenceGraceDuration { get; }
+
+        public SecondsDuration SilenceTimeoutDuration { get; }
+
+        public SecondsDuration MaximumAnswerDuration { get; }
+
+        public AnswerCollectionTickResult Advance(SecondsDuration elapsedAnswerDuration, SecondsDuration elapsedSilenceDuration, SecondsDuration deltaTimeDuration, ESpeechDetectionState speechDetectionState)
+        {
+            SecondsDuration nextElapsedAnswerDuration = elapsedAnswerDuration.Add(deltaTimeDuration);
+            SecondsDuration nextElapsedSilenceDuration = speechDetectionState == ESpeechDetectionState.SpeechDetected
+                ? SecondsDuration.Zero
+                : elapsedSilenceDuration.Add(deltaTimeDuration);
+
+            EAnswerCollectionFinishReason finishReason = EAnswerCollectionFinishReason.None;
+            if (nextElapsedAnswerDuration.Value >= MaximumAnswerDuration.Value)
+            {
+                finishReason = EAnswerCollectionFinishReason.Timeout;
+            }
+            else if (nextElapsedAnswerDuration.Value >= InitialSilenceGraceDuration.Value && nextElapsedSilenceDuration.Value >= SilenceTimeoutDuration.Value)
+            {
+                finishReason = EAnswerCollectionFinishReason.Silence;
+            }
+
+            return new AnswerCollectionTickResult(nextElapsedAnswerDuration, nextElapsedSilenceDuration, finishReason);
         }
     }
 
     public readonly struct AnswerCollectionTickResult
     {
-        public AnswerCollectionTickResult(float elapsedAnswerSeconds, float elapsedSilenceSeconds, bool shouldFinishForSilence, bool shouldFinishForTimeout)
+        public AnswerCollectionTickResult(SecondsDuration elapsedAnswerDuration, SecondsDuration elapsedSilenceDuration, EAnswerCollectionFinishReason finishReason)
         {
-            ElapsedAnswerSeconds = elapsedAnswerSeconds;
-            ElapsedSilenceSeconds = elapsedSilenceSeconds;
-            ShouldFinishForSilence = shouldFinishForSilence;
-            ShouldFinishForTimeout = shouldFinishForTimeout;
+            ElapsedAnswerDuration = elapsedAnswerDuration;
+            ElapsedSilenceDuration = elapsedSilenceDuration;
+            FinishReason = finishReason;
         }
 
-        public float ElapsedAnswerSeconds { get; }
+        public SecondsDuration ElapsedAnswerDuration { get; }
 
-        public float ElapsedSilenceSeconds { get; }
+        public SecondsDuration ElapsedSilenceDuration { get; }
 
-        public bool ShouldFinishForSilence { get; }
+        public EAnswerCollectionFinishReason FinishReason { get; }
 
-        public bool ShouldFinishForTimeout { get; }
+        public bool ShouldFinishForSilence => FinishReason == EAnswerCollectionFinishReason.Silence;
+
+        public bool ShouldFinishForTimeout => FinishReason == EAnswerCollectionFinishReason.Timeout;
     }
 }

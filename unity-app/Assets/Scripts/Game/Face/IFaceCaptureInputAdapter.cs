@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using MouthOfTruth.Game.Data;
 
 namespace MouthOfTruth.Game.Face
 {
@@ -9,7 +10,7 @@ namespace MouthOfTruth.Game.Face
 
         void Reset();
 
-        void BeginCollection(string questionID);
+        void BeginCollection(QuestionId questionId);
 
         void PauseCollection();
 
@@ -17,7 +18,7 @@ namespace MouthOfTruth.Game.Face
 
         void CancelCollection();
 
-        void Update(float deltaTimeSeconds);
+        void Update(SecondsDuration deltaTime);
 
         Task<FaceCaptureResult> CompleteCollectionAsync(CancellationToken cancellationToken);
     }

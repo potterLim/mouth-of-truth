@@ -15,7 +15,7 @@ namespace MouthOfTruth.Game.Narration
 
         public async Task SpeakQuestionAsync(QuestionDefinition questionDefinition, CancellationToken cancellationToken)
         {
-            string questionText = questionDefinition == null ? string.Empty : questionDefinition.Text;
+            string questionText = questionDefinition == null ? string.Empty : questionDefinition.Text.Value;
 
             if (string.IsNullOrWhiteSpace(questionText))
             {

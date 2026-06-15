@@ -8,10 +8,10 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 {
     public partial class MouthOfTruthGameView
     {
-        public void UpdateAnswerMetrics(float elapsedAnswerSeconds, float elapsedSilenceSeconds)
+        public void UpdateAnswerMetrics(SecondsDuration elapsedAnswerDuration, SecondsDuration elapsedSilenceDuration)
         {
-            _ = elapsedAnswerSeconds;
-            _ = elapsedSilenceSeconds;
+            _ = elapsedAnswerDuration;
+            _ = elapsedSilenceDuration;
         }
 
         public EQuestionCardSlot? GetHoveredQuestionCardSlotOrNull(Vector2? pointerScreenPositionOrNull)
@@ -232,31 +232,30 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             pointerRectTransform.anchoredPosition = anchoredPosition;
         }
 
-        public string GetAnswerTranscript()
+        public AnswerTranscript GetAnswerTranscript()
         {
             if (mAnswerInputField == null)
             {
-                return string.Empty;
+                return AnswerTranscript.Empty;
             }
 
-            return string.IsNullOrEmpty(mAnswerInputField.text) ? string.Empty : mAnswerInputField.text;
+            return new AnswerTranscript(mAnswerInputField.text);
         }
 
-        public void SetAnswerTranscriptText(string transcriptText)
+        public void SetAnswerTranscriptText(AnswerTranscript answerTranscript)
         {
             if (mAnswerInputField == null)
             {
                 return;
             }
 
-            string safeTranscriptText = string.IsNullOrEmpty(transcriptText) ? string.Empty : transcriptText;
-            mAnswerInputField.SetTextWithoutNotify(safeTranscriptText);
-            setText(mAnswerInputField.textComponent, safeTranscriptText);
+            mAnswerInputField.SetTextWithoutNotify(answerTranscript.Value);
+            setText(mAnswerInputField.textComponent, answerTranscript.Value);
         }
 
         public void ClearAnswerTranscript()
         {
-            SetAnswerTranscriptText(string.Empty);
+            SetAnswerTranscriptText(AnswerTranscript.Empty);
         }
 
         public void SetAnswerTranscriptPlaceholder(string placeholderText)

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using MouthOfTruth.Game.App;
+using MouthOfTruth.Game.Data;
 using UnityEngine;
 
 namespace MouthOfTruth.Game.Voice
@@ -20,13 +21,13 @@ namespace MouthOfTruth.Game.Voice
             return Path.Combine(GetWorkspaceDirectoryPath(), AUDIO_DIRECTORY_NAME);
         }
 
-        public static string BuildAudioFilePath(string questionID)
+        public static AnswerAudioFilePath BuildAudioFilePath(QuestionId questionId)
         {
-            string sanitizedQuestionID = string.IsNullOrWhiteSpace(questionID)
+            string sanitizedQuestionId = string.IsNullOrWhiteSpace(questionId.Value)
                 ? "question"
-                : questionID.Trim().Replace(" ", "_");
+                : questionId.Value.Trim().Replace(" ", "_");
             string timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmssfff");
-            return Path.Combine(GetAudioDirectoryPath(), $"{sanitizedQuestionID}_{timestamp}.wav");
+            return new AnswerAudioFilePath(Path.Combine(GetAudioDirectoryPath(), $"{sanitizedQuestionId}_{timestamp}.wav"));
         }
     }
 }

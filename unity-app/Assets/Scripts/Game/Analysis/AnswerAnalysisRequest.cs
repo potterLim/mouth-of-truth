@@ -1,11 +1,13 @@
 using System;
 using MouthOfTruth.Game.Data;
+using MouthOfTruth.Game.Face;
+using MouthOfTruth.Game.Voice;
 
 namespace MouthOfTruth.Game.Analysis
 {
     public class AnswerAnalysisRequest
     {
-        public AnswerAnalysisRequest(QuestionDefinition questionDefinition, string answerTranscript, string answerAudioFilePath, string faceFramesDirectoryPath, int faceFrameCount, int voiceSegmentCount)
+        public AnswerAnalysisRequest(QuestionDefinition questionDefinition, AnswerTranscript answerTranscript, AnswerAudioFilePath answerAudioFilePath, FaceFramesDirectoryPath faceFramesDirectoryPath, FaceFrameCount faceFrameCount, VoiceSegmentCount voiceSegmentCount)
         {
             if (questionDefinition == null)
             {
@@ -13,23 +15,23 @@ namespace MouthOfTruth.Game.Analysis
             }
 
             QuestionDefinition = questionDefinition;
-            AnswerTranscript = string.IsNullOrEmpty(answerTranscript) ? string.Empty : answerTranscript;
-            AnswerAudioFilePath = string.IsNullOrEmpty(answerAudioFilePath) ? string.Empty : answerAudioFilePath;
-            FaceFramesDirectoryPath = string.IsNullOrEmpty(faceFramesDirectoryPath) ? string.Empty : faceFramesDirectoryPath;
+            AnswerTranscript = answerTranscript;
+            AnswerAudioFilePath = answerAudioFilePath;
+            FaceFramesDirectoryPath = faceFramesDirectoryPath;
             FaceFrameCount = faceFrameCount;
             VoiceSegmentCount = voiceSegmentCount;
         }
 
         public QuestionDefinition QuestionDefinition { get; }
 
-        public string AnswerTranscript { get; }
+        public AnswerTranscript AnswerTranscript { get; }
 
-        public string AnswerAudioFilePath { get; }
+        public AnswerAudioFilePath AnswerAudioFilePath { get; }
 
-        public string FaceFramesDirectoryPath { get; }
+        public FaceFramesDirectoryPath FaceFramesDirectoryPath { get; }
 
-        public int FaceFrameCount { get; }
+        public FaceFrameCount FaceFrameCount { get; }
 
-        public int VoiceSegmentCount { get; }
+        public VoiceSegmentCount VoiceSegmentCount { get; }
     }
 }

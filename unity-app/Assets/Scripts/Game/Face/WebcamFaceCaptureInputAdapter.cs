@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using MouthOfTruth.Game.Data;
 using UnityEngine;
 
 namespace MouthOfTruth.Game.Face
@@ -14,7 +15,7 @@ namespace MouthOfTruth.Game.Face
 
         private Texture2D mCaptureTexture;
         private WebCamTexture mWebCamTexture;
-        private string mActiveCaptureDirectoryPath;
+        private FaceFramesDirectoryPath mActiveCaptureDirectoryPath;
         private string mSelectedDeviceName;
         private float mElapsedSinceCaptureSeconds;
         private int mCapturedFrameCount;
@@ -37,7 +38,7 @@ namespace MouthOfTruth.Game.Face
             clearCaptureState();
         }
 
-        public void BeginCollection(string questionID)
+        public void BeginCollection(QuestionId questionId)
         {
             if (HasAvailableDevice() == false)
             {
@@ -47,8 +48,8 @@ namespace MouthOfTruth.Game.Face
             stopCollection();
             deleteCaptureDirectoryIfSafe();
             clearCaptureState();
-            mActiveCaptureDirectoryPath = FaceFrameWorkspacePaths.BuildCaptureDirectoryPath(questionID);
-            Directory.CreateDirectory(mActiveCaptureDirectoryPath);
+            mActiveCaptureDirectoryPath = FaceFrameWorkspacePaths.BuildCaptureDirectoryPath(questionId);
+            Directory.CreateDirectory(mActiveCaptureDirectoryPath.Value);
             mCapturedFrameCount = 0;
             mElapsedSinceCaptureSeconds = CAPTURE_INTERVAL_SECONDS;
             ensureWebCamTextureStarted();
@@ -67,9 +68,9 @@ namespace MouthOfTruth.Game.Face
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(mActiveCaptureDirectoryPath))
+            if (mActiveCaptureDirectoryPath.IsEmpty)
             {
-                BeginCollection("question");
+                BeginCollection(QuestionId.Fallback);
                 return;
             }
 
@@ -83,7 +84,7 @@ namespace MouthOfTruth.Game.Face
             Reset();
         }
 
-        public void Update(float deltaTimeSeconds)
+        public void Update(SecondsDuration deltaTime)
         {
             if (mIsCollecting == false || mWebCamTexture == null || mWebCamTexture.isPlaying == false)
             {
@@ -100,7 +101,7 @@ namespace MouthOfTruth.Game.Face
                 return;
             }
 
-            mElapsedSinceCaptureSeconds += Mathf.Max(0.0f, deltaTimeSeconds);
+            mElapsedSinceCaptureSeconds += deltaTime.Value;
 
             if (mElapsedSinceCaptureSeconds < CAPTURE_INTERVAL_SECONDS)
             {
@@ -116,17 +117,17 @@ namespace MouthOfTruth.Game.Face
             cancellationToken.ThrowIfCancellationRequested();
             stopCollection();
 
-            string completedDirectoryPath = mCapturedFrameCount > 0
+            FaceFramesDirectoryPath completedDirectoryPath = mCapturedFrameCount > 0
                 ? mActiveCaptureDirectoryPath
-                : string.Empty;
-            FaceCaptureResult faceCaptureResult = new FaceCaptureResult(completedDirectoryPath, mCapturedFrameCount);
+                : FaceFramesDirectoryPath.Empty;
+            FaceCaptureResult faceCaptureResult = new FaceCaptureResult(completedDirectoryPath, new FaceFrameCount(mCapturedFrameCount));
             clearCaptureState();
             return Task.FromResult(faceCaptureResult);
         }
 
         private void captureCurrentFrame()
         {
-            if (string.IsNullOrWhiteSpace(mActiveCaptureDirectoryPath))
+            if (mActiveCaptureDirectoryPath.IsEmpty)
             {
                 return;
             }
@@ -143,7 +144,7 @@ namespace MouthOfTruth.Game.Face
             mCaptureTexture.Apply(false, false);
 
             byte[] jpgBytes = ImageConversion.EncodeToJPG(mCaptureTexture, JPEG_QUALITY);
-            string frameFilePath = Path.Combine(mActiveCaptureDirectoryPath, $"frame_{mCapturedFrameCount + 1:D5}.jpg");
+            string frameFilePath = Path.Combine(mActiveCaptureDirectoryPath.Value, $"frame_{mCapturedFrameCount + 1:D5}.jpg");
             File.WriteAllBytes(frameFilePath, jpgBytes);
             mCapturedFrameCount += 1;
         }
@@ -180,12 +181,12 @@ namespace MouthOfTruth.Game.Face
 
         private void deleteCaptureDirectoryIfSafe()
         {
-            if (string.IsNullOrWhiteSpace(mActiveCaptureDirectoryPath))
+            if (mActiveCaptureDirectoryPath.IsEmpty)
             {
                 return;
             }
 
-            if (Directory.Exists(mActiveCaptureDirectoryPath) == false)
+            if (Directory.Exists(mActiveCaptureDirectoryPath.Value) == false)
             {
                 return;
             }
@@ -195,12 +196,12 @@ namespace MouthOfTruth.Game.Face
                 return;
             }
 
-            Directory.Delete(mActiveCaptureDirectoryPath, recursive: true);
+            Directory.Delete(mActiveCaptureDirectoryPath.Value, recursive: true);
         }
 
         private void clearCaptureState()
         {
-            mActiveCaptureDirectoryPath = string.Empty;
+            mActiveCaptureDirectoryPath = FaceFramesDirectoryPath.Empty;
             mCapturedFrameCount = 0;
             mElapsedSinceCaptureSeconds = 0.0f;
 

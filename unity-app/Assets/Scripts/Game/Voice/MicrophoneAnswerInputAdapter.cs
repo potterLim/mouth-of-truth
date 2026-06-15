@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using MouthOfTruth.Game.Data;
 using UnityEngine;
 
 namespace MouthOfTruth.Game.Voice
@@ -68,20 +69,24 @@ namespace MouthOfTruth.Game.Voice
             stopMicrophoneIfRunning();
         }
 
-        public AnswerCaptureFrameSnapshot Update(float deltaTimeSeconds)
+        public AnswerCaptureFrameSnapshot Update(SecondsDuration deltaTime)
         {
+            _ = deltaTime;
             bool isSpeechDetected = mIsCollecting && calculateCurrentSpeechRms() >= SPEECH_ACTIVITY_RMS_THRESHOLD;
-            return new AnswerCaptureFrameSnapshot(string.Empty, isSpeechDetected);
+            ESpeechDetectionState speechDetectionState = isSpeechDetected
+                ? ESpeechDetectionState.SpeechDetected
+                : ESpeechDetectionState.Silent;
+            return new AnswerCaptureFrameSnapshot(AnswerTranscript.Empty, speechDetectionState);
         }
 
-        public Task<AnswerCaptureResult> CompleteCollectionAsync(string questionID, CancellationToken cancellationToken)
+        public Task<AnswerCaptureResult> CompleteCollectionAsync(QuestionId questionId, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             stopCurrentRecording(preserveActiveSegment: true);
 
             if (mRecordedSegments.Count == 0)
             {
-                return Task.FromResult(new AnswerCaptureResult(string.Empty, string.Empty, 0));
+                return Task.FromResult(new AnswerCaptureResult(AnswerTranscript.Empty, AnswerAudioFilePath.Empty, VoiceSegmentCount.Zero));
             }
 
             int totalSampleCount = 0;
@@ -100,10 +105,10 @@ namespace MouthOfTruth.Game.Voice
                 nextOffset += segmentSamples.Length;
             }
 
-            string audioFilePath = AnswerAudioWorkspacePaths.BuildAudioFilePath(questionID);
-            WaveFileWriter.WriteMono16BitPcm(audioFilePath, mergedSamples, SAMPLE_RATE);
+            AnswerAudioFilePath audioFilePath = AnswerAudioWorkspacePaths.BuildAudioFilePath(questionId);
+            WaveFileWriter.WriteMono16BitPcm(audioFilePath.Value, mergedSamples, SAMPLE_RATE);
 
-            return Task.FromResult(new AnswerCaptureResult(string.Empty, audioFilePath, mRecordedSegmentCount));
+            return Task.FromResult(new AnswerCaptureResult(AnswerTranscript.Empty, audioFilePath, new VoiceSegmentCount(mRecordedSegmentCount)));
         }
 
         public bool HasAvailableDevice()

@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using MouthOfTruth.Game.App;
+using MouthOfTruth.Game.Data;
 using UnityEngine;
 
 namespace MouthOfTruth.Game.Analysis
@@ -48,13 +49,13 @@ namespace MouthOfTruth.Game.Analysis
                     new BridgeAnalysisRequestFileData
                     {
                         RequestID = requestID,
-                        QuestionID = answerAnalysisRequest.QuestionDefinition.ID,
-                        QuestionText = answerAnalysisRequest.QuestionDefinition.Text,
-                        AnswerTranscript = answerAnalysisRequest.AnswerTranscript,
-                        AnswerAudioFilePath = buildRuntimeRelativePath(answerAnalysisRequest.AnswerAudioFilePath),
-                        FaceFramesDirectoryPath = buildRuntimeRelativePath(answerAnalysisRequest.FaceFramesDirectoryPath),
-                        FaceFrameCount = answerAnalysisRequest.FaceFrameCount,
-                        VoiceSegmentCount = answerAnalysisRequest.VoiceSegmentCount,
+                        QuestionID = answerAnalysisRequest.QuestionDefinition.Id.Value,
+                        QuestionText = answerAnalysisRequest.QuestionDefinition.Text.Value,
+                        AnswerTranscript = answerAnalysisRequest.AnswerTranscript.Value,
+                        AnswerAudioFilePath = buildRuntimeRelativePath(answerAnalysisRequest.AnswerAudioFilePath.Value),
+                        FaceFramesDirectoryPath = buildRuntimeRelativePath(answerAnalysisRequest.FaceFramesDirectoryPath.Value),
+                        FaceFrameCount = answerAnalysisRequest.FaceFrameCount.Value,
+                        VoiceSegmentCount = answerAnalysisRequest.VoiceSegmentCount.Value,
                         RequestedAtUtc = DateTime.UtcNow.ToString("O"),
                     };
 
@@ -83,7 +84,7 @@ namespace MouthOfTruth.Game.Analysis
                     reasonCodes = Array.Empty<string>();
                 }
 
-                return new AnswerAnalysisResult(parseVerdictKind(bridgeAnalysisResultFileData.Verdict), bridgeAnalysisResultFileData.AnswerTranscript, reasonCodes);
+                return new AnswerAnalysisResult(parseVerdictKind(bridgeAnalysisResultFileData.Verdict), new AnswerTranscript(bridgeAnalysisResultFileData.AnswerTranscript), reasonCodes);
             }
             finally
             {

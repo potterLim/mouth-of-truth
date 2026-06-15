@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using MouthOfTruth.Game.Data;
 
 namespace MouthOfTruth.Game.Analysis
 {
@@ -27,8 +28,8 @@ namespace MouthOfTruth.Game.Analysis
 
             _ = cancellationToken;
 
-            bool hasFaceSignal = answerAnalysisRequest.FaceFrameCount >= MINIMUM_FACE_RECOGNITION_COUNT;
-            bool hasVoiceSignal = answerAnalysisRequest.VoiceSegmentCount >= MINIMUM_VOICE_SEGMENT_COUNT;
+            bool hasFaceSignal = answerAnalysisRequest.FaceFrameCount.Value >= MINIMUM_FACE_RECOGNITION_COUNT;
+            bool hasVoiceSignal = answerAnalysisRequest.VoiceSegmentCount.Value >= MINIMUM_VOICE_SEGMENT_COUNT;
             List<string> reasonCodes = new List<string>();
 
             if (hasFaceSignal == false)
@@ -46,16 +47,16 @@ namespace MouthOfTruth.Game.Analysis
                 return Task.FromResult(new AnswerAnalysisResult(EVerdictKind.Uncertain, answerAnalysisRequest.AnswerTranscript, reasonCodes));
             }
 
-            int paritySeed = calculateStableParitySeed(answerAnalysisRequest.QuestionDefinition.ID, answerAnalysisRequest.AnswerTranscript);
+            int paritySeed = calculateStableParitySeed(answerAnalysisRequest.QuestionDefinition.Id, answerAnalysisRequest.AnswerTranscript);
 
             EVerdictKind verdictKind = paritySeed % 2 == 0 ? EVerdictKind.True : EVerdictKind.False;
 
             return Task.FromResult(new AnswerAnalysisResult(verdictKind, answerAnalysisRequest.AnswerTranscript, reasonCodes));
         }
 
-        private int calculateStableParitySeed(string questionID, string answerTranscript)
+        private int calculateStableParitySeed(QuestionId questionId, AnswerTranscript answerTranscript)
         {
-            string combinedText = $"{questionID}|{answerTranscript.Trim()}";
+            string combinedText = $"{questionId.Value}|{answerTranscript.Value.Trim()}";
             int checksum = 0;
 
             foreach (char character in combinedText)

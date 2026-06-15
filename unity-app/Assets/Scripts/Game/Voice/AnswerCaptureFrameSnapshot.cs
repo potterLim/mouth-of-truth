@@ -1,15 +1,17 @@
+using MouthOfTruth.Game.Data;
+
 namespace MouthOfTruth.Game.Voice
 {
     public class AnswerCaptureFrameSnapshot
     {
-        public AnswerCaptureFrameSnapshot(string transcriptText, bool isSpeechDetected)
+        public AnswerCaptureFrameSnapshot(AnswerTranscript answerTranscript, ESpeechDetectionState speechDetectionState)
         {
-            TranscriptText = string.IsNullOrEmpty(transcriptText) ? string.Empty : transcriptText;
-            IsSpeechDetected = isSpeechDetected;
+            AnswerTranscript = answerTranscript;
+            SpeechDetectionState = speechDetectionState;
         }
 
-        public string TranscriptText { get; }
+        public AnswerTranscript AnswerTranscript { get; }
 
-        public bool IsSpeechDetected { get; }
+        public ESpeechDetectionState SpeechDetectionState { get; }
     }
 }

@@ -5,30 +5,30 @@ namespace MouthOfTruth.Game.Input
 {
     public class CardDwellSelectionTracker
     {
-        private readonly float mRequiredDwellSeconds;
+        private readonly SecondsDuration mRequiredDwellDuration;
 
         private EQuestionCardSlot? mHoveredQuestionCardSlotOrNull;
-        private float mHoveredDurationSeconds;
+        private SecondsDuration mHoveredDuration;
 
-        public CardDwellSelectionTracker(float requiredDwellSeconds = 0.7f)
+        public CardDwellSelectionTracker()
+            : this(new SecondsDuration(0.7f))
         {
-            if (requiredDwellSeconds <= 0.0f)
-            {
-                throw new ArgumentOutOfRangeException(nameof(requiredDwellSeconds));
-            }
-
-            mRequiredDwellSeconds = requiredDwellSeconds;
         }
 
-        public float HoveredDurationSeconds => mHoveredDurationSeconds;
-
-        public EQuestionCardSlot? UpdateHoveredCardOrNull(EQuestionCardSlot? hoveredQuestionCardSlotOrNull, float deltaTimeSeconds)
+        public CardDwellSelectionTracker(SecondsDuration requiredDwellDuration)
         {
-            if (deltaTimeSeconds < 0.0f)
+            if (requiredDwellDuration.Value <= 0.0f)
             {
-                throw new ArgumentOutOfRangeException(nameof(deltaTimeSeconds));
+                throw new ArgumentOutOfRangeException(nameof(requiredDwellDuration));
             }
 
+            mRequiredDwellDuration = requiredDwellDuration;
+        }
+
+        public SecondsDuration HoveredDuration => mHoveredDuration;
+
+        public EQuestionCardSlot? UpdateHoveredCardOrNull(EQuestionCardSlot? hoveredQuestionCardSlotOrNull, SecondsDuration deltaTimeDuration)
+        {
             if (hoveredQuestionCardSlotOrNull == null)
             {
                 Reset();
@@ -38,12 +38,12 @@ namespace MouthOfTruth.Game.Input
             if (mHoveredQuestionCardSlotOrNull != hoveredQuestionCardSlotOrNull)
             {
                 mHoveredQuestionCardSlotOrNull = hoveredQuestionCardSlotOrNull;
-                mHoveredDurationSeconds = 0.0f;
+                mHoveredDuration = SecondsDuration.Zero;
             }
 
-            mHoveredDurationSeconds += deltaTimeSeconds;
+            mHoveredDuration = mHoveredDuration.Add(deltaTimeDuration);
 
-            if (mHoveredDurationSeconds < mRequiredDwellSeconds)
+            if (mHoveredDuration.Value < mRequiredDwellDuration.Value)
             {
                 return null;
             }
@@ -56,7 +56,7 @@ namespace MouthOfTruth.Game.Input
         public void Reset()
         {
             mHoveredQuestionCardSlotOrNull = null;
-            mHoveredDurationSeconds = 0.0f;
+            mHoveredDuration = SecondsDuration.Zero;
         }
     }
 }

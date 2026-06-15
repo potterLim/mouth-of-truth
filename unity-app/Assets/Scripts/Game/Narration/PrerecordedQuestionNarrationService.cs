@@ -11,11 +11,11 @@ namespace MouthOfTruth.Game.Narration
     {
         private readonly AudioSource mAudioSource;
         private readonly IQuestionNarrationService mFallbackNarrationService;
-        private readonly string mQuestionAudioDirectoryPath;
+        private readonly QuestionAudioDirectoryPath mQuestionAudioDirectoryPath;
 
-        public PrerecordedQuestionNarrationService(string questionAudioDirectoryPath, IQuestionNarrationService fallbackNarrationService)
+        public PrerecordedQuestionNarrationService(QuestionAudioDirectoryPath questionAudioDirectoryPath, IQuestionNarrationService fallbackNarrationService)
         {
-            mQuestionAudioDirectoryPath = string.IsNullOrEmpty(questionAudioDirectoryPath) ? string.Empty : questionAudioDirectoryPath;
+            mQuestionAudioDirectoryPath = questionAudioDirectoryPath;
             mFallbackNarrationService = fallbackNarrationService == null
                 ? new SilentQuestionNarrationService()
                 : fallbackNarrationService;
@@ -75,12 +75,17 @@ namespace MouthOfTruth.Game.Narration
 
         private string getQuestionAudioFilePath(QuestionDefinition questionDefinition)
         {
-            if (questionDefinition == null || string.IsNullOrWhiteSpace(questionDefinition.ID))
+            if (questionDefinition == null || string.IsNullOrWhiteSpace(questionDefinition.Id.Value))
             {
                 return string.Empty;
             }
 
-            string candidateFilePath = Path.Combine(mQuestionAudioDirectoryPath, $"{questionDefinition.ID}.wav");
+            if (mQuestionAudioDirectoryPath.IsEmpty)
+            {
+                return string.Empty;
+            }
+
+            string candidateFilePath = Path.Combine(mQuestionAudioDirectoryPath.Value, $"{questionDefinition.Id.Value}.wav");
 
             if (File.Exists(candidateFilePath))
             {

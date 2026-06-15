@@ -166,9 +166,9 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             await animateOverTimeAsync(HAND_PROMPT_AFTER_CARD_LAUNCH_DELAY_SECONDS, _ => { });
         }
 
-        private static float getCardFrontReadHoldDurationSeconds(string questionText)
+        private static float getCardFrontReadHoldDurationSeconds(QuestionText questionText)
         {
-            int questionLength = string.IsNullOrWhiteSpace(questionText) ? 0 : questionText.Trim().Length;
+            int questionLength = string.IsNullOrWhiteSpace(questionText.Value) ? 0 : questionText.Value.Trim().Length;
             float weightedDuration = questionLength * CARD_FRONT_READ_HOLD_PER_CHARACTER_SECONDS;
             return Mathf.Clamp(CARD_FRONT_READ_HOLD_MINIMUM_SECONDS + weightedDuration, CARD_FRONT_READ_HOLD_MINIMUM_SECONDS, CARD_FRONT_READ_HOLD_MAXIMUM_SECONDS);
         }

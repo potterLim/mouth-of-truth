@@ -14,10 +14,10 @@ namespace MouthOfTruth.Game.App
             cleanDirectoryContentsIfSafe(FaceFrameWorkspacePaths.GetFaceFramesDirectoryPath());
         }
 
-        public static void CleanAnalysisArtifacts(string answerAudioFilePath, string faceFramesDirectoryPath)
+        public static void CleanAnalysisArtifacts(AnswerAudioFilePath answerAudioFilePath, FaceFramesDirectoryPath faceFramesDirectoryPath)
         {
-            deleteFileIfInsideDirectory(answerAudioFilePath, AnswerAudioWorkspacePaths.GetAudioDirectoryPath());
-            deleteDirectoryIfInsideDirectory(faceFramesDirectoryPath, FaceFrameWorkspacePaths.GetFaceFramesDirectoryPath());
+            deleteFileIfInsideDirectory(answerAudioFilePath.Value, AnswerAudioWorkspacePaths.GetAudioDirectoryPath());
+            deleteDirectoryIfInsideDirectory(faceFramesDirectoryPath.Value, FaceFrameWorkspacePaths.GetFaceFramesDirectoryPath());
         }
 
         public static bool IsPathInsideDirectory(string candidatePath, string directoryPath)

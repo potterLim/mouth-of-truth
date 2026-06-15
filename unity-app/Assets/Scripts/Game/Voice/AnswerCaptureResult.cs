@@ -1,18 +1,20 @@
+using MouthOfTruth.Game.Data;
+
 namespace MouthOfTruth.Game.Voice
 {
     public class AnswerCaptureResult
     {
-        public AnswerCaptureResult(string transcriptText, string audioFilePath, int voiceSegmentCount)
+        public AnswerCaptureResult(AnswerTranscript answerTranscript, AnswerAudioFilePath audioFilePath, VoiceSegmentCount voiceSegmentCount)
         {
-            TranscriptText = string.IsNullOrEmpty(transcriptText) ? string.Empty : transcriptText;
-            AudioFilePath = string.IsNullOrEmpty(audioFilePath) ? string.Empty : audioFilePath;
+            AnswerTranscript = answerTranscript;
+            AudioFilePath = audioFilePath;
             VoiceSegmentCount = voiceSegmentCount;
         }
 
-        public string TranscriptText { get; }
+        public AnswerTranscript AnswerTranscript { get; }
 
-        public string AudioFilePath { get; }
+        public AnswerAudioFilePath AudioFilePath { get; }
 
-        public int VoiceSegmentCount { get; }
+        public VoiceSegmentCount VoiceSegmentCount { get; }
     }
 }

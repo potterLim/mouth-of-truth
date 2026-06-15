@@ -5,17 +5,17 @@ namespace MouthOfTruth.Game.Session
 {
     public class GameSessionSnapshot
     {
-        public GameSessionSnapshot(EGameFlowState currentState, QuestionRoundSelection currentRoundSelection, EQuestionCardSlot? selectedQuestionCardSlotOrNull, QuestionDefinition selectedQuestionDefinition, EVerdictKind? currentVerdictKindOrNull, string currentAnswerTranscript, float hoveredCardDwellSeconds, float elapsedAnswerSeconds, float elapsedSilenceSeconds)
+        public GameSessionSnapshot(EGameFlowState currentState, QuestionRoundSelection currentRoundSelection, EQuestionCardSlot? selectedQuestionCardSlotOrNull, QuestionDefinition selectedQuestionDefinitionOrNull, EVerdictKind? currentVerdictKindOrNull, AnswerTranscript currentAnswerTranscript, SecondsDuration hoveredCardDwellDuration, SecondsDuration elapsedAnswerDuration, SecondsDuration elapsedSilenceDuration)
         {
             CurrentState = currentState;
             CurrentRoundSelection = currentRoundSelection;
             SelectedQuestionCardSlotOrNull = selectedQuestionCardSlotOrNull;
-            SelectedQuestionDefinition = selectedQuestionDefinition;
+            SelectedQuestionDefinitionOrNull = selectedQuestionDefinitionOrNull;
             CurrentVerdictKindOrNull = currentVerdictKindOrNull;
             CurrentAnswerTranscript = currentAnswerTranscript;
-            HoveredCardDwellSeconds = hoveredCardDwellSeconds;
-            ElapsedAnswerSeconds = elapsedAnswerSeconds;
-            ElapsedSilenceSeconds = elapsedSilenceSeconds;
+            HoveredCardDwellDuration = hoveredCardDwellDuration;
+            ElapsedAnswerDuration = elapsedAnswerDuration;
+            ElapsedSilenceDuration = elapsedSilenceDuration;
         }
 
         public EGameFlowState CurrentState { get; }
@@ -24,17 +24,17 @@ namespace MouthOfTruth.Game.Session
 
         public EQuestionCardSlot? SelectedQuestionCardSlotOrNull { get; }
 
-        public QuestionDefinition SelectedQuestionDefinition { get; }
+        public QuestionDefinition SelectedQuestionDefinitionOrNull { get; }
 
         public EVerdictKind? CurrentVerdictKindOrNull { get; }
 
-        public string CurrentAnswerTranscript { get; }
+        public AnswerTranscript CurrentAnswerTranscript { get; }
 
-        public float HoveredCardDwellSeconds { get; }
+        public SecondsDuration HoveredCardDwellDuration { get; }
 
-        public float ElapsedAnswerSeconds { get; }
+        public SecondsDuration ElapsedAnswerDuration { get; }
 
-        public float ElapsedSilenceSeconds { get; }
+        public SecondsDuration ElapsedSilenceDuration { get; }
 
         public bool IsAnswerPaused => CurrentState == EGameFlowState.AnswerPaused;
     }

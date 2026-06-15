@@ -62,12 +62,11 @@ namespace MouthOfTruth.Game.Data
 
         private void refillDeckExcluding(IReadOnlyList<QuestionDefinition> currentRoundQuestionDefinitions)
         {
-            HashSet<string> currentRoundQuestionIDs = new HashSet<string>(
-                currentRoundQuestionDefinitions.Select(questionDefinition => questionDefinition.ID),
-                StringComparer.Ordinal);
+            HashSet<QuestionId> currentRoundQuestionIds = new HashSet<QuestionId>(
+                currentRoundQuestionDefinitions.Select(questionDefinition => questionDefinition.Id));
 
             List<QuestionDefinition> shuffledQuestionDefinitions = mAllEnabledQuestionDefinitions
-                .Where(questionDefinition => currentRoundQuestionIDs.Contains(questionDefinition.ID) == false)
+                .Where(questionDefinition => currentRoundQuestionIds.Contains(questionDefinition.Id) == false)
                 .OrderBy(_ => mRandom.Next())
                 .ToList();
 

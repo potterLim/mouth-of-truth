@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using MouthOfTruth.Game.Data;
 using MouthOfTruth.Game.Presentation.Runtime;
 
 namespace MouthOfTruth.Game.Voice
@@ -12,7 +13,7 @@ namespace MouthOfTruth.Game.Voice
         private readonly MouthOfTruthGameView mGameView;
 
         private float mTypingActivityGraceSeconds;
-        private string mLastObservedTranscript = string.Empty;
+        private AnswerTranscript mLastObservedTranscript = AnswerTranscript.Empty;
 
         public KeyboardTranscriptAnswerInputAdapter(MouthOfTruthGameView gameView)
         {
@@ -32,7 +33,7 @@ namespace MouthOfTruth.Game.Voice
         public void Reset()
         {
             mTypingActivityGraceSeconds = 0.0f;
-            mLastObservedTranscript = string.Empty;
+            mLastObservedTranscript = AnswerTranscript.Empty;
         }
 
         public void BeginCollection()
@@ -52,11 +53,11 @@ namespace MouthOfTruth.Game.Voice
             Reset();
         }
 
-        public AnswerCaptureFrameSnapshot Update(float deltaTimeSeconds)
+        public AnswerCaptureFrameSnapshot Update(SecondsDuration deltaTime)
         {
-            string currentTranscript = mGameView.GetAnswerTranscript();
+            AnswerTranscript currentTranscript = mGameView.GetAnswerTranscript();
 
-            if (string.Equals(currentTranscript, mLastObservedTranscript, StringComparison.Ordinal) == false)
+            if (currentTranscript.Equals(mLastObservedTranscript) == false)
             {
                 mLastObservedTranscript = currentTranscript;
                 mTypingActivityGraceSeconds = TYPING_ACTIVITY_GRACE_SECONDS;
@@ -64,18 +65,22 @@ namespace MouthOfTruth.Game.Voice
 
             if (mTypingActivityGraceSeconds > 0.0f)
             {
-                mTypingActivityGraceSeconds = Math.Max(0.0f, mTypingActivityGraceSeconds - deltaTimeSeconds);
+                mTypingActivityGraceSeconds = Math.Max(0.0f, mTypingActivityGraceSeconds - deltaTime.Value);
             }
 
-            return new AnswerCaptureFrameSnapshot(currentTranscript, mTypingActivityGraceSeconds > 0.0f);
+            ESpeechDetectionState speechDetectionState = mTypingActivityGraceSeconds > 0.0f
+                ? ESpeechDetectionState.SpeechDetected
+                : ESpeechDetectionState.Silent;
+            return new AnswerCaptureFrameSnapshot(currentTranscript, speechDetectionState);
         }
 
-        public Task<AnswerCaptureResult> CompleteCollectionAsync(string questionID, CancellationToken cancellationToken)
+        public Task<AnswerCaptureResult> CompleteCollectionAsync(QuestionId questionId, CancellationToken cancellationToken)
         {
+            _ = questionId;
             cancellationToken.ThrowIfCancellationRequested();
-            string transcriptText = mGameView.GetAnswerTranscript().Trim();
-            int voiceSegmentCount = string.IsNullOrWhiteSpace(transcriptText) ? 0 : 1;
-            return Task.FromResult(new AnswerCaptureResult(transcriptText, string.Empty, voiceSegmentCount));
+            AnswerTranscript answerTranscript = mGameView.GetAnswerTranscript().Trimmed();
+            VoiceSegmentCount voiceSegmentCount = answerTranscript.IsEmpty ? VoiceSegmentCount.Zero : new VoiceSegmentCount(1);
+            return Task.FromResult(new AnswerCaptureResult(answerTranscript, AnswerAudioFilePath.Empty, voiceSegmentCount));
         }
     }
 }

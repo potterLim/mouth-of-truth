@@ -1,33 +1,34 @@
 using System;
+using MouthOfTruth.Game.Data;
 
 namespace MouthOfTruth.Game.Input
 {
     public class UiActionDwellSelectionTracker
     {
-        private readonly float mRequiredDwellSeconds;
+        private readonly SecondsDuration mRequiredDwellDuration;
 
         private EUiActionTarget? mHoveredUiActionTargetOrNull;
-        private float mHoveredDurationSeconds;
+        private SecondsDuration mHoveredDuration;
 
-        public UiActionDwellSelectionTracker(float requiredDwellSeconds = 0.7f)
+        public UiActionDwellSelectionTracker()
+            : this(new SecondsDuration(0.7f))
         {
-            if (requiredDwellSeconds <= 0.0f)
-            {
-                throw new ArgumentOutOfRangeException(nameof(requiredDwellSeconds));
-            }
-
-            mRequiredDwellSeconds = requiredDwellSeconds;
         }
 
-        public float HoveredDurationSeconds => mHoveredDurationSeconds;
-
-        public EUiActionTarget? UpdateHoveredTargetOrNull(EUiActionTarget? hoveredUiActionTargetOrNull, float deltaTimeSeconds)
+        public UiActionDwellSelectionTracker(SecondsDuration requiredDwellDuration)
         {
-            if (deltaTimeSeconds < 0.0f)
+            if (requiredDwellDuration.Value <= 0.0f)
             {
-                throw new ArgumentOutOfRangeException(nameof(deltaTimeSeconds));
+                throw new ArgumentOutOfRangeException(nameof(requiredDwellDuration));
             }
 
+            mRequiredDwellDuration = requiredDwellDuration;
+        }
+
+        public SecondsDuration HoveredDuration => mHoveredDuration;
+
+        public EUiActionTarget? UpdateHoveredTargetOrNull(EUiActionTarget? hoveredUiActionTargetOrNull, SecondsDuration deltaTimeDuration)
+        {
             if (hoveredUiActionTargetOrNull == null)
             {
                 Reset();
@@ -37,12 +38,12 @@ namespace MouthOfTruth.Game.Input
             if (mHoveredUiActionTargetOrNull != hoveredUiActionTargetOrNull)
             {
                 mHoveredUiActionTargetOrNull = hoveredUiActionTargetOrNull;
-                mHoveredDurationSeconds = 0.0f;
+                mHoveredDuration = SecondsDuration.Zero;
             }
 
-            mHoveredDurationSeconds += deltaTimeSeconds;
+            mHoveredDuration = mHoveredDuration.Add(deltaTimeDuration);
 
-            if (mHoveredDurationSeconds < mRequiredDwellSeconds)
+            if (mHoveredDuration.Value < mRequiredDwellDuration.Value)
             {
                 return null;
             }
@@ -55,7 +56,7 @@ namespace MouthOfTruth.Game.Input
         public void Reset()
         {
             mHoveredUiActionTargetOrNull = null;
-            mHoveredDurationSeconds = 0.0f;
+            mHoveredDuration = SecondsDuration.Zero;
         }
     }
 }

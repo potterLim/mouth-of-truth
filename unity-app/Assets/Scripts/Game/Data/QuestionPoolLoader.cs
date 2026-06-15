@@ -41,11 +41,15 @@ namespace MouthOfTruth.Game.Data
                     throw new InvalidDataException($"Question definition text cannot be empty: {questionDefinitionJsonRecord.id}");
                 }
 
-                string category = string.IsNullOrEmpty(questionDefinitionJsonRecord.category)
-                    ? string.Empty
-                    : questionDefinitionJsonRecord.category;
+                QuestionId questionId = new QuestionId(questionDefinitionJsonRecord.id);
+                QuestionText questionText = new QuestionText(questionDefinitionJsonRecord.text);
+                QuestionCategory questionCategory = new QuestionCategory(questionDefinitionJsonRecord.category);
+                QuestionDifficulty questionDifficulty = new QuestionDifficulty(questionDefinitionJsonRecord.difficulty);
+                EQuestionAvailability questionAvailability = questionDefinitionJsonRecord.enabled
+                    ? EQuestionAvailability.Enabled
+                    : EQuestionAvailability.Disabled;
 
-                questionDefinitions.Add(new QuestionDefinition(questionDefinitionJsonRecord.id, questionDefinitionJsonRecord.text, category, questionDefinitionJsonRecord.difficulty, questionDefinitionJsonRecord.enabled));
+                questionDefinitions.Add(new QuestionDefinition(questionId, questionText, questionCategory, questionDifficulty, questionAvailability));
             }
 
             return questionDefinitions;

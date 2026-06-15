@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using MouthOfTruth.Game.App;
+using MouthOfTruth.Game.Data;
 using UnityEngine;
 
 namespace MouthOfTruth.Game.Face
@@ -20,13 +21,13 @@ namespace MouthOfTruth.Game.Face
             return Path.Combine(GetWorkspaceDirectoryPath(), FACE_DIRECTORY_NAME);
         }
 
-        public static string BuildCaptureDirectoryPath(string questionID)
+        public static FaceFramesDirectoryPath BuildCaptureDirectoryPath(QuestionId questionId)
         {
-            string sanitizedQuestionID = string.IsNullOrWhiteSpace(questionID)
+            string sanitizedQuestionId = string.IsNullOrWhiteSpace(questionId.Value)
                 ? "question"
-                : questionID.Trim().Replace(" ", "_");
+                : questionId.Value.Trim().Replace(" ", "_");
             string timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmssfff");
-            return Path.Combine(GetFaceFramesDirectoryPath(), $"{sanitizedQuestionID}_{timestamp}");
+            return new FaceFramesDirectoryPath(Path.Combine(GetFaceFramesDirectoryPath(), $"{sanitizedQuestionId}_{timestamp}"));
         }
     }
 }

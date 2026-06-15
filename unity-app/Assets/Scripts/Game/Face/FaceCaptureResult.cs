@@ -2,14 +2,14 @@ namespace MouthOfTruth.Game.Face
 {
     public class FaceCaptureResult
     {
-        public FaceCaptureResult(string faceFramesDirectoryPath, int capturedFrameCount)
+        public FaceCaptureResult(FaceFramesDirectoryPath faceFramesDirectoryPath, FaceFrameCount capturedFrameCount)
         {
-            FaceFramesDirectoryPath = string.IsNullOrEmpty(faceFramesDirectoryPath) ? string.Empty : faceFramesDirectoryPath;
+            FaceFramesDirectoryPath = faceFramesDirectoryPath;
             CapturedFrameCount = capturedFrameCount;
         }
 
-        public string FaceFramesDirectoryPath { get; }
+        public FaceFramesDirectoryPath FaceFramesDirectoryPath { get; }
 
-        public int CapturedFrameCount { get; }
+        public FaceFrameCount CapturedFrameCount { get; }
     }
 }

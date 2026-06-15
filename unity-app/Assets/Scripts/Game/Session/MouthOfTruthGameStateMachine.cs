@@ -2,6 +2,7 @@ using System;
 using MouthOfTruth.Game.Analysis;
 using MouthOfTruth.Game.Data;
 using MouthOfTruth.Game.Input;
+using MouthOfTruth.Game.Voice;
 
 namespace MouthOfTruth.Game.Session
 {
@@ -13,11 +14,11 @@ namespace MouthOfTruth.Game.Session
 
         private QuestionRoundSelection mCurrentRoundSelection;
         private EQuestionCardSlot? mSelectedQuestionCardSlotOrNull;
-        private QuestionDefinition mSelectedQuestionDefinition;
+        private QuestionDefinition mSelectedQuestionDefinitionOrNull;
         private EVerdictKind? mCurrentVerdictKindOrNull;
-        private string mCurrentAnswerTranscript = string.Empty;
-        private float mElapsedAnswerSeconds;
-        private float mElapsedSilenceSeconds;
+        private AnswerTranscript mCurrentAnswerTranscript = AnswerTranscript.Empty;
+        private SecondsDuration mElapsedAnswerDuration;
+        private SecondsDuration mElapsedSilenceDuration;
 
         public MouthOfTruthGameStateMachine(QuestionDeckService questionDeckService, CardDwellSelectionTracker cardDwellSelectionTracker, AnswerCollectionPolicy answerCollectionPolicy)
         {
@@ -54,11 +55,11 @@ namespace MouthOfTruth.Game.Session
         {
             mCurrentRoundSelection = mQuestionDeckService.DrawNextRound();
             mSelectedQuestionCardSlotOrNull = null;
-            mSelectedQuestionDefinition = null;
+            mSelectedQuestionDefinitionOrNull = null;
             mCurrentVerdictKindOrNull = null;
-            mCurrentAnswerTranscript = string.Empty;
-            mElapsedAnswerSeconds = 0.0f;
-            mElapsedSilenceSeconds = 0.0f;
+            mCurrentAnswerTranscript = AnswerTranscript.Empty;
+            mElapsedAnswerDuration = SecondsDuration.Zero;
+            mElapsedSilenceDuration = SecondsDuration.Zero;
             CurrentState = EGameFlowState.PresentingCards;
         }
 
@@ -68,12 +69,12 @@ namespace MouthOfTruth.Game.Session
             CurrentState = EGameFlowState.AwaitingCardSelection;
         }
 
-        public EQuestionCardSlot? UpdateCardSelectionOrNull(EQuestionCardSlot? hoveredQuestionCardSlotOrNull, float deltaTimeSeconds)
+        public EQuestionCardSlot? UpdateCardSelectionOrNull(EQuestionCardSlot? hoveredQuestionCardSlotOrNull, SecondsDuration deltaTimeDuration)
         {
             ensureCurrentState(EGameFlowState.AwaitingCardSelection);
 
             EQuestionCardSlot? confirmedQuestionCardSlotOrNull = mCardDwellSelectionTracker
-                .UpdateHoveredCardOrNull(hoveredQuestionCardSlotOrNull, deltaTimeSeconds);
+                .UpdateHoveredCardOrNull(hoveredQuestionCardSlotOrNull, deltaTimeDuration);
 
             if (confirmedQuestionCardSlotOrNull == null)
             {
@@ -81,7 +82,7 @@ namespace MouthOfTruth.Game.Session
             }
 
             mSelectedQuestionCardSlotOrNull = confirmedQuestionCardSlotOrNull;
-            mSelectedQuestionDefinition = mCurrentRoundSelection.GetQuestionBySlot(confirmedQuestionCardSlotOrNull.Value);
+            mSelectedQuestionDefinitionOrNull = mCurrentRoundSelection.GetQuestionBySlot(confirmedQuestionCardSlotOrNull.Value);
             CurrentState = EGameFlowState.RevealingQuestionCard;
             return confirmedQuestionCardSlotOrNull;
         }
@@ -108,8 +109,8 @@ namespace MouthOfTruth.Game.Session
         {
             if (CurrentState == EGameFlowState.InsertingHand)
             {
-                mElapsedAnswerSeconds = 0.0f;
-                mElapsedSilenceSeconds = 0.0f;
+                mElapsedAnswerDuration = SecondsDuration.Zero;
+                mElapsedSilenceDuration = SecondsDuration.Zero;
                 CurrentState = EGameFlowState.Answering;
                 return;
             }
@@ -133,27 +134,26 @@ namespace MouthOfTruth.Game.Session
             // Hand insertion is a start trigger. Once answering starts, temporary hand loss does not pause collection.
         }
 
-        public bool AdvanceAnswerCollection(float deltaTimeSeconds, bool isSpeechDetected)
+        public EAnswerCollectionFinishReason AdvanceAnswerCollection(SecondsDuration deltaTimeDuration, ESpeechDetectionState speechDetectionState)
         {
             ensureCurrentState(EGameFlowState.Answering);
 
-            AnswerCollectionTickResult answerCollectionTickResult = mAnswerCollectionPolicy.Advance(mElapsedAnswerSeconds, mElapsedSilenceSeconds, deltaTimeSeconds, isSpeechDetected);
+            AnswerCollectionTickResult answerCollectionTickResult = mAnswerCollectionPolicy.Advance(mElapsedAnswerDuration, mElapsedSilenceDuration, deltaTimeDuration, speechDetectionState);
 
-            mElapsedAnswerSeconds = answerCollectionTickResult.ElapsedAnswerSeconds;
-            mElapsedSilenceSeconds = answerCollectionTickResult.ElapsedSilenceSeconds;
+            mElapsedAnswerDuration = answerCollectionTickResult.ElapsedAnswerDuration;
+            mElapsedSilenceDuration = answerCollectionTickResult.ElapsedSilenceDuration;
 
-            if (answerCollectionTickResult.ShouldFinishForSilence || answerCollectionTickResult.ShouldFinishForTimeout)
+            if (answerCollectionTickResult.FinishReason != EAnswerCollectionFinishReason.None)
             {
                 CurrentState = EGameFlowState.AnalyzingAnswer;
-                return true;
             }
 
-            return false;
+            return answerCollectionTickResult.FinishReason;
         }
 
-        public void UpdateAnswerTranscript(string answerTranscript)
+        public void UpdateAnswerTranscript(AnswerTranscript answerTranscript)
         {
-            mCurrentAnswerTranscript = string.IsNullOrEmpty(answerTranscript) ? string.Empty : answerTranscript;
+            mCurrentAnswerTranscript = answerTranscript;
         }
 
         public void ResetCardSelectionHover()
@@ -188,7 +188,7 @@ namespace MouthOfTruth.Game.Session
 
         public GameSessionSnapshot CreateSnapshot()
         {
-            return new GameSessionSnapshot(CurrentState, mCurrentRoundSelection, mSelectedQuestionCardSlotOrNull, mSelectedQuestionDefinition, mCurrentVerdictKindOrNull, mCurrentAnswerTranscript, mCardDwellSelectionTracker.HoveredDurationSeconds, mElapsedAnswerSeconds, mElapsedSilenceSeconds);
+            return new GameSessionSnapshot(CurrentState, mCurrentRoundSelection, mSelectedQuestionCardSlotOrNull, mSelectedQuestionDefinitionOrNull, mCurrentVerdictKindOrNull, mCurrentAnswerTranscript, mCardDwellSelectionTracker.HoveredDuration, mElapsedAnswerDuration, mElapsedSilenceDuration);
         }
 
         private void ensureCurrentState(EGameFlowState expectedGameFlowState)
@@ -204,11 +204,11 @@ namespace MouthOfTruth.Game.Session
             mCardDwellSelectionTracker.Reset();
             mCurrentRoundSelection = null;
             mSelectedQuestionCardSlotOrNull = null;
-            mSelectedQuestionDefinition = null;
+            mSelectedQuestionDefinitionOrNull = null;
             mCurrentVerdictKindOrNull = null;
-            mCurrentAnswerTranscript = string.Empty;
-            mElapsedAnswerSeconds = 0.0f;
-            mElapsedSilenceSeconds = 0.0f;
+            mCurrentAnswerTranscript = AnswerTranscript.Empty;
+            mElapsedAnswerDuration = SecondsDuration.Zero;
+            mElapsedSilenceDuration = SecondsDuration.Zero;
         }
     }
 }

@@ -52,6 +52,40 @@ class AnalysisContractsTest(unittest.TestCase):
                 str((runtime_root_path / "python-engine" / "data" / "session-workspace" / "face").resolve()),
             )
 
+    def test_read_analysis_request_infers_runtime_root_from_bridge_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            runtime_root_path = Path(temporary_directory)
+            request_file_path = runtime_root_path / "bridge" / "analysis_request.json"
+            request_file_path.parent.mkdir(parents=True)
+            request_file_path.write_text(
+                json.dumps(
+                    {
+                        "RequestID": "request-bridge-fallback",
+                        "QuestionID": "question-bridge-fallback",
+                        "QuestionText": "질문",
+                        "AnswerTranscript": "대답",
+                        "AnswerAudioFilePath": "python-engine/data/session-workspace/answer.wav",
+                        "FaceFramesDirectoryPath": "python-engine/data/session-workspace/face",
+                        "FaceFrameCount": 3,
+                        "VoiceSegmentCount": 1,
+                        "RequestedAtUtc": "2026-06-03T00:00:00Z",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with patch.dict(os.environ, {"MOUTH_OF_TRUTH_RUNTIME_ROOT": ""}):
+                analysis_request = read_analysis_request(request_file_path)
+
+            self.assertEqual(
+                analysis_request.answer_audio_file_path,
+                str((runtime_root_path / "python-engine" / "data" / "session-workspace" / "answer.wav").resolve()),
+            )
+            self.assertEqual(
+                analysis_request.face_frames_directory_path,
+                str((runtime_root_path / "python-engine" / "data" / "session-workspace" / "face").resolve()),
+            )
+
     def test_write_analysis_result_uses_unity_bridge_keys(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             result_file_path = Path(temporary_directory) / "analysis_result.json"

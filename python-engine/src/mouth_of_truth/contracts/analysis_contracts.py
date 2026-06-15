@@ -51,7 +51,17 @@ def read_analysis_request(file_path: str | Path) -> AnalysisRequest:
     answer_audio_file_path = resolve_runtime_relative_path(file_path, answer_audio_relative_path)
     face_frames_directory_path = resolve_runtime_relative_path(file_path, face_frames_relative_path)
 
-    return AnalysisRequest(request_id=payload["RequestID"], question_id=payload["QuestionID"], question_text=payload["QuestionText"], answer_transcript=payload.get("AnswerTranscript", ""), answer_audio_file_path=answer_audio_file_path, face_frames_directory_path=face_frames_directory_path, face_frame_count=int(payload.get("FaceFrameCount", 0)), voice_segment_count=int(payload.get("VoiceSegmentCount", 0)), requested_at_utc=payload["RequestedAtUtc"])
+    return AnalysisRequest(
+        request_id=payload["RequestID"],
+        question_id=payload["QuestionID"],
+        question_text=payload["QuestionText"],
+        answer_transcript=payload.get("AnswerTranscript", ""),
+        answer_audio_file_path=answer_audio_file_path,
+        face_frames_directory_path=face_frames_directory_path,
+        face_frame_count=int(payload.get("FaceFrameCount", 0)),
+        voice_segment_count=int(payload.get("VoiceSegmentCount", 0)),
+        requested_at_utc=payload["RequestedAtUtc"],
+    )
 
 
 def write_analysis_result(file_path: str | Path, analysis_result: AnalysisResult) -> None:
@@ -79,6 +89,19 @@ def resolve_runtime_relative_path(request_file_path: Path, raw_path: str) -> str
     if candidate_path.is_absolute():
         return str(candidate_path.resolve())
 
-    configured_runtime_root = os.environ.get("MOUTH_OF_TRUTH_RUNTIME_ROOT", "").strip()
-    runtime_root_path = Path(configured_runtime_root).expanduser().resolve() if configured_runtime_root else request_file_path.parent
+    runtime_root_path = _resolve_runtime_root_path(request_file_path)
     return str((runtime_root_path / candidate_path).resolve())
+
+
+def _resolve_runtime_root_path(request_file_path: Path) -> Path:
+    configured_runtime_root = os.environ.get("MOUTH_OF_TRUTH_RUNTIME_ROOT", "").strip()
+
+    if configured_runtime_root:
+        return Path(configured_runtime_root).expanduser().resolve()
+
+    request_directory_path = request_file_path.parent.resolve()
+
+    if request_directory_path.name == "bridge":
+        return request_directory_path.parent.resolve()
+
+    return request_directory_path

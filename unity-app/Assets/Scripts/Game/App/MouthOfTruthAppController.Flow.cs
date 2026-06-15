@@ -78,7 +78,7 @@ namespace MouthOfTruth.Game.App
                 mGameStateMachine.MarkQuestionRevealCompleted();
                 mGameStateMachine.MarkQuestionNarrationCompleted();
                 mGameView.ShowAwaitingHandInsertion();
-                beginBottomCenterPointerSettle(mGameView.HandPromptPanelHoldDuration.Value);
+                beginBottomCenterPointerSettle(mGameView.HandPromptPanelHoldDuration);
                 mGameView.SetAnswerTranscriptInputMode(mAnswerCaptureInputAdapter.TranscriptInputMode);
                 resetAnswerTracking();
             }

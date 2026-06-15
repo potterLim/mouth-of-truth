@@ -17,6 +17,12 @@ namespace MouthOfTruth.Game.Voice
         private const float SPEECH_EVIDENCE_PEAK_RMS_THRESHOLD = 0.0200f;
         private const int MINIMUM_SPEECH_EVIDENCE_WINDOW_COUNT = 4;
 
+        private enum ERecordingStopMode
+        {
+            DiscardActiveSegment,
+            PreserveActiveSegment,
+        }
+
         private readonly List<float[]> mRecordedSegments = new List<float[]>();
 
         private AudioClip mActiveRecordingClip;
@@ -38,7 +44,7 @@ namespace MouthOfTruth.Game.Voice
 
         public void Reset()
         {
-            stopCurrentRecording(preserveActiveSegment: false);
+            stopCurrentRecording(ERecordingStopMode.DiscardActiveSegment);
             mRecordedSegments.Clear();
             mRecordedSegmentCount = 0;
         }
@@ -55,7 +61,7 @@ namespace MouthOfTruth.Game.Voice
 
         public void PauseCollection()
         {
-            stopCurrentRecording(preserveActiveSegment: true);
+            stopCurrentRecording(ERecordingStopMode.PreserveActiveSegment);
         }
 
         public void ResumeCollection()
@@ -82,7 +88,7 @@ namespace MouthOfTruth.Game.Voice
         public Task<AnswerCaptureResult> CompleteCollectionAsync(QuestionId questionId, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            stopCurrentRecording(preserveActiveSegment: true);
+            stopCurrentRecording(ERecordingStopMode.PreserveActiveSegment);
 
             if (mRecordedSegments.Count == 0)
             {
@@ -170,14 +176,14 @@ namespace MouthOfTruth.Game.Voice
             mSegmentStartSamplePosition = 0;
         }
 
-        private void stopCurrentRecording(bool preserveActiveSegment)
+        private void stopCurrentRecording(ERecordingStopMode recordingStopMode)
         {
             if (mIsCollecting == false || string.IsNullOrWhiteSpace(mSelectedDeviceName))
             {
                 return;
             }
 
-            float[] activeSegmentSamples = preserveActiveSegment
+            float[] activeSegmentSamples = recordingStopMode == ERecordingStopMode.PreserveActiveSegment
                 ? readActiveSegmentSamples()
                 : Array.Empty<float>();
 

@@ -12,9 +12,9 @@ namespace MouthOfTruth.Game.App
     public partial class MouthOfTruthAppController
     {
         private const float POINTER_REACQUIRE_GUARD_SECONDS = 0.45f;
-        private const float POST_CARD_SELECTION_POINTER_SETTLE_SECONDS = 0.0f;
         private const float HAND_PROMPT_DISMISS_MOVEMENT_MIN_PIXELS = 28.0f;
         private const float HAND_PROMPT_DISMISS_MOVEMENT_SCREEN_HEIGHT_FACTOR = 0.018f;
+        private static readonly SecondsDuration POST_CARD_SELECTION_POINTER_SETTLE_DURATION = SecondsDuration.Zero;
 
         private bool mWasPointerAvailableLastFrame;
         private float mPointerReacquireGuardRemainingSeconds;
@@ -205,12 +205,12 @@ namespace MouthOfTruth.Game.App
 
         private void beginBottomCenterPointerSettle()
         {
-            beginBottomCenterPointerSettle(POST_CARD_SELECTION_POINTER_SETTLE_SECONDS);
+            beginBottomCenterPointerSettle(POST_CARD_SELECTION_POINTER_SETTLE_DURATION);
         }
 
-        private void beginBottomCenterPointerSettle(float durationSeconds)
+        private void beginBottomCenterPointerSettle(SecondsDuration duration)
         {
-            mPointerPresentationOverrideRemainingSeconds = Mathf.Max(0.0f, durationSeconds);
+            mPointerPresentationOverrideRemainingSeconds = duration.Value;
             mPresentedPointerScreenPositionOrNull = new PointerScreenPosition(getBottomCenterPointerScreenPosition());
             mShouldRebasePointerAfterPresentationOverride = mPointerPresentationOverrideRemainingSeconds > 0.0f;
             mIsPointerPresentationRebaseActive = false;

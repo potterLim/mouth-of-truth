@@ -78,6 +78,18 @@ namespace MouthOfTruth.Game.Presentation.Runtime
         private const int POINTER_CURSOR_TEXTURE_SIZE = 64;
         private static readonly Vector2 POINTER_CURSOR_SIZE_PIXELS = new Vector2(46.0f, 46.0f);
         private static readonly Vector2 HELD_POINTER_CURSOR_SIZE_PIXELS = new Vector2(58.0f, 58.0f);
+
+        private enum EEyeBeamSourceSide
+        {
+            Left,
+            Right,
+        }
+
+        private enum EMouthEffectVisualState
+        {
+            Hidden,
+            ListeningAndAnalyzing,
+        }
         private static readonly Vector2 RITUAL_HAND_SIZE_PIXELS = new Vector2(340.0f, 380.0f);
         private static readonly Vector2 TUTORIAL_HAND_SIZE_PIXELS = new Vector2(260.0f, 290.0f);
         private static readonly Vector2 TUTORIAL_LEAP_MOTION_DEVICE_SIZE_PIXELS = new Vector2(350.0f, 160.0f);
@@ -213,6 +225,6 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
         public NormalizedProgress CardAbsorptionPresentationProgress => mCardAbsorptionPresentationProgress;
 
-        public SecondsDuration HandPromptPanelHoldDuration => new SecondsDuration(getHandPromptPanelHoldSeconds());
+        public SecondsDuration HandPromptPanelHoldDuration => getHandPromptPanelHoldDuration();
     }
 }

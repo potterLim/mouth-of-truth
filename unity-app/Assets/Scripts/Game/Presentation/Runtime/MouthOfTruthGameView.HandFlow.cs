@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using MouthOfTruth.Game.Data;
 using UnityEngine;
 
 namespace MouthOfTruth.Game.Presentation.Runtime
@@ -31,7 +32,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             configureExitButtonAsTopLeftIcon();
             setObjectActive(mExitButton, true);
             setObjectActive(mMouthImage, true);
-            setMouthEffectImagesActive(false, false);
+            setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
             setEyeBeamImagesActive(false);
             setObjectActive(mHandImage, false);
             setObjectActive(mRitualHandImage, false);
@@ -86,7 +87,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             }
 
             setObjectActive(mHandImage, false);
-            setMouthEffectImagesActive(false, false);
+            setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
             setEyeBeamImagesActive(false);
             setObjectActive(mRitualHandImage, true);
             placeRitualHandAboveMouth();
@@ -96,7 +97,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             Vector2 innerPosition = getHandInnerPosition() + new Vector2(0.0f, -36.0f);
 
             await animateOverTimeAsync(
-                HAND_INSERTION_DURATION_SECONDS,
+                new SecondsDuration(HAND_INSERTION_DURATION_SECONDS),
                 progress =>
                 {
                     float easedProgress = easeInOut(progress);
@@ -170,7 +171,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 applyAnsweringFocusLayout();
             }
 
-            setMouthEffectImagesActive(false, false);
+            setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
             setEyeBeamImagesActive(true);
             enableAnsweringPresentation();
         }
@@ -218,7 +219,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             setObjectActive(mPointerImage, false);
             setObjectActive(mHandImage, false);
             setObjectActive(mRitualHandImage, false);
-            setMouthEffectImagesActive(true, true);
+            setMouthEffectVisualState(EMouthEffectVisualState.ListeningAndAnalyzing);
             setEyeBeamImagesActive(false);
             enableAnalyzingPresentation();
         }
@@ -284,7 +285,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
             if (mIsAnalyzingPresentationActive == false)
             {
-                setMouthEffectImagesActive(false, false);
+                setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
             }
 
             if (mAnalyzingDotsText != null && mIsAnalyzingPresentationActive == false)
@@ -333,7 +334,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 mMouthImage.rectTransform.localScale = Vector3.one;
             }
 
-            setMouthEffectImagesActive(false, false);
+            setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
 
             if (mAnalyzingDotsText != null)
             {

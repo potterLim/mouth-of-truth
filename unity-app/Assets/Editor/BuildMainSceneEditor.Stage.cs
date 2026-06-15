@@ -71,7 +71,7 @@ namespace MouthOfTruth.Editor
             {
                 GameObject archInstance = instantiatePrefab(archPrefab, parentTransform, "StageArch");
                 archInstance.transform.position = new Vector3(stageBasePosition.x, floorY + 0.1f, stageBasePosition.z + 0.25f);
-                alignLongAxisToForward(archInstance.transform, corridorAxes.Forward, isLongAxisX: true);
+                alignLongAxisToForward(archInstance.transform, corridorAxes.Forward, EObjectLongAxis.XAxis);
                 archInstance.transform.localScale = new Vector3(1.18f, 1.18f, 1.18f);
             }
 
@@ -90,11 +90,11 @@ namespace MouthOfTruth.Editor
 
             GameObject leftTorch = instantiatePrefab(torchPrefab, parentTransform, "StageTorchLeft");
             leftTorch.transform.position = leftTorchPosition;
-            alignLongAxisToForward(leftTorch.transform, corridorAxes.Forward, isLongAxisX: false);
+            alignLongAxisToForward(leftTorch.transform, corridorAxes.Forward, EObjectLongAxis.ZAxis);
 
             GameObject rightTorch = instantiatePrefab(torchPrefab, parentTransform, "StageTorchRight");
             rightTorch.transform.position = rightTorchPosition;
-            alignLongAxisToForward(rightTorch.transform, corridorAxes.Forward, isLongAxisX: false);
+            alignLongAxisToForward(rightTorch.transform, corridorAxes.Forward, EObjectLongAxis.ZAxis);
         }
 
         private static void createStageRunner(Transform parentTransform, Bounds environmentBounds, CorridorAxes corridorAxes, float floorY, Vector3 stageBasePosition)

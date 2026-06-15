@@ -98,7 +98,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             return Sprite.Create(texture, new Rect(0.0f, 0.0f, TEXTURE_SIZE, TEXTURE_SIZE), new Vector2(0.5f, 0.5f), TEXTURE_SIZE);
         }
 
-        private static Sprite createEyeBeamSprite(bool isSourceOnRight)
+        private static Sprite createEyeBeamSprite(EEyeBeamSourceSide eyeBeamSourceSide)
         {
             const int TEXTURE_WIDTH = 192;
             const int TEXTURE_HEIGHT = 256;
@@ -107,7 +107,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             texture.filterMode = FilterMode.Bilinear;
             texture.wrapMode = TextureWrapMode.Clamp;
             Color[] pixels = new Color[TEXTURE_WIDTH * TEXTURE_HEIGHT];
-            float sourceCenterX = isSourceOnRight ? 0.52f : 0.48f;
+            float sourceCenterX = eyeBeamSourceSide == EEyeBeamSourceSide.Right ? 0.52f : 0.48f;
 
             for (int y = 0; y < TEXTURE_HEIGHT; y += 1)
             {

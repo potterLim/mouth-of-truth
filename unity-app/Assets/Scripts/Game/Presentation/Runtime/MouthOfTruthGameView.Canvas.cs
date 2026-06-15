@@ -61,11 +61,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mMouthAnalyzingAuraImage.sprite = createRingGlowSprite();
             mMouthAnalyzingAuraImage.raycastTarget = false;
             mMouthLeftEyeBeamImage = createImage("MouthLeftEyeBeam", mCanvasRootTransform, new Vector2(0.5f, 0.50f), new Vector2(0.5f, 0.50f), new Vector2(0.0f, 60.0f), new Vector2(360.0f, 72.0f), Color.clear);
-            mMouthLeftEyeBeamImage.sprite = createEyeBeamSprite(isSourceOnRight: false);
+            mMouthLeftEyeBeamImage.sprite = createEyeBeamSprite(EEyeBeamSourceSide.Left);
             mMouthLeftEyeBeamImage.type = Image.Type.Simple;
             mMouthLeftEyeBeamImage.raycastTarget = false;
             mMouthRightEyeBeamImage = createImage("MouthRightEyeBeam", mCanvasRootTransform, new Vector2(0.5f, 0.50f), new Vector2(0.5f, 0.50f), new Vector2(0.0f, 60.0f), new Vector2(360.0f, 72.0f), Color.clear);
-            mMouthRightEyeBeamImage.sprite = createEyeBeamSprite(isSourceOnRight: true);
+            mMouthRightEyeBeamImage.sprite = createEyeBeamSprite(EEyeBeamSourceSide.Right);
             mMouthRightEyeBeamImage.type = Image.Type.Simple;
             mMouthRightEyeBeamImage.raycastTarget = false;
             placeMouthEffectImagesBehindMouth();
@@ -112,7 +112,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             setObjectActive(mTutorialTitleText, false);
             setObjectActive(mTutorialBodyText, false);
             setObjectActive(mTutorialStepText, false);
-            setMouthEffectImagesActive(false, false);
+            setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
             setEyeBeamImagesActive(false);
             mLoadingOverlayImage = createFullScreenImage("LoadingOverlay", mCanvasRootTransform, Color.black);
             mLoadingOverlayImage.transform.SetAsLastSibling();

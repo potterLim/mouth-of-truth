@@ -33,7 +33,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             setObjectActive(mStatusText, false);
             setObjectActive(mAnswerTimerText, false);
             setObjectActive(mAnswerInputField, false);
-            setMouthEffectImagesActive(false, false);
+            setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
             setEyeBeamImagesActive(false);
             setObjectActive(mHandImage, false);
             setObjectActive(mRitualHandImage, false);
@@ -48,7 +48,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             hideFirstRunTutorialPresentation();
 
             await animateOverTimeAsync(
-                TEMPLE_APPROACH_FORWARD_DURATION_SECONDS,
+                new SecondsDuration(TEMPLE_APPROACH_FORWARD_DURATION_SECONDS),
                 progress =>
                 {
                     float travelProgress = easeInOut(progress);
@@ -64,7 +64,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mTempleApproachCameraRectTransform.localScale = Vector3.one * TEMPLE_APPROACH_STAIR_START_SCALE;
             mTempleApproachCameraRectTransform.anchoredPosition = Vector2.zero;
             setOverlayTint(STAGE_OVERLAY_TINT, TEMPLE_APPROACH_STAGE_OVERLAY_ALPHA);
-            await fadeTempleApproachMouthAlphaAsync(CARD_SELECTION_DIM_MOUTH_ALPHA, TEMPLE_APPROACH_MOUTH_DIM_SECONDS);
+            await fadeTempleApproachMouthAlphaAsync(CARD_SELECTION_DIM_MOUTH_ALPHA, new SecondsDuration(TEMPLE_APPROACH_MOUTH_DIM_SECONDS));
         }
 
         public Task PrepareTempleGameplayBackdropAsync()
@@ -176,7 +176,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             syncTempleStageMouthOverlay(0.0f);
         }
 
-        private async Task fadeTempleApproachMouthAlphaAsync(float targetAlpha, float durationSeconds)
+        private async Task fadeTempleApproachMouthAlphaAsync(float targetAlpha, SecondsDuration duration)
         {
             if (mTempleApproachMouthImage == null)
             {
@@ -186,7 +186,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             float startAlpha = mTempleApproachMouthImage.color.a;
 
             await animateOverTimeAsync(
-                durationSeconds,
+                duration,
                 progress =>
                 {
                     float easedProgress = easeInOut(progress);

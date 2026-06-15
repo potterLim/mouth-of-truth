@@ -314,8 +314,10 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             effectRectTransform.localRotation = Quaternion.identity;
         }
 
-        private void setMouthEffectImagesActive(bool isListeningAuraActive, bool isAnalyzingAuraActive)
+        private void setMouthEffectVisualState(EMouthEffectVisualState mouthEffectVisualState)
         {
+            bool isListeningAuraActive = mouthEffectVisualState == EMouthEffectVisualState.ListeningAndAnalyzing;
+            bool isAnalyzingAuraActive = mouthEffectVisualState == EMouthEffectVisualState.ListeningAndAnalyzing;
             setObjectActive(mMouthListeningAuraImage, isListeningAuraActive);
             setObjectActive(mMouthAnalyzingAuraImage, isAnalyzingAuraActive);
             placeMouthEffectImagesBehindMouth();

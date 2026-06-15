@@ -110,7 +110,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mQuestionTextInkBoost.effectColor = QUESTION_TEXT_INK_BOOST_COLOR;
             mQuestionTextInkBoost.effectDistance = QUESTION_TEXT_INK_BOOST_OFFSET;
             mQuestionTextInkBoost.useGraphicAlpha = false;
-            setQuestionText(string.Empty);
+            clearQuestionText();
         }
 
         public void SetBack(Sprite cardBackSprite)
@@ -118,7 +118,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mCardImage.sprite = cardBackSprite;
             mCardImage.type = Image.Type.Simple;
             mCardImage.color = Color.white;
-            setQuestionText(string.Empty);
+            clearQuestionText();
             mQuestionText.enabled = false;
         }
 
@@ -143,8 +143,8 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mQuestionText.color = QUESTION_TEXT_INK_COLOR;
             mQuestionText.material = Graphic.defaultGraphicMaterial;
             mCanvasGroup.alpha = 1.0f;
-            setQuestionText(questionText.Value);
-            applyQuestionTextLayout(questionText.Value);
+            setQuestionText(questionText);
+            applyQuestionTextLayout(questionText);
         }
 
         public void SetVisualState(EQuestionCardVisualState questionCardVisualState, NormalizedProgress hoverProgress)
@@ -203,13 +203,19 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             IsHovered = false;
         }
 
-        private void setQuestionText(string questionText)
+        private void clearQuestionText()
         {
-            mQuestionText.font = containsHangul(questionText) ? mKoreanFallbackFont : mPrimaryUiFont;
+            setQuestionText(default);
+        }
+
+        private void setQuestionText(QuestionText questionText)
+        {
+            string questionTextValue = questionText.Value;
+            mQuestionText.font = containsHangul(questionTextValue) ? mKoreanFallbackFont : mPrimaryUiFont;
             mQuestionText.color = QUESTION_TEXT_INK_COLOR;
             mQuestionText.material = Graphic.defaultGraphicMaterial;
             mQuestionText.fontStyle = FontStyle.Normal;
-            mQuestionText.text = questionText;
+            mQuestionText.text = questionTextValue;
 
             if (mQuestionTextInkBoost != null)
             {
@@ -218,7 +224,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             }
         }
 
-        private void applyQuestionTextLayout(string questionText)
+        private void applyQuestionTextLayout(QuestionText questionText)
         {
             mQuestionText.horizontalOverflow = HorizontalWrapMode.Overflow;
             mQuestionText.verticalOverflow = VerticalWrapMode.Truncate;
@@ -227,9 +233,9 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mQuestionText.fontSize = calculateFittingQuestionTextFontSize(questionText);
         }
 
-        private int calculateFittingQuestionTextFontSize(string questionText)
+        private int calculateFittingQuestionTextFontSize(QuestionText questionText)
         {
-            if (string.IsNullOrWhiteSpace(questionText))
+            if (string.IsNullOrWhiteSpace(questionText.Value))
             {
                 return QUESTION_TEXT_MAXIMUM_FONT_SIZE;
             }
@@ -259,12 +265,13 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             return QUESTION_TEXT_MINIMUM_FONT_SIZE;
         }
 
-        private bool canQuestionTextFitAtFontSize(string questionText, Vector2 availableTextSize, int fontSize)
+        private bool canQuestionTextFitAtFontSize(QuestionText questionText, Vector2 availableTextSize, int fontSize)
         {
+            string questionTextValue = questionText.Value;
             mQuestionText.fontSize = fontSize;
             TextGenerationSettings textGenerationSettings = mQuestionText.GetGenerationSettings(availableTextSize);
 
-            foreach (string questionLine in questionText.Split('\n'))
+            foreach (string questionLine in questionTextValue.Split('\n'))
             {
                 float lineWidth = mQuestionText.cachedTextGeneratorForLayout.GetPreferredWidth(questionLine, textGenerationSettings) / mQuestionText.pixelsPerUnit;
 
@@ -274,7 +281,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 }
             }
 
-            float textHeight = mQuestionText.cachedTextGeneratorForLayout.GetPreferredHeight(questionText, textGenerationSettings) / mQuestionText.pixelsPerUnit;
+            float textHeight = mQuestionText.cachedTextGeneratorForLayout.GetPreferredHeight(questionTextValue, textGenerationSettings) / mQuestionText.pixelsPerUnit;
             return textHeight <= availableTextSize.y;
         }
 

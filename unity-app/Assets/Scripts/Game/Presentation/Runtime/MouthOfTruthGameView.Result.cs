@@ -20,14 +20,15 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 TempleCameraTransition templeCameraTransition = captureTempleCameraTransition(targetCameraScale, TEMPLE_MOUTH_FOCUS_CENTER);
 
                 await animateOverTimeAsync(
-                    0.54f,
+                    new SecondsDuration(0.54f),
                     progress =>
                     {
+                        float progressValue = progress.Value;
                         float easedProgress = easeInOut(progress);
-                        float pulse = Mathf.Sin(progress * Mathf.PI);
+                        float pulse = Mathf.Sin(progressValue * Mathf.PI);
                         float shakeFalloff = 1.0f - easedProgress;
-                        float residualShake = Mathf.Sin(progress * Mathf.PI * 7.0f) * shakeFalloff * 4.2f;
-                        float residualVerticalShake = Mathf.Sin(progress * Mathf.PI * 8.0f) * shakeFalloff * 1.8f;
+                        float residualShake = Mathf.Sin(progressValue * Mathf.PI * 7.0f) * shakeFalloff * 4.2f;
+                        float residualVerticalShake = Mathf.Sin(progressValue * Mathf.PI * 8.0f) * shakeFalloff * 1.8f;
                         NormalizedProgress cameraProgress = NormalizedProgress.FromUnclamped(easedProgress);
                         float cameraScale = templeCameraTransition.GetScale(targetCameraScale, cameraProgress) + (pulse * 0.020f);
                         Vector2 cameraPosition = templeCameraTransition.GetPosition(cameraProgress);
@@ -59,11 +60,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             Vector3 startScale = mouthRectTransform.localScale;
 
             await animateOverTimeAsync(
-                0.54f,
+                new SecondsDuration(0.54f),
                 progress =>
                 {
                     float easedProgress = easeInOut(progress);
-                    float pulse = Mathf.Sin(progress * Mathf.PI);
+                    float pulse = Mathf.Sin(progress.Value * Mathf.PI);
                     Vector2 currentAnchor = Vector2.Lerp(startAnchor, RESULT_MOUTH_ANCHOR, easedProgress);
                     mouthRectTransform.anchorMin = currentAnchor;
                     mouthRectTransform.anchorMax = currentAnchor;
@@ -116,7 +117,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             setObjectActive(mQuestionPanelImage, false);
             setObjectActive(mStatusPanelImage, false);
             setObjectActive(mMouthImage, true);
-            setMouthEffectImagesActive(false, false);
+            setMouthEffectVisualState(EMouthEffectVisualState.Hidden);
             setObjectActive(mHandImage, false);
             setObjectActive(mRitualHandImage, false);
             setObjectActive(mVerdictImage, true);
@@ -222,17 +223,18 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             };
 
             await animateOverTimeAsync(
-                verdictKind == EVerdictKind.False ? 0.88f : 0.72f,
+                new SecondsDuration(verdictKind == EVerdictKind.False ? 0.88f : 0.72f),
                 progress =>
                 {
+                    float progressValue = progress.Value;
                     float easedProgress = easeOut(progress);
-                    float pulse = Mathf.Sin(progress * Mathf.PI);
+                    float pulse = Mathf.Sin(progressValue * Mathf.PI);
                     float falloff = 1.0f - easedProgress;
-                    float residualShake = Mathf.Sin(progress * Mathf.PI * 8.0f) * falloff;
+                    float residualShake = Mathf.Sin(progressValue * Mathf.PI * 8.0f) * falloff;
                     float shake = verdictKind == EVerdictKind.False
-                        ? Mathf.Sin(progress * Mathf.PI * 12.0f) * falloff
+                        ? Mathf.Sin(progressValue * Mathf.PI * 12.0f) * falloff
                         : residualShake * 0.45f;
-                    float verticalShake = Mathf.Sin(progress * Mathf.PI * 7.0f) * falloff * 0.72f;
+                    float verticalShake = Mathf.Sin(progressValue * Mathf.PI * 7.0f) * falloff * 0.72f;
                     setTempleCameraPoseCenteredOnMouth(TEMPLE_RESULT_FOCUS_SCALE + (pulse * 0.018f), TEMPLE_MOUTH_FOCUS_CENTER, shake * 1.4f, verticalShake);
                     setOverlayTint(overlayTint, Mathf.Lerp(0.48f, 0.38f, easedProgress));
                     setTempleApproachMouthColor(Color.Lerp(Color.white, mouthTint, 1.0f - easedProgress * 0.25f));
@@ -247,7 +249,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mVerdictImage.color = new Color(1.0f, 1.0f, 1.0f, 0.0f);
 
             await animateOverTimeAsync(
-                0.68f,
+                new SecondsDuration(0.68f),
                 progress =>
                 {
                     float easedProgress = easeOut(progress);
@@ -265,7 +267,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mVerdictImage.color = new Color(1.0f, 1.0f, 1.0f, 0.0f);
 
             await animateOverTimeAsync(
-                0.32f,
+                new SecondsDuration(0.32f),
                 progress =>
                 {
                     float easedProgress = easeInOut(progress);
@@ -275,11 +277,11 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 });
 
             await animateOverTimeAsync(
-                0.56f,
+                new SecondsDuration(0.56f),
                 progress =>
                 {
                     float easedProgress = easeOut(progress);
-                    float shake = Mathf.Sin(progress * Mathf.PI * 14.0f) * (1.0f - easedProgress);
+                    float shake = Mathf.Sin(progress.Value * Mathf.PI * 14.0f) * (1.0f - easedProgress);
                     setOverlayTint(new Color(0.22f, 0.006f, 0.006f, 1.0f), Mathf.Lerp(0.70f, 0.40f, easedProgress));
                     mMouthImage.color = new Color(1.0f, Mathf.Lerp(0.60f, 1.0f, easedProgress), Mathf.Lerp(0.54f, 1.0f, easedProgress), 1.0f);
                     mMouthImage.rectTransform.localScale = Vector3.one * Mathf.Lerp(1.22f, 1.0f, easedProgress);
@@ -294,13 +296,14 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mVerdictImage.color = new Color(1.0f, 1.0f, 1.0f, 0.0f);
 
             await animateOverTimeAsync(
-                0.72f,
+                new SecondsDuration(0.72f),
                 progress =>
                 {
+                    float progressValue = progress.Value;
                     float easedProgress = easeInOut(progress);
-                    float wobble = Mathf.Sin(progress * Mathf.PI * 7.0f) * (1.0f - easedProgress);
+                    float wobble = Mathf.Sin(progressValue * Mathf.PI * 7.0f) * (1.0f - easedProgress);
                     float flickerAlpha = Mathf.Lerp(0.25f, 1.0f, easedProgress)
-                        + (Mathf.Sin(progress * Mathf.PI * 9.0f) * 0.08f * (1.0f - easedProgress));
+                        + (Mathf.Sin(progressValue * Mathf.PI * 9.0f) * 0.08f * (1.0f - easedProgress));
                     setOverlayTint(new Color(0.055f, 0.055f, 0.075f, 1.0f), Mathf.Lerp(0.48f, 0.40f, easedProgress));
                     mMouthImage.color = new Color(0.74f, 0.76f, 0.82f, Mathf.Lerp(0.74f, 1.0f, easedProgress));
                     mMouthImage.rectTransform.localScale = Vector3.one * Mathf.Lerp(0.985f, 1.0f, easedProgress);

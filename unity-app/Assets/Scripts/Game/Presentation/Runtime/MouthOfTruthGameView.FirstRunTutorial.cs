@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using MouthOfTruth.Game.Data;
 using UnityEngine;
 
 namespace MouthOfTruth.Game.Presentation.Runtime
@@ -18,7 +19,8 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
         public async Task PlayFirstRunTutorialAsync()
         {
-            float tutorialDurationSeconds = getFirstRunTutorialDurationSeconds() * FIRST_RUN_TUTORIAL_DURATION_SCALE;
+            SecondsDuration firstRunTutorialDuration = getFirstRunTutorialDuration();
+            SecondsDuration tutorialDuration = new SecondsDuration(firstRunTutorialDuration.Value * FIRST_RUN_TUTORIAL_DURATION_SCALE);
             IsFirstRunTutorialVisible = true;
             configureExitButtonAsTopLeftIcon();
             setObjectActive(mTutorialOverlayImage, true);
@@ -46,14 +48,15 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             RectTransform handRectTransform = mTutorialHandImage.rectTransform;
 
             await animateOverTimeAsync(
-                tutorialDurationSeconds,
+                tutorialDuration,
                 progress =>
                 {
-                    float firstSegmentProgress = Mathf.Clamp01(progress / 0.48f);
-                    float secondSegmentProgress = Mathf.Clamp01((progress - 0.48f) / 0.52f);
+                    float progressValue = progress.Value;
+                    float firstSegmentProgress = Mathf.Clamp01(progressValue / 0.48f);
+                    float secondSegmentProgress = Mathf.Clamp01((progressValue - 0.48f) / 0.52f);
                     Vector2 hoverStartPosition = new Vector2(0.0f, -130.0f);
                     Vector2 hoverReadyPosition = new Vector2(0.0f, -18.0f);
-                    handRectTransform.anchoredPosition = progress < 0.48f
+                    handRectTransform.anchoredPosition = progressValue < 0.48f
                         ? Vector2.Lerp(hoverStartPosition, hoverReadyPosition, easeOut(firstSegmentProgress))
                         : getTutorialScanPosition(secondSegmentProgress);
                     handRectTransform.localScale = Vector3.one * Mathf.Lerp(0.78f, 1.02f, easeOut(firstSegmentProgress));
@@ -102,7 +105,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             return Vector2.Lerp(rightPosition, centerPosition, easeInOut((clampedProgress - 0.65f) / 0.35f));
         }
 
-        private static float getFirstRunTutorialDurationSeconds()
+        private static SecondsDuration getFirstRunTutorialDuration()
         {
             try
             {
@@ -110,7 +113,7 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
                 if (File.Exists(firstRunTutorialSequencePath.Value) == false)
                 {
-                    return FIRST_RUN_TUTORIAL_FALLBACK_DURATION_SECONDS;
+                    return new SecondsDuration(FIRST_RUN_TUTORIAL_FALLBACK_DURATION_SECONDS);
                 }
 
                 string jsonText = File.ReadAllText(firstRunTutorialSequencePath.Value);
@@ -118,15 +121,15 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
                 if (metadata == null || metadata.fr <= 0.0f || metadata.op <= metadata.ip)
                 {
-                    return FIRST_RUN_TUTORIAL_FALLBACK_DURATION_SECONDS;
+                    return new SecondsDuration(FIRST_RUN_TUTORIAL_FALLBACK_DURATION_SECONDS);
                 }
 
-                return Mathf.Clamp((metadata.op - metadata.ip) / metadata.fr, 3.0f, 5.0f);
+                return new SecondsDuration(Mathf.Clamp((metadata.op - metadata.ip) / metadata.fr, 3.0f, 5.0f));
             }
             catch (Exception exception)
             {
                 Debug.LogWarning("Failed to read first-run tutorial sequence metadata.\n" + exception);
-                return FIRST_RUN_TUTORIAL_FALLBACK_DURATION_SECONDS;
+                return new SecondsDuration(FIRST_RUN_TUTORIAL_FALLBACK_DURATION_SECONDS);
             }
         }
     }

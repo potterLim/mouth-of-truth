@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Threading.Tasks;
 using MouthOfTruth.Game.App;
 using UnityEditor;
 using UnityEditor.Build;
@@ -186,9 +187,11 @@ namespace MouthOfTruth.Editor
                     throw new BuildFailedException($"Failed to start process: {fileName}");
                 }
 
-                string standardOutput = process.StandardOutput.ReadToEnd();
-                string standardError = process.StandardError.ReadToEnd();
+                Task<string> standardOutputTask = process.StandardOutput.ReadToEndAsync();
+                Task<string> standardErrorTask = process.StandardError.ReadToEndAsync();
                 process.WaitForExit();
+                string standardOutput = standardOutputTask.GetAwaiter().GetResult();
+                string standardError = standardErrorTask.GetAwaiter().GetResult();
 
                 if (process.ExitCode != 0)
                 {

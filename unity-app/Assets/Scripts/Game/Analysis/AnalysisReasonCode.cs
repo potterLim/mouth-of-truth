@@ -41,9 +41,9 @@ namespace MouthOfTruth.Game.Analysis
             return string.Equals(Value, other.Value, StringComparison.Ordinal);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object otherObject)
         {
-            return obj is AnalysisReasonCode other && Equals(other);
+            return otherObject is AnalysisReasonCode other && Equals(other);
         }
 
         public override int GetHashCode()

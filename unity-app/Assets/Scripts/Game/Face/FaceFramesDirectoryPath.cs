@@ -33,9 +33,9 @@ namespace MouthOfTruth.Game.Face
             return string.Equals(Value, other.Value, StringComparison.Ordinal);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object otherObject)
         {
-            return obj is FaceFramesDirectoryPath other && Equals(other);
+            return otherObject is FaceFramesDirectoryPath other && Equals(other);
         }
 
         public override int GetHashCode()

@@ -12,8 +12,8 @@ class ModelPredictionPayload(TypedDict):
 
     label: str
     confidence: float
-    probs: list[float]
-    prob_dict: dict[str, float]
+    class_probabilities: list[float]
+    probability_by_label: dict[str, float]
 
 
 class VoiceFilePredictionPayload(ModelPredictionPayload):
@@ -42,8 +42,8 @@ class VoiceSegmentPayload(TypedDict):
     base_score: float
     suspicion_score: float
     status_text: str
-    prob_dict: dict[str, float]
-    probs: list[float]
+    probability_by_label: dict[str, float]
+    class_probabilities: list[float]
 
 
 class AnalysisSummary(TypedDict):

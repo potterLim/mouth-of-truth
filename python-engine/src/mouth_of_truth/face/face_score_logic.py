@@ -49,13 +49,21 @@ def calculate_change_score(current_probs: list[float], average_probs: list[float
     return _clamp(difference_sum * 100.0, 0.0, 100.0)
 
 
-def calculate_base_score(prob_dict: dict[str, float]) -> float:
+def calculate_base_score(probability_by_label: dict[str, float]) -> float:
     """Calculates one base suspicion score from face-emotion probabilities."""
-    stable_probability = prob_dict.get("happiness", 0.0) + prob_dict.get("neutral", 0.0)
-    medium_probability = prob_dict.get("sadness", 0.0) + prob_dict.get("surprise", 0.0)
-    tense_probability = prob_dict.get("fear", 0.0) + prob_dict.get("disgust", 0.0) + prob_dict.get("anger", 0.0)
+    stable_probability = probability_by_label.get("happiness", 0.0) + probability_by_label.get("neutral", 0.0)
+    medium_probability = probability_by_label.get("sadness", 0.0) + probability_by_label.get("surprise", 0.0)
+    tense_probability = (
+        probability_by_label.get("fear", 0.0)
+        + probability_by_label.get("disgust", 0.0)
+        + probability_by_label.get("anger", 0.0)
+    )
 
-    score = 100.0 * ((BASE_TENSE_WEIGHT * tense_probability) + (BASE_MEDIUM_WEIGHT * medium_probability) + (BASE_STABLE_WEIGHT * stable_probability))
+    score = 100.0 * (
+        (BASE_TENSE_WEIGHT * tense_probability)
+        + (BASE_MEDIUM_WEIGHT * medium_probability)
+        + (BASE_STABLE_WEIGHT * stable_probability)
+    )
     return _clamp(score, 0.0, 100.0)
 
 
@@ -108,14 +116,14 @@ def summarize_session(recognition_results: list[FaceRecognitionPayload]) -> Anal
             "dominant_label": "N/A",
             "status_text": "No data",
             "result_text": "No valid face data",
-        }
+    }
 
     recognition_count = len(recognition_results)
-    average_score = sum(item["suspicion_score"] for item in recognition_results) / recognition_count
-    average_base_score = sum(item["base_score"] for item in recognition_results) / recognition_count
-    change_score_sum = sum(item["change_score"] for item in recognition_results)
+    average_score = sum(recognition_result["suspicion_score"] for recognition_result in recognition_results) / recognition_count
+    average_base_score = sum(recognition_result["base_score"] for recognition_result in recognition_results) / recognition_count
+    change_score_sum = sum(recognition_result["change_score"] for recognition_result in recognition_results)
     average_change_score = change_score_sum / recognition_count
-    label_counter = Counter(item["label"] for item in recognition_results)
+    label_counter = Counter(recognition_result["label"] for recognition_result in recognition_results)
     dominant_label = label_counter.most_common(1)[0][0]
 
     return {

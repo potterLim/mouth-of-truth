@@ -19,9 +19,9 @@ namespace MouthOfTruth.Game.Data
             return Value == other.Value;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object otherObject)
         {
-            return obj is QuestionDeckRandomSeed other && Equals(other);
+            return otherObject is QuestionDeckRandomSeed other && Equals(other);
         }
 
         public override int GetHashCode()

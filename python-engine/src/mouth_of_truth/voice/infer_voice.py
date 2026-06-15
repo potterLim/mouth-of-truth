@@ -73,12 +73,12 @@ def load_target_pcm_wav(audio_file_path: Path) -> list[float] | None:
     return [sample / 32768.0 for sample in samples]
 
 
-def probs_to_dict(probs_data: list[float]) -> dict[str, float]:
+def build_probability_by_label(class_probabilities: list[float]) -> dict[str, float]:
     """Converts one voice probability list into one label-to-score dictionary."""
-    if len(probs_data) != len(VOICE_LABELS):
-        raise ValueError(f"Unexpected number of voice class probabilities: {len(probs_data)} (expected {len(VOICE_LABELS)})")
+    if len(class_probabilities) != len(VOICE_LABELS):
+        raise ValueError(f"Unexpected number of voice class probabilities: {len(class_probabilities)} (expected {len(VOICE_LABELS)})")
 
-    return {label: float(score) for label, score in zip(VOICE_LABELS, probs_data)}
+    return {label: float(score) for label, score in zip(VOICE_LABELS, class_probabilities)}
 
 
 def predict_voice_file(
@@ -94,14 +94,14 @@ def predict_voice_file(
         logits = model(**inputs).logits
         probabilities = torch.softmax(logits, dim=-1)[0]
 
-    probabilities_data = probabilities.tolist()
-    probability_dict = probs_to_dict(probabilities_data)
+    class_probabilities = probabilities.tolist()
+    probability_by_label = build_probability_by_label(class_probabilities)
     top_index = int(torch.argmax(probabilities).item())
 
     return {
         "audio_path": audio_path,
         "label": VOICE_LABELS[top_index],
         "confidence": float(probabilities[top_index].item()),
-        "probs": probabilities_data,
-        "prob_dict": probability_dict,
+        "class_probabilities": class_probabilities,
+        "probability_by_label": probability_by_label,
     }

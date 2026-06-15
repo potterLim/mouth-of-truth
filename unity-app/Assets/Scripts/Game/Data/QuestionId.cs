@@ -36,9 +36,9 @@ namespace MouthOfTruth.Game.Data
             return string.Equals(Value, other.Value, StringComparison.Ordinal);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object otherObject)
         {
-            return obj is QuestionId other && Equals(other);
+            return otherObject is QuestionId other && Equals(other);
         }
 
         public override int GetHashCode()

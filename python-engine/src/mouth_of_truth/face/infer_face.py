@@ -25,14 +25,14 @@ def load_face_model() -> YOLO:
     return _CACHED_FACE_MODEL
 
 
-def probs_to_dict(model_names: dict[int, str], probs_data: list[float]) -> dict[str, float]:
+def build_probability_by_label(model_names: dict[int, str], class_probabilities: list[float]) -> dict[str, float]:
     """Converts one probability list into one label-to-score dictionary."""
-    probability_dict: dict[str, float] = {}
+    probability_by_label: dict[str, float] = {}
 
     for class_index, class_name in model_names.items():
-        probability_dict[class_name] = float(probs_data[class_index])
+        probability_by_label[class_name] = float(class_probabilities[class_index])
 
-    return probability_dict
+    return probability_by_label
 
 
 def predict_face_crop(model: YOLO, face_crop: Any) -> ModelPredictionPayload:
@@ -51,11 +51,11 @@ def predict_face_crop(model: YOLO, face_crop: Any) -> ModelPredictionPayload:
     top_index = int(probabilities.top1)
     top_confidence = float(probabilities.top1conf)
     top_label = model.names[top_index]
-    probabilities_data = probabilities.data.tolist()
+    class_probabilities = probabilities.data.tolist()
 
     return {
         "label": top_label,
         "confidence": top_confidence,
-        "probs": probabilities_data,
-        "prob_dict": probs_to_dict(model.names, probabilities_data),
+        "class_probabilities": class_probabilities,
+        "probability_by_label": build_probability_by_label(model.names, class_probabilities),
     }

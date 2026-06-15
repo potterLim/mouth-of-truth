@@ -11,7 +11,7 @@ import torch
 
 from mouth_of_truth.audio_signal import calculate_window_rms
 from mouth_of_truth.contracts.analysis_payloads import ModelPredictionPayload, VoiceAnalysisPayload, VoiceSegmentPayload
-from mouth_of_truth.voice.infer_voice import TARGET_SAMPLE_RATE, VOICE_LABELS, load_audio, load_voice_model, probs_to_dict
+from mouth_of_truth.voice.infer_voice import TARGET_SAMPLE_RATE, VOICE_LABELS, build_probability_by_label, load_audio, load_voice_model
 from mouth_of_truth.voice.voice_score_logic import (
     calculate_voice_base_score,
     calculate_voice_change_score,
@@ -79,11 +79,11 @@ def run_trained_voice_emotion_pipeline(audio_path: str, waveform: list[float]) -
 
     for segment_waveform in segments:
         prediction = predict_voice_segment(feature_extractor, model, segment_waveform)
-        probabilities_data = prediction["probs"]
-        history.append(probabilities_data)
+        class_probabilities = prediction["class_probabilities"]
+        history.append(class_probabilities)
         average_distribution = build_average_distribution(history)
-        change_score = calculate_voice_change_score(probabilities_data, average_distribution)
-        base_score = calculate_voice_base_score(prediction["prob_dict"])
+        change_score = calculate_voice_change_score(class_probabilities, average_distribution)
+        base_score = calculate_voice_base_score(prediction["probability_by_label"])
         suspicion_score = calculate_voice_suspicion_score(base_score, change_score)
 
         segment_results.append(
@@ -95,8 +95,8 @@ def run_trained_voice_emotion_pipeline(audio_path: str, waveform: list[float]) -
                 "base_score": base_score,
                 "suspicion_score": suspicion_score,
                 "status_text": get_voice_status_text(suspicion_score),
-                "prob_dict": prediction["prob_dict"],
-                "probs": probabilities_data,
+                "probability_by_label": prediction["probability_by_label"],
+                "class_probabilities": class_probabilities,
             }
         )
         analyzed_segment_index += 1
@@ -115,17 +115,17 @@ def build_fast_voice_segment_result(waveform: list[float], sample_rate: int) -> 
     speech_rms_values = [rms_value for rms_value in rms_values if rms_value >= FAST_SPEECH_EVIDENCE_RMS_THRESHOLD]
 
     if not speech_rms_values:
-        probability_dict = build_fast_voice_probability_dict(0.0)
+        probability_by_label = build_fast_voice_probability_by_label(0.0)
         return {
             "segment_index": 0,
             "label": "neu",
-            "confidence": probability_dict["neu"],
+            "confidence": probability_by_label["neu"],
             "change_score": 0.0,
             "base_score": 0.0,
             "suspicion_score": 0.0,
             "status_text": get_voice_status_text(0.0),
-            "prob_dict": probability_dict,
-            "probs": [probability_dict[label] for label in VOICE_LABELS],
+            "probability_by_label": probability_by_label,
+            "class_probabilities": [probability_by_label[label] for label in VOICE_LABELS],
         }
 
     average_rms = sum(speech_rms_values) / len(speech_rms_values)
@@ -138,20 +138,20 @@ def build_fast_voice_segment_result(waveform: list[float], sample_rate: int) -> 
     spike_score = _clamp(((max_rms / max(average_rms, 0.0001)) - 1.0) * 8.0, 0.0, 18.0)
     base_score = _clamp(gap_score + spike_score + (average_rms * 95.0), 0.0, 100.0)
     suspicion_score = _clamp((0.55 * base_score) + (0.45 * change_score), 0.0, 100.0)
-    probability_dict = build_fast_voice_probability_dict(suspicion_score)
-    probabilities_data = [probability_dict[label] for label in VOICE_LABELS]
-    top_label = max(probability_dict, key=probability_dict.get)
+    probability_by_label = build_fast_voice_probability_by_label(suspicion_score)
+    class_probabilities = [probability_by_label[label] for label in VOICE_LABELS]
+    top_label = max(probability_by_label, key=probability_by_label.get)
 
     return {
         "segment_index": 0,
         "label": top_label,
-        "confidence": probability_dict[top_label],
+        "confidence": probability_by_label[top_label],
         "change_score": change_score,
         "base_score": base_score,
         "suspicion_score": suspicion_score,
         "status_text": get_voice_status_text(suspicion_score),
-        "prob_dict": probability_dict,
-        "probs": probabilities_data,
+        "probability_by_label": probability_by_label,
+        "class_probabilities": class_probabilities,
     }
 
 
@@ -184,7 +184,7 @@ def has_sustained_voice_evidence(waveform: list[float], sample_rate: int) -> boo
     return max(speech_rms_values) >= FAST_SPEECH_EVIDENCE_PEAK_RMS_THRESHOLD
 
 
-def build_fast_voice_probability_dict(suspicion_score: float) -> dict[str, float]:
+def build_fast_voice_probability_by_label(suspicion_score: float) -> dict[str, float]:
     """Maps one acoustic instability score onto the existing voice labels."""
     tension = _clamp(suspicion_score / 100.0, 0.05, 0.85)
     stable = _clamp(1.0 - tension, 0.10, 0.80)
@@ -241,7 +241,10 @@ def split_audio_into_segments(
     return segments
 
 
-def select_representative_segments(segments: list[list[float]], maximum_segment_count: int = MAX_ANALYSIS_SEGMENT_COUNT) -> list[list[float]]:
+def select_representative_segments(
+    segments: list[list[float]],
+    maximum_segment_count: int = MAX_ANALYSIS_SEGMENT_COUNT,
+) -> list[list[float]]:
     """Selects evenly spaced speech segments so verdict latency stays bounded."""
     if maximum_segment_count <= 0:
         raise ValueError("maximum_segment_count must be greater than zero.")
@@ -253,7 +256,10 @@ def select_representative_segments(segments: list[list[float]], maximum_segment_
         return [segments[len(segments) // 2]]
 
     last_segment_index = len(segments) - 1
-    selected_indices = {round((last_segment_index * sample_index) / (maximum_segment_count - 1)) for sample_index in range(maximum_segment_count)}
+    selected_indices = {
+        round((last_segment_index * sample_index) / (maximum_segment_count - 1))
+        for sample_index in range(maximum_segment_count)
+    }
     return [segments[segment_index] for segment_index in sorted(selected_indices)]
 
 
@@ -265,16 +271,16 @@ def predict_voice_segment(feature_extractor: Any, model: Any, segment_waveform: 
         logits = model(**inputs).logits
         probabilities = torch.softmax(logits, dim=-1)[0]
 
-    probabilities_data = probabilities.tolist()
-    probability_dict = probs_to_dict(probabilities_data)
+    class_probabilities = probabilities.tolist()
+    probability_by_label = build_probability_by_label(class_probabilities)
     top_index = int(torch.argmax(probabilities).item())
-    top_label = list(probability_dict.keys())[top_index]
+    top_label = list(probability_by_label.keys())[top_index]
 
     return {
         "label": top_label,
         "confidence": float(probabilities[top_index].item()),
-        "probs": probabilities_data,
-        "prob_dict": probability_dict,
+        "class_probabilities": class_probabilities,
+        "probability_by_label": probability_by_label,
     }
 
 

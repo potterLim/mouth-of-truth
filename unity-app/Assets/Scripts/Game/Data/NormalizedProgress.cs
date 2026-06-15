@@ -37,9 +37,9 @@ namespace MouthOfTruth.Game.Data
             return Value.Equals(other.Value);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object otherObject)
         {
-            return obj is NormalizedProgress other && Equals(other);
+            return otherObject is NormalizedProgress other && Equals(other);
         }
 
         public override int GetHashCode()

@@ -23,9 +23,9 @@ namespace MouthOfTruth.Game.Narration
             return string.Equals(Value, other.Value, StringComparison.Ordinal);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object otherObject)
         {
-            return obj is QuestionAudioDirectoryPath other && Equals(other);
+            return otherObject is QuestionAudioDirectoryPath other && Equals(other);
         }
 
         public override int GetHashCode()

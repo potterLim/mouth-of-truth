@@ -56,11 +56,11 @@ def analyze_face_frame_directory(face_frames_directory_path: str | Path) -> Face
             continue
 
         prediction = predict_face_crop(face_model, face_crop)
-        probabilities_data = prediction["probs"]
-        history.append(probabilities_data)
+        class_probabilities = prediction["class_probabilities"]
+        history.append(class_probabilities)
         average_distribution = get_average_distribution(history)
-        change_score = calculate_change_score(probabilities_data, average_distribution)
-        base_score = calculate_base_score(prediction["prob_dict"])
+        change_score = calculate_change_score(class_probabilities, average_distribution)
+        base_score = calculate_base_score(prediction["probability_by_label"])
         suspicion_score = calculate_suspicion_score(base_score, change_score)
 
         recognition_results.append(

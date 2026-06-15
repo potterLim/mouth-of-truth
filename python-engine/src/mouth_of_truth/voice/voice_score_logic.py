@@ -18,13 +18,17 @@ def _clamp(value: float, min_value: float, max_value: float) -> float:
     return max(min_value, min(value, max_value))
 
 
-def calculate_voice_base_score(prob_dict: dict[str, float]) -> float:
+def calculate_voice_base_score(probability_by_label: dict[str, float]) -> float:
     """Calculates one base suspicion score from voice-emotion probabilities."""
-    stable_probability = prob_dict.get("neu", 0.0) + prob_dict.get("hap", 0.0)
-    medium_probability = prob_dict.get("sad", 0.0) + prob_dict.get("exc", 0.0)
-    tense_probability = prob_dict.get("ang", 0.0) + prob_dict.get("fru", 0.0)
+    stable_probability = probability_by_label.get("neu", 0.0) + probability_by_label.get("hap", 0.0)
+    medium_probability = probability_by_label.get("sad", 0.0) + probability_by_label.get("exc", 0.0)
+    tense_probability = probability_by_label.get("ang", 0.0) + probability_by_label.get("fru", 0.0)
 
-    score = 100.0 * ((BASE_TENSE_WEIGHT * tense_probability) + (BASE_MEDIUM_WEIGHT * medium_probability) - (BASE_STABLE_WEIGHT * stable_probability))
+    score = 100.0 * (
+        (BASE_TENSE_WEIGHT * tense_probability)
+        + (BASE_MEDIUM_WEIGHT * medium_probability)
+        - (BASE_STABLE_WEIGHT * stable_probability)
+    )
     return _clamp(score, 0.0, 100.0)
 
 
@@ -73,13 +77,13 @@ def summarize_voice_session(segment_results: list[VoiceSegmentPayload]) -> Analy
             "dominant_label": "N/A",
             "status_text": "No data",
             "result_text": "No valid voice data",
-        }
+    }
 
     segment_count = len(segment_results)
-    average_score = sum(item["suspicion_score"] for item in segment_results) / segment_count
-    average_base_score = sum(item["base_score"] for item in segment_results) / segment_count
-    average_change_score = sum(item["change_score"] for item in segment_results) / segment_count
-    label_counter = Counter(item["label"] for item in segment_results)
+    average_score = sum(segment_result["suspicion_score"] for segment_result in segment_results) / segment_count
+    average_base_score = sum(segment_result["base_score"] for segment_result in segment_results) / segment_count
+    average_change_score = sum(segment_result["change_score"] for segment_result in segment_results) / segment_count
+    label_counter = Counter(segment_result["label"] for segment_result in segment_results)
     dominant_label = label_counter.most_common(1)[0][0]
     status_text = get_voice_status_text(average_score)
 

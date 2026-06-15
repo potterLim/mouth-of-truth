@@ -31,9 +31,9 @@ namespace MouthOfTruth.Game.Voice
             return Value.Equals(other.Value);
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object otherObject)
         {
-            return obj is AudioRmsLevel other && Equals(other);
+            return otherObject is AudioRmsLevel other && Equals(other);
         }
 
         public override int GetHashCode()

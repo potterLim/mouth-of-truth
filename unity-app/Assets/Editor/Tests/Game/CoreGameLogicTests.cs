@@ -50,7 +50,9 @@ namespace MouthOfTruth.Editor.Tests.Game
 
             Assert.That(tracker.UpdateHoveredTargetOrNull(EUiActionTarget.StartGame, new SecondsDuration(0.2f)), Is.Null);
 
-            EUiActionTarget? confirmedTargetOrNull = tracker.UpdateHoveredTargetOrNull(EUiActionTarget.StartGame, new SecondsDuration(0.3f));
+            EUiActionTarget? confirmedTargetOrNull = tracker.UpdateHoveredTargetOrNull(
+                EUiActionTarget.StartGame,
+                new SecondsDuration(0.3f));
 
             Assert.That(confirmedTargetOrNull, Is.EqualTo(EUiActionTarget.StartGame));
             Assert.That(tracker.HoveredDuration.Value, Is.EqualTo(0.0f));
@@ -59,36 +61,61 @@ namespace MouthOfTruth.Editor.Tests.Game
         [Test]
         public void AnswerCollectionPolicyWaitsForGraceBeforeSilenceTimeout()
         {
-            AnswerCollectionPolicy policy = createAnswerCollectionPolicy(initialSilenceGraceSeconds: 2.0f, silenceTimeoutSeconds: 1.0f, maximumAnswerDurationSeconds: 5.0f);
+            AnswerCollectionPolicy policy = createAnswerCollectionPolicy(
+                initialSilenceGraceSeconds: 2.0f,
+                silenceTimeoutSeconds: 1.0f,
+                maximumAnswerDurationSeconds: 5.0f);
 
-            AnswerCollectionTickResult tick = policy.Advance(new SecondsDuration(0.0f), new SecondsDuration(0.0f), new SecondsDuration(1.5f), ESpeechDetectionState.Silent);
+            AnswerCollectionTickResult firstTickResult = policy.Advance(
+                new SecondsDuration(0.0f),
+                new SecondsDuration(0.0f),
+                new SecondsDuration(1.5f),
+                ESpeechDetectionState.Silent);
 
-            Assert.That(tick.ShouldFinishForSilence, Is.False);
+            Assert.That(firstTickResult.ShouldFinishForSilence, Is.False);
 
-            tick = policy.Advance(tick.ElapsedAnswerDuration, tick.ElapsedSilenceDuration, new SecondsDuration(0.5f), ESpeechDetectionState.Silent);
+            AnswerCollectionTickResult secondTickResult = policy.Advance(
+                firstTickResult.ElapsedAnswerDuration,
+                firstTickResult.ElapsedSilenceDuration,
+                new SecondsDuration(0.5f),
+                ESpeechDetectionState.Silent);
 
-            Assert.That(tick.ShouldFinishForSilence, Is.True);
+            Assert.That(secondTickResult.ShouldFinishForSilence, Is.True);
         }
 
         [Test]
         public void AnswerCollectionPolicyResetsSilenceWhenSpeechIsDetected()
         {
-            AnswerCollectionPolicy policy = createAnswerCollectionPolicy(initialSilenceGraceSeconds: 2.0f, silenceTimeoutSeconds: 1.0f, maximumAnswerDurationSeconds: 5.0f);
+            AnswerCollectionPolicy policy = createAnswerCollectionPolicy(
+                initialSilenceGraceSeconds: 2.0f,
+                silenceTimeoutSeconds: 1.0f,
+                maximumAnswerDurationSeconds: 5.0f);
 
-            AnswerCollectionTickResult tick = policy.Advance(new SecondsDuration(2.0f), new SecondsDuration(0.9f), new SecondsDuration(0.1f), ESpeechDetectionState.SpeechDetected);
+            AnswerCollectionTickResult tickResult = policy.Advance(
+                new SecondsDuration(2.0f),
+                new SecondsDuration(0.9f),
+                new SecondsDuration(0.1f),
+                ESpeechDetectionState.SpeechDetected);
 
-            Assert.That(tick.ElapsedSilenceDuration.Value, Is.EqualTo(0.0f));
-            Assert.That(tick.ShouldFinishForSilence, Is.False);
+            Assert.That(tickResult.ElapsedSilenceDuration.Value, Is.EqualTo(0.0f));
+            Assert.That(tickResult.ShouldFinishForSilence, Is.False);
         }
 
         [Test]
         public void AnswerCollectionPolicyFinishesAtMaximumDuration()
         {
-            AnswerCollectionPolicy policy = createAnswerCollectionPolicy(initialSilenceGraceSeconds: 10.0f, silenceTimeoutSeconds: 5.0f, maximumAnswerDurationSeconds: 3.0f);
+            AnswerCollectionPolicy policy = createAnswerCollectionPolicy(
+                initialSilenceGraceSeconds: 10.0f,
+                silenceTimeoutSeconds: 5.0f,
+                maximumAnswerDurationSeconds: 3.0f);
 
-            AnswerCollectionTickResult tick = policy.Advance(new SecondsDuration(2.9f), SecondsDuration.Zero, new SecondsDuration(0.1f), ESpeechDetectionState.SpeechDetected);
+            AnswerCollectionTickResult tickResult = policy.Advance(
+                new SecondsDuration(2.9f),
+                SecondsDuration.Zero,
+                new SecondsDuration(0.1f),
+                ESpeechDetectionState.SpeechDetected);
 
-            Assert.That(tick.ShouldFinishForTimeout, Is.True);
+            Assert.That(tickResult.ShouldFinishForTimeout, Is.True);
         }
 
         [Test]
@@ -102,9 +129,24 @@ namespace MouthOfTruth.Editor.Tests.Game
         [Test]
         public void LoopedAudioClipReaderCalculatesWrappedSampleDistance()
         {
-            Assert.That(LoopedAudioClipReader.CalculateLoopedSampleDistance(new AudioSamplePosition(2), new AudioSamplePosition(8), new AudioSampleCount(10)).Value, Is.EqualTo(6));
-            Assert.That(LoopedAudioClipReader.CalculateLoopedSampleDistance(new AudioSamplePosition(8), new AudioSamplePosition(2), new AudioSampleCount(10)).Value, Is.EqualTo(4));
-            Assert.That(LoopedAudioClipReader.CalculateLoopedSampleDistance(new AudioSamplePosition(8), new AudioSamplePosition(2), AudioSampleCount.Zero).Value, Is.EqualTo(0));
+            AudioSampleCount totalSampleCount = new AudioSampleCount(10);
+
+            AudioSampleCount forwardDistance = LoopedAudioClipReader.CalculateLoopedSampleDistance(
+                new AudioSamplePosition(2),
+                new AudioSamplePosition(8),
+                totalSampleCount);
+            AudioSampleCount wrappedDistance = LoopedAudioClipReader.CalculateLoopedSampleDistance(
+                new AudioSamplePosition(8),
+                new AudioSamplePosition(2),
+                totalSampleCount);
+            AudioSampleCount zeroSampleDistance = LoopedAudioClipReader.CalculateLoopedSampleDistance(
+                new AudioSamplePosition(8),
+                new AudioSamplePosition(2),
+                AudioSampleCount.Zero);
+
+            Assert.That(forwardDistance.Value, Is.EqualTo(6));
+            Assert.That(wrappedDistance.Value, Is.EqualTo(4));
+            Assert.That(zeroSampleDistance.Value, Is.EqualTo(0));
         }
 
         [Test]
@@ -131,7 +173,9 @@ namespace MouthOfTruth.Editor.Tests.Game
 
             Assert.That(stateMachine.UpdateCardSelectionOrNull(EQuestionCardSlot.CenterCard, new SecondsDuration(0.4f)), Is.Null);
 
-            EQuestionCardSlot? selectedSlotOrNull = stateMachine.UpdateCardSelectionOrNull(EQuestionCardSlot.CenterCard, new SecondsDuration(0.1f));
+            EQuestionCardSlot? selectedSlotOrNull = stateMachine.UpdateCardSelectionOrNull(
+                EQuestionCardSlot.CenterCard,
+                new SecondsDuration(0.1f));
 
             Assert.That(selectedSlotOrNull, Is.EqualTo(EQuestionCardSlot.CenterCard));
             Assert.That(stateMachine.CurrentState, Is.EqualTo(EGameFlowState.RevealingQuestionCard));
@@ -156,11 +200,11 @@ namespace MouthOfTruth.Editor.Tests.Game
             DeterministicAnswerAnalysisClient client = new DeterministicAnswerAnalysisClient();
             AnswerAnalysisRequest request = createAnalysisRequest("Q100", "answer", faceFrameCount: 0, voiceSegmentCount: 0);
 
-            AnswerAnalysisResult result = await client.AnalyzeAsync(request, CancellationToken.None);
+            AnswerAnalysisResult analysisResult = await client.AnalyzeAsync(request, CancellationToken.None);
 
-            Assert.That(result.VerdictKind, Is.EqualTo(EVerdictKind.Uncertain));
+            Assert.That(analysisResult.VerdictKind, Is.EqualTo(EVerdictKind.Uncertain));
             Assert.That(
-                result.ReasonCodes.Select(reasonCode => reasonCode.Value),
+                analysisResult.ReasonCodes.Select(reasonCode => reasonCode.Value),
                 Is.EquivalentTo(new[] { "insufficient_face_data", "insufficient_voice_data" }));
         }
 
@@ -258,9 +302,13 @@ namespace MouthOfTruth.Editor.Tests.Game
                 File.WriteAllText(outsideFilePath, "audio");
                 File.WriteAllText(Path.Combine(outsideFaceDirectoryPath, "frame_00001.jpg"), "face");
                 LogAssert.Expect(LogType.Warning, "Skipped deleting session artifact outside the allowed directory: " + outsideFilePath);
-                LogAssert.Expect(LogType.Warning, "Skipped deleting session artifact directory outside the allowed directory: " + outsideFaceDirectoryPath);
+                LogAssert.Expect(
+                    LogType.Warning,
+                    "Skipped deleting session artifact directory outside the allowed directory: " + outsideFaceDirectoryPath);
 
-                MouthOfTruthSessionArtifactCleaner.CleanAnalysisArtifacts(new AnswerAudioFilePath(outsideFilePath), new FaceFramesDirectoryPath(outsideFaceDirectoryPath));
+                MouthOfTruthSessionArtifactCleaner.CleanAnalysisArtifacts(
+                    new AnswerAudioFilePath(outsideFilePath),
+                    new FaceFramesDirectoryPath(outsideFaceDirectoryPath));
 
                 Assert.That(File.Exists(outsideFilePath), Is.True);
                 Assert.That(Directory.Exists(outsideFaceDirectoryPath), Is.True);
@@ -313,7 +361,10 @@ namespace MouthOfTruth.Editor.Tests.Game
             return new MouthOfTruthGameStateMachine(questionDeckService, cardDwellSelectionTracker, answerCollectionPolicy);
         }
 
-        private static AnswerCollectionPolicy createAnswerCollectionPolicy(float initialSilenceGraceSeconds, float silenceTimeoutSeconds, float maximumAnswerDurationSeconds)
+        private static AnswerCollectionPolicy createAnswerCollectionPolicy(
+            float initialSilenceGraceSeconds,
+            float silenceTimeoutSeconds,
+            float maximumAnswerDurationSeconds)
         {
             return new AnswerCollectionPolicy(
                 new SecondsDuration(initialSilenceGraceSeconds),
@@ -342,7 +393,11 @@ namespace MouthOfTruth.Editor.Tests.Game
                 EQuestionAvailability.Enabled);
         }
 
-        private static AnswerAnalysisRequest createAnalysisRequest(string questionId, string answerTranscript, int faceFrameCount, int voiceSegmentCount)
+        private static AnswerAnalysisRequest createAnalysisRequest(
+            string questionId,
+            string answerTranscript,
+            int faceFrameCount,
+            int voiceSegmentCount)
         {
             return new AnswerAnalysisRequest(
                 createQuestion(questionId),

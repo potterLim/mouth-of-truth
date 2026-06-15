@@ -11,11 +11,6 @@ namespace MouthOfTruth.Game.Voice
     {
         private static readonly AudioSampleRate MICROPHONE_SAMPLE_RATE = new AudioSampleRate(16000);
         private const int MAX_SEGMENT_DURATION_SECONDS = 20;
-        private const float SPEECH_WINDOW_SECONDS = 0.20f;
-        private const float SPEECH_ACTIVITY_RMS_THRESHOLD = 0.0085f;
-        private const float SPEECH_EVIDENCE_RMS_THRESHOLD = 0.0145f;
-        private const float SPEECH_EVIDENCE_PEAK_RMS_THRESHOLD = 0.0200f;
-        private const int MINIMUM_SPEECH_EVIDENCE_WINDOW_COUNT = 4;
 
         private enum ERecordingStopMode
         {
@@ -23,6 +18,7 @@ namespace MouthOfTruth.Game.Voice
             PreserveActiveSegment,
         }
 
+        private readonly SpeechEvidenceDetector mSpeechEvidenceDetector = new SpeechEvidenceDetector(MICROPHONE_SAMPLE_RATE);
         private readonly List<float[]> mRecordedSegments = new List<float[]>();
 
         private AudioClip mActiveRecordingClip;
@@ -78,9 +74,8 @@ namespace MouthOfTruth.Game.Voice
         public AnswerCaptureFrameSnapshot Update(SecondsDuration deltaTime)
         {
             _ = deltaTime;
-            bool isSpeechDetected = mIsCollecting && calculateCurrentSpeechRms() >= SPEECH_ACTIVITY_RMS_THRESHOLD;
-            ESpeechDetectionState speechDetectionState = isSpeechDetected
-                ? ESpeechDetectionState.SpeechDetected
+            ESpeechDetectionState speechDetectionState = mIsCollecting
+                ? evaluateCurrentSpeechState()
                 : ESpeechDetectionState.Silent;
             return new AnswerCaptureFrameSnapshot(AnswerTranscript.Empty, speechDetectionState);
         }
@@ -194,7 +189,7 @@ namespace MouthOfTruth.Game.Voice
                 return;
             }
 
-            if (containsSpeechEvidence(activeSegmentSamples) == false)
+            if (mSpeechEvidenceDetector.ContainsSpeechEvidence(activeSegmentSamples) == false)
             {
                 return;
             }
@@ -210,187 +205,43 @@ namespace MouthOfTruth.Game.Voice
                 return Array.Empty<float>();
             }
 
-            int currentSamplePosition = Mathf.Clamp(Microphone.GetPosition(mSelectedDeviceName), 0, mActiveRecordingClip.samples);
-            int segmentStartSamplePosition = Mathf.Clamp(mSegmentStartSamplePosition, 0, mActiveRecordingClip.samples);
-            int recordedSampleCount = calculateLoopedSampleDistance(segmentStartSamplePosition, currentSamplePosition, mActiveRecordingClip.samples);
+            AudioSamplePosition currentSamplePosition = new AudioSamplePosition(Mathf.Clamp(Microphone.GetPosition(mSelectedDeviceName), 0, mActiveRecordingClip.samples));
+            AudioSamplePosition segmentStartSamplePosition = new AudioSamplePosition(Mathf.Clamp(mSegmentStartSamplePosition, 0, mActiveRecordingClip.samples));
+            AudioSampleCount recordedSampleCount = LoopedAudioClipReader.CalculateLoopedSampleDistance(segmentStartSamplePosition, currentSamplePosition, new AudioSampleCount(mActiveRecordingClip.samples));
 
-            if (recordedSampleCount <= 0)
+            if (recordedSampleCount.Value <= 0)
             {
                 return Array.Empty<float>();
             }
 
-            return readLoopedMonoSamples(segmentStartSamplePosition, recordedSampleCount);
+            return LoopedAudioClipReader.ReadMonoSamples(mActiveRecordingClip, segmentStartSamplePosition, recordedSampleCount);
         }
 
-        private bool containsSpeechEvidence(float[] monoSamples)
-        {
-            if (monoSamples == null || monoSamples.Length == 0)
-            {
-                return false;
-            }
-
-            int windowSampleCount = Mathf.Max(1, Mathf.CeilToInt(MICROPHONE_SAMPLE_RATE.Value * SPEECH_WINDOW_SECONDS));
-            int strideSampleCount = Mathf.Max(1, windowSampleCount / 2);
-
-            if (monoSamples.Length <= windowSampleCount)
-            {
-                float singleWindowRms = calculateWindowRms(monoSamples, 0, monoSamples.Length);
-                return singleWindowRms >= SPEECH_EVIDENCE_RMS_THRESHOLD
-                    && singleWindowRms >= SPEECH_EVIDENCE_PEAK_RMS_THRESHOLD;
-            }
-
-            int speechWindowCount = 0;
-            float peakRms = 0.0f;
-
-            for (int startSampleIndex = 0;
-                 startSampleIndex + windowSampleCount <= monoSamples.Length;
-                 startSampleIndex += strideSampleCount)
-            {
-                float windowRms = calculateWindowRms(monoSamples, startSampleIndex, windowSampleCount);
-                peakRms = Math.Max(peakRms, windowRms);
-
-                if (windowRms >= SPEECH_EVIDENCE_RMS_THRESHOLD)
-                {
-                    speechWindowCount += 1;
-                }
-            }
-
-            int tailWindowStartIndex = Math.Max(0, monoSamples.Length - windowSampleCount);
-            int tailSampleCount = monoSamples.Length - tailWindowStartIndex;
-            float tailWindowRms = calculateWindowRms(monoSamples, tailWindowStartIndex, tailSampleCount);
-            peakRms = Math.Max(peakRms, tailWindowRms);
-
-            if (tailWindowRms >= SPEECH_EVIDENCE_RMS_THRESHOLD)
-            {
-                speechWindowCount += 1;
-            }
-
-            return speechWindowCount >= MINIMUM_SPEECH_EVIDENCE_WINDOW_COUNT
-                && peakRms >= SPEECH_EVIDENCE_PEAK_RMS_THRESHOLD;
-        }
-
-        private float calculateWindowRms(float[] monoSamples, int startSampleIndex, int sampleCount)
-        {
-            if (sampleCount <= 0)
-            {
-                return 0.0f;
-            }
-
-            double squaredSum = 0.0d;
-
-            for (int sampleIndex = 0; sampleIndex < sampleCount; sampleIndex += 1)
-            {
-                float sampleValue = monoSamples[startSampleIndex + sampleIndex];
-                squaredSum += sampleValue * sampleValue;
-            }
-
-            double meanSquare = squaredSum / sampleCount;
-            return (float)Math.Sqrt(meanSquare);
-        }
-
-        private float calculateCurrentSpeechRms()
+        private ESpeechDetectionState evaluateCurrentSpeechState()
         {
             if (mActiveRecordingClip == null || mIsMicrophoneRunning == false || string.IsNullOrWhiteSpace(mSelectedDeviceName))
             {
-                return 0.0f;
+                return ESpeechDetectionState.Silent;
             }
 
-            int currentSamplePosition = Mathf.Clamp(Microphone.GetPosition(mSelectedDeviceName), 0, mActiveRecordingClip.samples);
-            int availableSampleCount = calculateLoopedSampleDistance(mSegmentStartSamplePosition, currentSamplePosition, mActiveRecordingClip.samples);
-            int windowSampleCount = Mathf.Min(availableSampleCount, Mathf.CeilToInt(MICROPHONE_SAMPLE_RATE.Value * SPEECH_WINDOW_SECONDS));
+            AudioSamplePosition currentSamplePosition = new AudioSamplePosition(Mathf.Clamp(Microphone.GetPosition(mSelectedDeviceName), 0, mActiveRecordingClip.samples));
+            AudioSampleCount availableSampleCount = LoopedAudioClipReader.CalculateLoopedSampleDistance(new AudioSamplePosition(mSegmentStartSamplePosition), currentSamplePosition, new AudioSampleCount(mActiveRecordingClip.samples));
+            AudioSampleCount windowSampleCount = new AudioSampleCount(Mathf.Min(availableSampleCount.Value, Mathf.CeilToInt(MICROPHONE_SAMPLE_RATE.Value * mSpeechEvidenceDetector.SpeechWindowDuration.Value)));
 
-            if (windowSampleCount <= 0)
+            if (windowSampleCount.Value <= 0)
             {
-                return 0.0f;
+                return ESpeechDetectionState.Silent;
             }
 
-            int startSampleOffset = currentSamplePosition - windowSampleCount;
+            int startSampleOffset = currentSamplePosition.Value - windowSampleCount.Value;
 
             if (startSampleOffset < 0)
             {
                 startSampleOffset += mActiveRecordingClip.samples;
             }
 
-            float[] clipBuffer = readLoopedMonoSamples(startSampleOffset, windowSampleCount);
-
-            if (clipBuffer.Length == 0)
-            {
-                return 0.0f;
-            }
-
-            double squaredSum = 0.0d;
-
-            foreach (float sample in clipBuffer)
-            {
-                squaredSum += sample * sample;
-            }
-
-            double meanSquare = squaredSum / clipBuffer.Length;
-            return (float)Math.Sqrt(meanSquare);
-        }
-
-        private float[] readLoopedMonoSamples(int startSamplePosition, int sampleCount)
-        {
-            if (mActiveRecordingClip == null || sampleCount <= 0)
-            {
-                return Array.Empty<float>();
-            }
-
-            int channels = Mathf.Max(1, mActiveRecordingClip.channels);
-            int clipSampleCount = mActiveRecordingClip.samples;
-
-            if (clipSampleCount <= 0)
-            {
-                return Array.Empty<float>();
-            }
-
-            int remainingSampleCount = Mathf.Min(sampleCount, clipSampleCount);
-            int readSamplePosition = Mathf.Clamp(startSamplePosition, 0, clipSampleCount - 1);
-            int outputSampleOffset = 0;
-            float[] monoSamples = new float[remainingSampleCount];
-
-            while (remainingSampleCount > 0)
-            {
-                int chunkSampleCount = Math.Min(remainingSampleCount, clipSampleCount - readSamplePosition);
-                float[] interleavedSamples = new float[chunkSampleCount * channels];
-                mActiveRecordingClip.GetData(interleavedSamples, readSamplePosition);
-
-                for (int sampleIndex = 0; sampleIndex < chunkSampleCount; sampleIndex += 1)
-                {
-                    float mixedValue = 0.0f;
-
-                    for (int channelIndex = 0; channelIndex < channels; channelIndex += 1)
-                    {
-                        mixedValue += interleavedSamples[(sampleIndex * channels) + channelIndex];
-                    }
-
-                    monoSamples[outputSampleOffset + sampleIndex] = mixedValue / channels;
-                }
-
-                outputSampleOffset += chunkSampleCount;
-                remainingSampleCount -= chunkSampleCount;
-                readSamplePosition = 0;
-            }
-
-            return monoSamples;
-        }
-
-        private int calculateLoopedSampleDistance(int startSamplePosition, int endSamplePosition, int clipSampleCount)
-        {
-            if (clipSampleCount <= 0)
-            {
-                return 0;
-            }
-
-            int clampedStartSamplePosition = Mathf.Clamp(startSamplePosition, 0, clipSampleCount);
-            int clampedEndSamplePosition = Mathf.Clamp(endSamplePosition, 0, clipSampleCount);
-
-            if (clampedEndSamplePosition >= clampedStartSamplePosition)
-            {
-                return clampedEndSamplePosition - clampedStartSamplePosition;
-            }
-
-            return (clipSampleCount - clampedStartSamplePosition) + clampedEndSamplePosition;
+            float[] activeSpeechSamples = LoopedAudioClipReader.ReadMonoSamples(mActiveRecordingClip, new AudioSamplePosition(startSampleOffset), windowSampleCount);
+            return mSpeechEvidenceDetector.EvaluateSpeechState(activeSpeechSamples);
         }
 
         private string selectDefaultDeviceName()

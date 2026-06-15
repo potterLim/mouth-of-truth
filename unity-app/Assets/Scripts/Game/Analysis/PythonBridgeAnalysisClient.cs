@@ -10,9 +10,11 @@ namespace MouthOfTruth.Game.Analysis
 {
     public partial class PythonBridgeAnalysisClient : IAnswerAnalysisClient, IDisposable
     {
-        private const int DEFAULT_TIMEOUT_MILLISECONDS = 15000;
-        private const int WORKER_STARTUP_TIMEOUT_MILLISECONDS = 30000;
-        private const int WORKER_SHUTDOWN_TIMEOUT_MILLISECONDS = 1000;
+        private static readonly TimeSpan DEFAULT_ANALYSIS_TIMEOUT = TimeSpan.FromSeconds(15.0d);
+        private static readonly TimeSpan WORKER_STARTUP_TIMEOUT = TimeSpan.FromSeconds(30.0d);
+        private static readonly TimeSpan WORKER_SHUTDOWN_TIMEOUT = TimeSpan.FromSeconds(1.0d);
+        private static readonly TimeSpan PROCESS_KILL_WAIT_TIMEOUT = TimeSpan.FromSeconds(1.0d);
+        private static readonly TimeSpan PROCESS_OUTPUT_DRAIN_TIMEOUT = TimeSpan.FromSeconds(1.0d);
 
         private readonly object mWorkerReadyLock = new object();
         private readonly SemaphoreSlim mAnalysisSemaphore = new SemaphoreSlim(1, 1);

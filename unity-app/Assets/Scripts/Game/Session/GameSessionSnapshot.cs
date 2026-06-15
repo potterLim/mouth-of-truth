@@ -5,7 +5,16 @@ namespace MouthOfTruth.Game.Session
 {
     public class GameSessionSnapshot
     {
-        public GameSessionSnapshot(EGameFlowState currentState, QuestionRoundSelection currentRoundSelection, EQuestionCardSlot? selectedQuestionCardSlotOrNull, QuestionDefinition selectedQuestionDefinitionOrNull, EVerdictKind? currentVerdictKindOrNull, AnswerTranscript currentAnswerTranscript, SecondsDuration hoveredCardDwellDuration, SecondsDuration elapsedAnswerDuration, SecondsDuration elapsedSilenceDuration)
+        public GameSessionSnapshot(
+            EGameFlowState currentState,
+            QuestionRoundSelection currentRoundSelection,
+            EQuestionCardSlot? selectedQuestionCardSlotOrNull,
+            QuestionDefinition selectedQuestionDefinitionOrNull,
+            EVerdictKind? currentVerdictKindOrNull,
+            AnswerTranscript currentAnswerTranscript,
+            SecondsDuration hoveredCardDwellDuration,
+            SecondsDuration elapsedAnswerDuration,
+            SecondsDuration elapsedSilenceDuration)
         {
             CurrentState = currentState;
             CurrentRoundSelection = currentRoundSelection;

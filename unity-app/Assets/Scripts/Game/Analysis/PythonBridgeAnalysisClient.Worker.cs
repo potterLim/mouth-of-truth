@@ -47,7 +47,7 @@ namespace MouthOfTruth.Game.Analysis
             await mWorkerProcess.StandardInput.WriteLineAsync(workerCommandJson).ConfigureAwait(false);
             await mWorkerProcess.StandardInput.FlushAsync().ConfigureAwait(false);
 
-            BridgeWorkerResponseFileData response = await readWorkerResponseAsync(DEFAULT_TIMEOUT_MILLISECONDS, cancellationToken).ConfigureAwait(false);
+            BridgeWorkerResponseFileData response = await readWorkerResponseAsync(DEFAULT_ANALYSIS_TIMEOUT, cancellationToken).ConfigureAwait(false);
 
             if (string.Equals(response.Status, "done", StringComparison.OrdinalIgnoreCase))
             {
@@ -79,7 +79,7 @@ namespace MouthOfTruth.Game.Analysis
 
         private async Task readWorkerReadyAsync(CancellationToken cancellationToken)
         {
-            BridgeWorkerResponseFileData readyResponse = await readWorkerResponseAsync(WORKER_STARTUP_TIMEOUT_MILLISECONDS, cancellationToken).ConfigureAwait(false);
+            BridgeWorkerResponseFileData readyResponse = await readWorkerResponseAsync(WORKER_STARTUP_TIMEOUT, cancellationToken).ConfigureAwait(false);
 
             if (string.Equals(readyResponse.Status, "ready", StringComparison.OrdinalIgnoreCase) == false)
             {
@@ -89,7 +89,7 @@ namespace MouthOfTruth.Game.Analysis
             mIsWorkerReady = true;
         }
 
-        private async Task<BridgeWorkerResponseFileData> readWorkerResponseAsync(int timeoutMilliseconds, CancellationToken cancellationToken)
+        private async Task<BridgeWorkerResponseFileData> readWorkerResponseAsync(TimeSpan timeout, CancellationToken cancellationToken)
         {
             if (isWorkerAvailable() == false)
             {
@@ -97,7 +97,7 @@ namespace MouthOfTruth.Game.Analysis
             }
 
             Task<string> readLineTask = mWorkerProcess.StandardOutput.ReadLineAsync();
-            Task timeoutTask = Task.Delay(timeoutMilliseconds, cancellationToken);
+            Task timeoutTask = Task.Delay(timeout, cancellationToken);
             Task completedTask = await Task.WhenAny(readLineTask, timeoutTask).ConfigureAwait(false);
 
             if (completedTask != readLineTask)
@@ -182,24 +182,15 @@ namespace MouthOfTruth.Game.Analysis
                     mWorkerProcess.StandardInput.WriteLine(shutdownCommandJson);
                     mWorkerProcess.StandardInput.Flush();
 
-                    if (mWorkerProcess.WaitForExit(WORKER_SHUTDOWN_TIMEOUT_MILLISECONDS) == false)
+                    if (mWorkerProcess.WaitForExit(getTimeoutMilliseconds(WORKER_SHUTDOWN_TIMEOUT)) == false)
                     {
-                        mWorkerProcess.Kill();
+                        terminateProcessAndWait(mWorkerProcess);
                     }
                 }
             }
             catch (Exception)
             {
-                try
-                {
-                    if (mWorkerProcess.HasExited == false)
-                    {
-                        mWorkerProcess.Kill();
-                    }
-                }
-                catch (Exception)
-                {
-                }
+                terminateProcessAndWait(mWorkerProcess);
             }
             finally
             {

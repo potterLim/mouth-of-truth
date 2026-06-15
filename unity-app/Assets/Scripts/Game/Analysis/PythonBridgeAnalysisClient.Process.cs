@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using MouthOfTruth.Game.App;
@@ -45,14 +46,26 @@ namespace MouthOfTruth.Game.Analysis
                 Task<string> standardOutputTask = process.StandardOutput.ReadToEndAsync();
                 Task<string> standardErrorTask = process.StandardError.ReadToEndAsync();
 
+                bool hasExited;
                 try
                 {
-                    await waitForProcessExitAsync(process, DEFAULT_TIMEOUT_MILLISECONDS, cancellationToken).ConfigureAwait(false);
+                    hasExited = await tryWaitForProcessExitAsync(process, DEFAULT_ANALYSIS_TIMEOUT, cancellationToken).ConfigureAwait(false);
                 }
                 catch
                 {
-                    killProcessIfRunning(process);
+                    terminateProcessAndWait(process);
                     throw;
+                }
+
+                if (hasExited == false)
+                {
+                    terminateProcessAndWait(process);
+                    string timedOutStandardOutput = await readProcessOutputOrFallbackAsync(standardOutputTask).ConfigureAwait(false);
+                    string timedOutStandardError = await readProcessOutputOrFallbackAsync(standardErrorTask).ConfigureAwait(false);
+                    throw new TimeoutException(
+                        $"Timed out while waiting for the Python analysis process after {DEFAULT_ANALYSIS_TIMEOUT}.\n"
+                        + $"stdout:\n{timedOutStandardOutput}\n"
+                        + $"stderr:\n{timedOutStandardError}");
                 }
 
                 string standardOutput = await standardOutputTask.ConfigureAwait(false);
@@ -65,7 +78,7 @@ namespace MouthOfTruth.Game.Analysis
             }
         }
 
-        private static async Task waitForProcessExitAsync(Process process, int timeoutMilliseconds, CancellationToken cancellationToken)
+        private static async Task<bool> tryWaitForProcessExitAsync(Process process, TimeSpan timeout, CancellationToken cancellationToken)
         {
             Stopwatch timeoutStopwatch = Stopwatch.StartNew();
 
@@ -73,27 +86,107 @@ namespace MouthOfTruth.Game.Analysis
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                if (timeoutStopwatch.ElapsedMilliseconds >= timeoutMilliseconds)
+                if (timeoutStopwatch.Elapsed >= timeout)
                 {
-                    throw new TimeoutException("Timed out while waiting for the Python analysis process.");
+                    return false;
                 }
 
                 await Task.Delay(50, cancellationToken).ConfigureAwait(false);
             }
+
+            return true;
         }
 
-        private static void killProcessIfRunning(Process process)
+        private static async Task<string> readProcessOutputOrFallbackAsync(Task<string> processOutputTask)
+        {
+            try
+            {
+                Task completedTask = await Task.WhenAny(processOutputTask, Task.Delay(PROCESS_OUTPUT_DRAIN_TIMEOUT)).ConfigureAwait(false);
+
+                if (completedTask == processOutputTask)
+                {
+                    return await processOutputTask.ConfigureAwait(false);
+                }
+            }
+            catch (Exception exception)
+            {
+                return "<process output could not be read: " + exception.GetType().Name + ": " + exception.Message + ">";
+            }
+
+            return "<process output was not available before timeout>";
+        }
+
+        private static void terminateProcessAndWait(Process process)
+        {
+            killProcessTreeIfRunning(process);
+            waitForProcessExitIfPossible(process, PROCESS_KILL_WAIT_TIMEOUT);
+        }
+
+        private static void killProcessTreeIfRunning(Process process)
         {
             try
             {
                 if (process != null && process.HasExited == false)
                 {
-                    process.Kill();
+                    killProcessTreeWhenAvailable(process);
                 }
             }
             catch (InvalidOperationException)
             {
             }
+            catch (Exception)
+            {
+            }
+        }
+
+        private static void killProcessTreeWhenAvailable(Process process)
+        {
+            MethodInfo killWithProcessTreeMethod = typeof(Process).GetMethod("Kill", new[] { typeof(bool) });
+
+            if (killWithProcessTreeMethod == null)
+            {
+                process.Kill();
+                return;
+            }
+
+            try
+            {
+                killWithProcessTreeMethod.Invoke(process, new object[] { true });
+            }
+            catch (TargetInvocationException)
+            {
+                process.Kill();
+            }
+            catch (NotSupportedException)
+            {
+                process.Kill();
+            }
+        }
+
+        private static void waitForProcessExitIfPossible(Process process, TimeSpan timeout)
+        {
+            try
+            {
+                process?.WaitForExit(getTimeoutMilliseconds(timeout));
+            }
+            catch (InvalidOperationException)
+            {
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        private static int getTimeoutMilliseconds(TimeSpan timeout)
+        {
+            if (timeout <= TimeSpan.Zero)
+            {
+                return 0;
+            }
+
+            return timeout.TotalMilliseconds >= int.MaxValue
+                ? int.MaxValue
+                : (int)Math.Ceiling(timeout.TotalMilliseconds);
         }
 
         private Process buildPythonProcess(string launcherScriptPath, string launcherArguments)

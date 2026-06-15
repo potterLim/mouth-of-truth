@@ -100,6 +100,25 @@ namespace MouthOfTruth.Editor.Tests.Game
         }
 
         [Test]
+        public void LoopedAudioClipReaderCalculatesWrappedSampleDistance()
+        {
+            Assert.That(LoopedAudioClipReader.CalculateLoopedSampleDistance(new AudioSamplePosition(2), new AudioSamplePosition(8), new AudioSampleCount(10)).Value, Is.EqualTo(6));
+            Assert.That(LoopedAudioClipReader.CalculateLoopedSampleDistance(new AudioSamplePosition(8), new AudioSamplePosition(2), new AudioSampleCount(10)).Value, Is.EqualTo(4));
+            Assert.That(LoopedAudioClipReader.CalculateLoopedSampleDistance(new AudioSamplePosition(8), new AudioSamplePosition(2), AudioSampleCount.Zero).Value, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void SpeechEvidenceDetectorSeparatesNoiseFromSpeechEvidence()
+        {
+            SpeechEvidenceDetector detector = new SpeechEvidenceDetector(new AudioSampleRate(16000));
+
+            Assert.That(detector.EvaluateSpeechState(createConstantSamples(1600, 0.001f)), Is.EqualTo(ESpeechDetectionState.Silent));
+            Assert.That(detector.ContainsSpeechEvidence(createConstantSamples(1600, 0.001f)), Is.False);
+            Assert.That(detector.EvaluateSpeechState(createConstantSamples(1600, 0.03f)), Is.EqualTo(ESpeechDetectionState.SpeechDetected));
+            Assert.That(detector.ContainsSpeechEvidence(createConstantSamples(1600, 0.03f)), Is.True);
+        }
+
+        [Test]
         public void GameStateMachineMovesThroughQuestionSelectionAndAnswerStart()
         {
             MouthOfTruthGameStateMachine stateMachine = createStateMachine(cardDwellSeconds: 0.5f);
@@ -298,6 +317,18 @@ namespace MouthOfTruth.Editor.Tests.Game
                 FaceFramesDirectoryPath.Empty,
                 new FaceFrameCount(faceFrameCount),
                 new VoiceSegmentCount(voiceSegmentCount));
+        }
+
+        private static float[] createConstantSamples(int sampleCount, float sampleValue)
+        {
+            float[] samples = new float[sampleCount];
+
+            for (int sampleIndex = 0; sampleIndex < samples.Length; sampleIndex += 1)
+            {
+                samples[sampleIndex] = sampleValue;
+            }
+
+            return samples;
         }
 
         private static string createTemporaryRuntimeRoot()

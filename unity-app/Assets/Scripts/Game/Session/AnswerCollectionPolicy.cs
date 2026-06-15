@@ -11,7 +11,10 @@ namespace MouthOfTruth.Game.Session
         {
         }
 
-        public AnswerCollectionPolicy(SecondsDuration initialSilenceGraceDuration, SecondsDuration silenceTimeoutDuration, SecondsDuration maximumAnswerDuration)
+        public AnswerCollectionPolicy(
+            SecondsDuration initialSilenceGraceDuration,
+            SecondsDuration silenceTimeoutDuration,
+            SecondsDuration maximumAnswerDuration)
         {
             if (silenceTimeoutDuration.Value <= 0.0f)
             {
@@ -34,7 +37,11 @@ namespace MouthOfTruth.Game.Session
 
         public SecondsDuration MaximumAnswerDuration { get; }
 
-        public AnswerCollectionTickResult Advance(SecondsDuration elapsedAnswerDuration, SecondsDuration elapsedSilenceDuration, SecondsDuration deltaTimeDuration, ESpeechDetectionState speechDetectionState)
+        public AnswerCollectionTickResult Advance(
+            SecondsDuration elapsedAnswerDuration,
+            SecondsDuration elapsedSilenceDuration,
+            SecondsDuration deltaTimeDuration,
+            ESpeechDetectionState speechDetectionState)
         {
             SecondsDuration nextElapsedAnswerDuration = elapsedAnswerDuration.Add(deltaTimeDuration);
             SecondsDuration nextElapsedSilenceDuration = speechDetectionState == ESpeechDetectionState.SpeechDetected
@@ -53,25 +60,5 @@ namespace MouthOfTruth.Game.Session
 
             return new AnswerCollectionTickResult(nextElapsedAnswerDuration, nextElapsedSilenceDuration, finishReason);
         }
-    }
-
-    public readonly struct AnswerCollectionTickResult
-    {
-        public AnswerCollectionTickResult(SecondsDuration elapsedAnswerDuration, SecondsDuration elapsedSilenceDuration, EAnswerCollectionFinishReason finishReason)
-        {
-            ElapsedAnswerDuration = elapsedAnswerDuration;
-            ElapsedSilenceDuration = elapsedSilenceDuration;
-            FinishReason = finishReason;
-        }
-
-        public SecondsDuration ElapsedAnswerDuration { get; }
-
-        public SecondsDuration ElapsedSilenceDuration { get; }
-
-        public EAnswerCollectionFinishReason FinishReason { get; }
-
-        public bool ShouldFinishForSilence => FinishReason == EAnswerCollectionFinishReason.Silence;
-
-        public bool ShouldFinishForTimeout => FinishReason == EAnswerCollectionFinishReason.Timeout;
     }
 }

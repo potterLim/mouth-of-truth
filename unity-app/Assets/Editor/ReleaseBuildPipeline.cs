@@ -15,6 +15,9 @@ namespace MouthOfTruth.Editor
     internal static class ReleaseBuildPipeline
     {
         private const string BURST_DEBUG_INFORMATION_DIRECTORY_SUFFIX = "_BurstDebugInformation_DoNotShip";
+        private static readonly TimeSpan DEFAULT_PROCESS_TIMEOUT = TimeSpan.FromMinutes(10.0d);
+        private static readonly TimeSpan PROCESS_KILL_WAIT_TIMEOUT = TimeSpan.FromSeconds(1.0d);
+        private static readonly TimeSpan PROCESS_OUTPUT_DRAIN_TIMEOUT = TimeSpan.FromSeconds(1.0d);
         private static readonly string[] DISTRIBUTION_FILE_NAMES_TO_REMOVE =
         {
             ".DS_Store",
@@ -169,6 +172,11 @@ namespace MouthOfTruth.Editor
 
         public static void RunProcess(string fileName, string arguments, string workingDirectory)
         {
+            RunProcess(fileName, arguments, workingDirectory, DEFAULT_PROCESS_TIMEOUT);
+        }
+
+        private static void RunProcess(string fileName, string arguments, string workingDirectory, TimeSpan processTimeout)
+        {
             using (Process process = new Process())
             {
                 process.StartInfo = new ProcessStartInfo
@@ -189,7 +197,20 @@ namespace MouthOfTruth.Editor
 
                 Task<string> standardOutputTask = process.StandardOutput.ReadToEndAsync();
                 Task<string> standardErrorTask = process.StandardError.ReadToEndAsync();
-                process.WaitForExit();
+                int timeoutMilliseconds = getProcessTimeoutMilliseconds(processTimeout);
+
+                if (process.WaitForExit(timeoutMilliseconds) == false)
+                {
+                    killProcessIfRunning(process);
+                    process.WaitForExit(getProcessTimeoutMilliseconds(PROCESS_KILL_WAIT_TIMEOUT));
+                    string timedOutStandardOutput = readProcessOutputOrFallback(standardOutputTask);
+                    string timedOutStandardError = readProcessOutputOrFallback(standardErrorTask);
+                    throw new BuildFailedException(
+                        $"{fileName} timed out after {processTimeout}.\n"
+                        + $"stdout:\n{timedOutStandardOutput}\n"
+                        + $"stderr:\n{timedOutStandardError}");
+                }
+
                 string standardOutput = standardOutputTask.GetAwaiter().GetResult();
                 string standardError = standardErrorTask.GetAwaiter().GetResult();
 
@@ -200,6 +221,42 @@ namespace MouthOfTruth.Editor
                         + $"stdout:\n{standardOutput}\n"
                         + $"stderr:\n{standardError}");
                 }
+            }
+        }
+
+        private static string readProcessOutputOrFallback(Task<string> processOutputTask)
+        {
+            if (processOutputTask.Wait(getProcessTimeoutMilliseconds(PROCESS_OUTPUT_DRAIN_TIMEOUT)))
+            {
+                return processOutputTask.GetAwaiter().GetResult();
+            }
+
+            return "<process output was not available before timeout>";
+        }
+
+        private static int getProcessTimeoutMilliseconds(TimeSpan processTimeout)
+        {
+            if (processTimeout <= TimeSpan.Zero)
+            {
+                return 0;
+            }
+
+            return processTimeout.TotalMilliseconds >= int.MaxValue
+                ? int.MaxValue
+                : (int)Math.Ceiling(processTimeout.TotalMilliseconds);
+        }
+
+        private static void killProcessIfRunning(Process process)
+        {
+            try
+            {
+                if (process != null && process.HasExited == false)
+                {
+                    process.Kill();
+                }
+            }
+            catch (InvalidOperationException)
+            {
             }
         }
 

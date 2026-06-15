@@ -24,7 +24,7 @@ Unity는 게임 화면, Ultraleap 손 입력, 마이크 녹음, 웹캠 캡처를
 
 현재 배포 빌드는 GitHub Releases에서 받을 수 있습니다.
 
-- [Mouth of Truth v0.1.0 다운로드](https://github.com/potterLim/mouth-of-truth/releases/tag/v0.1.0)
+- [Mouth of Truth v0.1.1 다운로드](https://github.com/potterLim/mouth-of-truth/releases/tag/v0.1.1)
 - macOS: ZIP 배포본
 - Windows: ZIP 배포본
 - 포함 항목: Unity 앱, Python 분석 엔진, 필수 모델, 플랫폼별 Python 런타임
@@ -117,7 +117,7 @@ Windows PowerShell:
 
 ## 릴리스 자동화
 
-Release workflow를 수동 실행하고 `v0.1.0` 같은 tag 이름을 입력하면 macOS/Windows 빌드를 만들고 draft GitHub Release에 asset을 업로드합니다.
+Release workflow를 수동 실행하고 `v0.1.1` 같은 tag 이름을 입력하면 macOS/Windows 빌드를 만들고 draft GitHub Release에 asset을 업로드합니다.
 
 모델과 Unity Asset Store 자산은 공개 Git에 넣지 않습니다. 비공개 asset bundle URL과 접근 토큰을 GitHub Actions secret으로 제공하며 빌드 중 필수 모델의 SHA-256을 확인합니다.
 

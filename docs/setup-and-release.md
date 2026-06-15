@@ -447,7 +447,7 @@ GitHub Release에는 검증된 실행 묶음만 올립니다. macOS에서 만든
 
 흐름:
 
-1. GitHub Actions에서 Release workflow를 수동 실행하고 `v0.1.0` 같은 tag 이름을 입력합니다.
+1. GitHub Actions에서 Release workflow를 수동 실행하고 `v0.1.1` 같은 tag 이름을 입력합니다.
 2. GitHub Actions가 macOS와 Windows job을 실행합니다.
 3. 각 job이 비공개 asset bundle을 복원합니다.
 4. Python 소스 컴파일 검사와 unit test를 실행한 뒤 Python 런타임을 OS별로 패키징합니다.

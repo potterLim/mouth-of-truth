@@ -117,6 +117,13 @@ Whisper 캐시까지 함께 배포할 때:
 MOUTH_OF_TRUTH_INCLUDE_WHISPER_CACHE=1 tools/package-model-assets.sh
 ```
 
+추가 생성 위치:
+
+```text
+dist/model-assets/mouth-of-truth-models-whisper-cache.tar.gz
+dist/model-assets/mouth-of-truth-models-whisper-cache.tar.gz.sha256
+```
+
 Whisper 전사를 사용할 때만 아래 캐시를 배치합니다.
 
 ```text
@@ -204,6 +211,7 @@ Git에 포함하지 않는 항목:
 - `python-runtime-windows/`
 - `dist/`
 - `bridge/*.json`
+- `python-engine/data/session-workspace/*`
 - Unity `Library/`, `Temp/`, `Obj/`, `Logs/`, `UserSettings/`
 
 GitHub의 일반 Git 저장소는 100 MiB를 초과하는 단일 파일 push를 차단합니다. 모델 묶음 파일은 GitHub Release asset, 별도 모델 저장소, 사내 저장소 또는 다른 외부 저장소로 관리합니다.
@@ -362,7 +370,7 @@ export MOUTH_OF_TRUTH_USE_TRAINED_VOICE_MODEL=1
 - Python persistent worker가 얼굴 모델을 미리 로드합니다.
 - 얼굴 분석은 대표 프레임 최대 3개를 샘플링합니다. 현재 정책은 첫 유효 얼굴 인식 1개만으로 세션 요약을 만듭니다.
 - 음성 분석은 기본적으로 빠른 음향 요약을 사용합니다. 학습된 wav2vec2 모델은 `MOUTH_OF_TRUTH_USE_TRAINED_VOICE_MODEL=1`일 때만 사용합니다.
-- Unity 브리지는 persistent worker가 실패하면 일회성 Python 프로세스를 사용합니다. 그마저 실패하면 결정적 대체 판정으로 내려갑니다.
+- Unity 브리지는 persistent worker가 실패하면 일회성 Python 프로세스를 사용합니다. 일회성 프로세스도 실패하면 기본 정책은 `fail-fast`이며, `MOUTH_OF_TRUTH_ANALYSIS_FAILURE_POLICY=deterministic`일 때만 결정적 대체 판정으로 내려갑니다.
 
 ## 12. 판정 정책
 
@@ -431,7 +439,7 @@ unity-app/Assets/StreamingAssets/audio/questions/Q0012.wav
 
 ## 14. 릴리스 빌드
 
-GitHub Release에는 검증된 실행 묶음만 올립니다. macOS에서 만든 배포본은 macOS용 Python 런타임을 포함하므로 macOS 배포본으로만 사용합니다. Windows 배포본은 Windows에서 패키징한 `python-runtime-windows/`를 포함해 별도로 만듭니다.
+GitHub Release에는 검증된 실행 묶음만 올립니다. macOS에서 만든 배포본은 macOS용 Python 런타임을 포함하므로 macOS 배포본으로만 사용합니다. Windows 배포본은 Windows에서 패키징한 런타임을 사용해 별도로 만들며, 최종 배포본 내부에는 공통 이름인 `python-runtime/`으로 포함됩니다.
 
 ### GitHub Actions 릴리스 workflow
 
@@ -466,7 +474,9 @@ python-engine/models/face/yolo26x_rafdb_best.pt
 python-engine/models/voice/best_wav2vec2_iemocap/
 python-engine/models/whisper/models--openai--whisper-tiny/   # optional
 unity-app/Assets/ThirdParty/Environment/DungeonModularPack/
+unity-app/Assets/ThirdParty/Environment/DungeonModularPack.meta
 unity-app/Assets/ThirdParty/Environment/PersianCarpetUrp/
+unity-app/Assets/ThirdParty/Environment/PersianCarpetUrp.meta
 ```
 
 로컬에서 CI용 asset bundle을 만들 때:
@@ -484,14 +494,9 @@ dist/ci-assets/mouth-of-truth-ci-assets.tar.gz.sha256
 
 이 파일은 모델과 Unity Asset Store 원본 자산을 포함하므로 Git에 commit하거나 public release asset으로 올리지 않습니다. 사내 저장소, private object storage, 만료 시간이 있는 pre-signed URL 같은 비공개 경로에 둡니다.
 
-tag로 자동 릴리스를 시작할 때:
+릴리스 tag 이름은 GitHub Actions의 Release workflow 수동 실행 입력값으로 전달합니다. 현재 workflow에는 tag push 트리거가 없으므로 `git push origin v0.1.1`만으로 릴리스가 시작되지 않습니다.
 
-```bash
-git tag v0.1.1
-git push origin v0.1.1
-```
-
-이미 있는 tag가 아니라 새 tag를 사용합니다. workflow는 release를 draft로 만들며 최종 publish는 GitHub Releases 화면에서 수동으로 합니다.
+이미 있는 tag나 release가 아니라 새 tag 이름을 입력합니다. workflow는 release를 draft로 만들며 최종 publish는 GitHub Releases 화면에서 수동으로 합니다.
 
 ### 로컬 릴리스 빌드
 
@@ -503,9 +508,11 @@ python-engine/scripts/
 python-engine/models/
 python-engine/requirements.txt
 python-engine/environment.yml
-python-runtime/ 또는 python-runtime-windows/
+python-runtime/
 bridge/
 ```
+
+Windows 로컬 빌드의 입력 런타임은 `python-runtime-windows/`에서 만들지만, 배포본 내부에는 `python-runtime/` 이름으로 복사됩니다.
 
 macOS:
 

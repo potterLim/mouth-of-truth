@@ -109,6 +109,7 @@ https://assetstore.unity.com/packages/3d/environments/dungeons/dungeon-modular-p
 
 ```text
 unity-app/Assets/ThirdParty/Environment/DungeonModularPack/
+unity-app/Assets/ThirdParty/Environment/DungeonModularPack.meta
 ```
 
 필수 경로:
@@ -133,6 +134,7 @@ https://assetstore.unity.com/packages/3d/props/persiang-carpets-urp-261455
 
 ```text
 unity-app/Assets/ThirdParty/Environment/PersianCarpetUrp/
+unity-app/Assets/ThirdParty/Environment/PersianCarpetUrp.meta
 ```
 
 필수 경로:
@@ -248,7 +250,9 @@ questions/question_pool.json
 
 ```text
 unity-app/Assets/ThirdParty/Environment/DungeonModularPack/
+unity-app/Assets/ThirdParty/Environment/DungeonModularPack.meta
 unity-app/Assets/ThirdParty/Environment/PersianCarpetUrp/
+unity-app/Assets/ThirdParty/Environment/PersianCarpetUrp.meta
 python-engine/models/face/yolo26x_rafdb_best.pt
 python-engine/models/voice/best_wav2vec2_iemocap/
 python-engine/models/whisper/models--openai--whisper-tiny/

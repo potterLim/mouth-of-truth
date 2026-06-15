@@ -12,7 +12,7 @@ Unity는 게임 화면, Ultraleap 손 입력, 마이크 녹음, 웹캠 캡처를
 
 카메라와 마이크는 참가자에게 수집 목적을 알리고 동의를 받은 설치 환경에서만 사용합니다. 얼굴/음성 모델과 기준값은 데이터셋, 조명, 카메라 각도, 마이크 품질, 주변 소음에 영향을 받기 때문에 운영 전 현장 검증이 필요합니다.
 
-답변 중 생성되는 얼굴 프레임과 음성 파일은 로컬 `python-engine/data/session-workspace/` 아래에 임시로 저장되며, 분석 직후와 앱 시작/종료 시 정리됩니다. 디버깅을 위해 보존이 필요한 경우에는 별도 보존 정책을 추가한 뒤 참가자 고지와 운영 절차를 함께 갱신해야 합니다.
+답변 중 생성되는 얼굴 프레임과 음성 파일은 로컬 `python-engine/data/session-workspace/face-frames/`와 `python-engine/data/session-workspace/answer-audio/` 아래에 임시로 저장됩니다. 이 파일들은 분석 직후와 앱 시작/종료 시 정리됩니다. 디버깅을 위해 보존이 필요한 경우에는 별도 보존 정책을 추가한 뒤 참가자 고지와 운영 절차를 함께 갱신해야 합니다.
 
 ## 구현 범위
 
@@ -207,6 +207,7 @@ Ultraleap 손 입력, 마이크 녹음, 웹캠 캡처, 실제 모델 지연 시�
 unity-app/        Unity 프로젝트, 게임 화면, 입력, 빌드 자동화
 python-engine/    얼굴/음성 분석 엔진, Python 브리지, 판정 정책
 bridge/           Unity와 Python이 JSON 요청/결과를 교환하는 런타임 폴더
+python-engine/data/session-workspace/  답변 오디오와 얼굴 프레임 임시 작업 폴더
 tools/            모델 복원, 모델 패키징, 릴리스 빌드 스크립트
 docs/             프로젝트 설정과 릴리스 빌드 문서
 ```

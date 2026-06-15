@@ -91,6 +91,19 @@ dist/model-assets/mouth-of-truth-models-required.tar.gz
 dist/model-assets/mouth-of-truth-models-required.tar.gz.sha256
 ```
 
+Whisper 캐시까지 함께 배포할 때:
+
+```bash
+MOUTH_OF_TRUTH_INCLUDE_WHISPER_CACHE=1 tools/package-model-assets.sh
+```
+
+추가 생성 위치:
+
+```text
+dist/model-assets/mouth-of-truth-models-whisper-cache.tar.gz
+dist/model-assets/mouth-of-truth-models-whisper-cache.tar.gz.sha256
+```
+
 ## 모델 교체
 
 배포본은 학습된 모델 산출물을 사용합니다. 다른 모델을 사용할 때는 같은 경로와 출력 포맷을 맞추고 얼굴/음성 점수 규칙이 기대하는 레이블 체계를 유지합니다.

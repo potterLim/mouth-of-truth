@@ -286,6 +286,13 @@ Whisper 캐시까지 배포할 때:
 MOUTH_OF_TRUTH_INCLUDE_WHISPER_CACHE=1 tools/package-model-assets.sh
 ```
 
+추가 생성물:
+
+```text
+dist/model-assets/mouth-of-truth-models-whisper-cache.tar.gz
+dist/model-assets/mouth-of-truth-models-whisper-cache.tar.gz.sha256
+```
+
 모델을 교체했다면 아래 파일의 검사값도 함께 갱신합니다.
 
 ```text

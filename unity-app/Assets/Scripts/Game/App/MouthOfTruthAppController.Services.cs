@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using MouthOfTruth.Game.Analysis;
 using MouthOfTruth.Game.Data;
+using MouthOfTruth.Game.Diagnostics;
 using MouthOfTruth.Game.Face;
 using MouthOfTruth.Game.Input;
 using MouthOfTruth.Game.Input.Keyboard;
@@ -56,7 +57,7 @@ namespace MouthOfTruth.Game.App
                 System.Diagnostics.Stopwatch warmUpStopwatch = System.Diagnostics.Stopwatch.StartNew();
                 await mAnswerAnalysisClient.WarmUpAsync(mLifecycleCancellationTokenSource.Token);
                 warmUpStopwatch.Stop();
-                Debug.Log($"Answer analysis engine warmed up in {warmUpStopwatch.ElapsedMilliseconds} ms.");
+                MouthOfTruthLog.LogInfo($"Answer analysis engine warmed up in {warmUpStopwatch.ElapsedMilliseconds} ms.");
             }
             catch (Exception exception)
             {

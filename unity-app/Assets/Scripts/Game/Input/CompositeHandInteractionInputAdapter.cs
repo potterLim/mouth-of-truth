@@ -12,7 +12,7 @@ namespace MouthOfTruth.Game.Input
             mInputAdapters = inputAdapters == null ? new IHandInteractionInputAdapter[0] : inputAdapters;
         }
 
-        public bool TryGetPointerScreenPosition(out Vector2 screenPosition)
+        public bool TryGetPointerScreenPosition(out PointerScreenPosition pointerScreenPosition)
         {
             foreach (IHandInteractionInputAdapter inputAdapter in mInputAdapters)
             {
@@ -21,19 +21,19 @@ namespace MouthOfTruth.Game.Input
                     continue;
                 }
 
-                if (inputAdapter.TryGetPointerScreenPosition(out screenPosition))
+                if (inputAdapter.TryGetPointerScreenPosition(out pointerScreenPosition))
                 {
                     return true;
                 }
 
                 if (inputAdapter is IHandInteractionFallbackGate fallbackGate && fallbackGate.ShouldSuppressFallbackInput)
                 {
-                    screenPosition = default;
+                    pointerScreenPosition = default;
                     return false;
                 }
             }
 
-            screenPosition = default;
+            pointerScreenPosition = default;
             return false;
         }
 

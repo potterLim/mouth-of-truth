@@ -19,8 +19,8 @@ namespace MouthOfTruth.Game.App
         private bool mWasPointerAvailableLastFrame;
         private float mPointerReacquireGuardRemainingSeconds;
         private float mPointerPresentationOverrideRemainingSeconds;
-        private Vector2? mPresentedPointerScreenPositionOrNull;
-        private Vector2? mHandPromptDismissalBaselineScreenPositionOrNull;
+        private PointerScreenPosition? mPresentedPointerScreenPositionOrNull;
+        private PointerScreenPosition? mHandPromptDismissalBaselineScreenPositionOrNull;
         private Vector2 mPointerPresentationRebaseInputScreenPosition;
         private Vector2 mPointerPresentationRebaseOutputScreenPosition;
         private EHandAnchorState mLastObservedHandAnchorState = EHandAnchorState.OutsideMouth;
@@ -28,23 +28,23 @@ namespace MouthOfTruth.Game.App
         private bool mIsPointerPresentationRebaseActive;
         private bool mShouldRebasePointerAfterPresentationOverride;
 
-        private Vector2? tryGetPointerScreenPositionOrNull()
+        private PointerScreenPosition? tryGetPointerScreenPositionOrNull()
         {
             if (mHandInteractionInputAdapter == null)
             {
                 return null;
             }
 
-            Vector2 screenPosition;
-            if (mHandInteractionInputAdapter.TryGetPointerScreenPosition(out screenPosition))
+            PointerScreenPosition pointerScreenPosition;
+            if (mHandInteractionInputAdapter.TryGetPointerScreenPosition(out pointerScreenPosition))
             {
-                return screenPosition;
+                return pointerScreenPosition;
             }
 
             return null;
         }
 
-        private void updatePointerPresentation(Vector2? pointerScreenPositionOrNull)
+        private void updatePointerPresentation(PointerScreenPosition? pointerScreenPositionOrNull)
         {
             bool isCinematicTransition = mIsTransitionBusy
                 && (mGameStateMachine.CurrentState == EGameFlowState.InsertingHand || mGameStateMachine.CurrentState == EGameFlowState.ShowingResult);
@@ -58,7 +58,7 @@ namespace MouthOfTruth.Game.App
             mGameView.UpdatePointerVisual(pointerVisualState, pointerScreenPositionOrNull);
         }
 
-        private bool updatePointerActivationGuard(Vector2? pointerScreenPositionOrNull)
+        private bool updatePointerActivationGuard(PointerScreenPosition? pointerScreenPositionOrNull)
         {
             if (pointerScreenPositionOrNull.HasValue == false)
             {
@@ -112,7 +112,7 @@ namespace MouthOfTruth.Game.App
             Cursor.lockState = CursorLockMode.None;
         }
 
-        private void updateHandPromptDismissal(Vector2? pointerScreenPositionOrNull)
+        private void updateHandPromptDismissal(PointerScreenPosition? pointerScreenPositionOrNull)
         {
             if (mPointerPresentationOverrideRemainingSeconds > 0.0f || pointerScreenPositionOrNull.HasValue == false)
             {
@@ -132,7 +132,7 @@ namespace MouthOfTruth.Game.App
             }
 
             float dismissalMovementThresholdPixels = Mathf.Max(HAND_PROMPT_DISMISS_MOVEMENT_MIN_PIXELS, Screen.height * HAND_PROMPT_DISMISS_MOVEMENT_SCREEN_HEIGHT_FACTOR);
-            float pointerMovementPixels = Vector2.Distance(mHandPromptDismissalBaselineScreenPositionOrNull.Value, pointerScreenPositionOrNull.Value);
+            float pointerMovementPixels = Vector2.Distance(mHandPromptDismissalBaselineScreenPositionOrNull.Value.Value, pointerScreenPositionOrNull.Value.Value);
 
             if (pointerMovementPixels < dismissalMovementThresholdPixels)
             {
@@ -163,12 +163,12 @@ namespace MouthOfTruth.Game.App
             mGameView.UpdateActionButtonHoverVisual(null, NormalizedProgress.Zero);
         }
 
-        private Vector2? getPresentedPointerScreenPositionOrNull(Vector2? pointerScreenPositionOrNull)
+        private PointerScreenPosition? getPresentedPointerScreenPositionOrNull(PointerScreenPosition? pointerScreenPositionOrNull)
         {
             if (mPointerPresentationOverrideRemainingSeconds > 0.0f)
             {
                 mPointerPresentationOverrideRemainingSeconds = Mathf.Max(0.0f, mPointerPresentationOverrideRemainingSeconds - Time.deltaTime);
-                mPresentedPointerScreenPositionOrNull = getBottomCenterPointerScreenPosition();
+                mPresentedPointerScreenPositionOrNull = new PointerScreenPosition(getBottomCenterPointerScreenPosition());
                 warpSystemPointerToBottomCenter();
 
                 if (mPointerPresentationOverrideRemainingSeconds <= 0.0f)
@@ -194,10 +194,12 @@ namespace MouthOfTruth.Game.App
 
             if (mShouldRebasePointerAfterPresentationOverride)
             {
-                beginPointerPresentationRebase(pointerScreenPositionOrNull.Value, getBottomCenterPointerScreenPosition());
+                beginPointerPresentationRebase(pointerScreenPositionOrNull.Value.Value, getBottomCenterPointerScreenPosition());
             }
 
-            mPresentedPointerScreenPositionOrNull = mIsPointerPresentationRebaseActive ? getRebasedPointerScreenPosition(pointerScreenPositionOrNull.Value) : pointerScreenPositionOrNull.Value;
+            mPresentedPointerScreenPositionOrNull = mIsPointerPresentationRebaseActive
+                ? new PointerScreenPosition(getRebasedPointerScreenPosition(pointerScreenPositionOrNull.Value.Value))
+                : pointerScreenPositionOrNull.Value;
             return mPresentedPointerScreenPositionOrNull;
         }
 
@@ -209,7 +211,7 @@ namespace MouthOfTruth.Game.App
         private void beginBottomCenterPointerSettle(float durationSeconds)
         {
             mPointerPresentationOverrideRemainingSeconds = Mathf.Max(0.0f, durationSeconds);
-            mPresentedPointerScreenPositionOrNull = getBottomCenterPointerScreenPosition();
+            mPresentedPointerScreenPositionOrNull = new PointerScreenPosition(getBottomCenterPointerScreenPosition());
             mShouldRebasePointerAfterPresentationOverride = mPointerPresentationOverrideRemainingSeconds > 0.0f;
             mIsPointerPresentationRebaseActive = false;
             warpSystemPointerToBottomCenter();

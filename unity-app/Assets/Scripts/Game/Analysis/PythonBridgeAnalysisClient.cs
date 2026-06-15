@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MouthOfTruth.Game.App;
 using MouthOfTruth.Game.Data;
+using MouthOfTruth.Game.Diagnostics;
 using UnityEngine;
 
 namespace MouthOfTruth.Game.Analysis
@@ -269,7 +270,7 @@ namespace MouthOfTruth.Game.Analysis
                 {
                     if (string.IsNullOrWhiteSpace(eventArguments.Data) == false)
                     {
-                        UnityEngine.Debug.Log(eventArguments.Data);
+                        MouthOfTruthLog.LogInfo(eventArguments.Data);
                     }
                 };
                 mWorkerProcess.BeginErrorReadLine();

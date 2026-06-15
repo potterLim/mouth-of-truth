@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
+using MouthOfTruth.Game.Diagnostics;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 using Leap;
 
 namespace MouthOfTruth.Game.Input.Leap
@@ -98,15 +98,15 @@ namespace MouthOfTruth.Game.Input.Leap
             updateTrackingState();
         }
 
-        public bool TryGetPointerScreenPosition(out Vector2 screenPosition)
+        public bool TryGetPointerScreenPosition(out PointerScreenPosition pointerScreenPosition)
         {
             if (mHasTrackedPointer == false)
             {
-                screenPosition = default;
+                pointerScreenPosition = default;
                 return false;
             }
 
-            screenPosition = mSmoothedPointerScreenPosition;
+            pointerScreenPosition = new PointerScreenPosition(mSmoothedPointerScreenPosition);
             return true;
         }
 
@@ -218,19 +218,19 @@ namespace MouthOfTruth.Game.Input.Leap
 
             if (mPreviousServiceConnectedState != IsTrackingServiceConnected)
             {
-                Debug.Log($"LeapHandTrackingRuntime: tracking service connected = {IsTrackingServiceConnected}.");
+                MouthOfTruthLog.LogInfo($"LeapHandTrackingRuntime: tracking service connected = {IsTrackingServiceConnected}.");
                 mPreviousServiceConnectedState = IsTrackingServiceConnected;
             }
 
             if (mPreviousDeviceConnectedState != IsTrackingDeviceConnected)
             {
-                Debug.Log($"LeapHandTrackingRuntime: tracking device connected = {IsTrackingDeviceConnected}.");
+                MouthOfTruthLog.LogInfo($"LeapHandTrackingRuntime: tracking device connected = {IsTrackingDeviceConnected}.");
                 mPreviousDeviceConnectedState = IsTrackingDeviceConnected;
             }
 
             if (mPreviousTrackedPointerState != mHasTrackedPointer)
             {
-                Debug.Log($"LeapHandTrackingRuntime: pointer tracked = {mHasTrackedPointer}.");
+                MouthOfTruthLog.LogInfo($"LeapHandTrackingRuntime: pointer tracked = {mHasTrackedPointer}.");
                 mPreviousTrackedPointerState = mHasTrackedPointer;
             }
         }

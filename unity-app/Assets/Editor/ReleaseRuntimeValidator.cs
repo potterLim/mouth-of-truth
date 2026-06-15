@@ -24,27 +24,23 @@ namespace MouthOfTruth.Editor
             new RequiredReleaseFile("python-engine/models/voice/best_wav2vec2_iemocap/model.safetensors", "699c55de39fddb538eee49a24afc1008a20bb78918b7a50429b63b59dc62f5c3"),
             new RequiredReleaseFile("python-engine/models/voice/best_wav2vec2_iemocap/preprocessor_config.json", "8cdfd65ff4115423185a1512bdae100e2e0cd744f5b322417429944aaafd0827"),
         };
-        public static void ValidateProjectRuntimeAssets(string runtimeRootPath)
+
+        public static void ValidateProjectRuntimeAssets(ReleaseRuntimeRootPath runtimeRootPath)
         {
             validateReleaseFiles(runtimeRootPath, "project runtime");
             validateProjectStreamingAssets(runtimeRootPath);
         }
 
-        public static void ValidateDistributionRuntimeAssets(string distributionRootPath)
+        public static void ValidateDistributionRuntimeAssets(ReleaseRuntimeRootPath distributionRootPath)
         {
             validateReleaseFiles(distributionRootPath, "distribution runtime");
         }
 
-        private static void validateReleaseFiles(string releaseRootPath, string releaseRootDescription)
+        private static void validateReleaseFiles(ReleaseRuntimeRootPath releaseRootPath, string releaseRootDescription)
         {
-            if (string.IsNullOrWhiteSpace(releaseRootPath))
-            {
-                throw new BuildFailedException("Release runtime root path is empty.");
-            }
-
-            assertDirectoryExists(Path.Combine(releaseRootPath, "python-engine", "src"), releaseRootDescription);
-            assertDirectoryExists(Path.Combine(releaseRootPath, "python-engine", "scripts"), releaseRootDescription);
-            assertDirectoryExists(Path.Combine(releaseRootPath, "python-engine", "models"), releaseRootDescription);
+            assertDirectoryExists(Path.Combine(releaseRootPath.Value, "python-engine", "src"), releaseRootDescription);
+            assertDirectoryExists(Path.Combine(releaseRootPath.Value, "python-engine", "scripts"), releaseRootDescription);
+            assertDirectoryExists(Path.Combine(releaseRootPath.Value, "python-engine", "models"), releaseRootDescription);
 
             foreach (RequiredReleaseFile requiredReleaseFile in REQUIRED_RELEASE_FILES)
             {
@@ -52,11 +48,11 @@ namespace MouthOfTruth.Editor
             }
         }
 
-        private static void validateProjectStreamingAssets(string runtimeRootPath)
+        private static void validateProjectStreamingAssets(ReleaseRuntimeRootPath runtimeRootPath)
         {
             foreach (string requiredProjectStreamingAssetFile in MouthOfTruthStreamingAssetManifest.RequiredProjectStreamingAssetFiles)
             {
-                string filePath = Path.Combine(runtimeRootPath, requiredProjectStreamingAssetFile.Replace('/', Path.DirectorySeparatorChar));
+                string filePath = Path.Combine(runtimeRootPath.Value, requiredProjectStreamingAssetFile.Replace('/', Path.DirectorySeparatorChar));
 
                 if (File.Exists(filePath))
                 {
@@ -77,9 +73,9 @@ namespace MouthOfTruth.Editor
             throw new BuildFailedException($"Required {releaseRootDescription} directory is missing: {directoryPath}");
         }
 
-        private static void validateRequiredFile(string releaseRootPath, string releaseRootDescription, RequiredReleaseFile requiredReleaseFile)
+        private static void validateRequiredFile(ReleaseRuntimeRootPath releaseRootPath, string releaseRootDescription, RequiredReleaseFile requiredReleaseFile)
         {
-            string filePath = Path.Combine(releaseRootPath, requiredReleaseFile.RelativePath.Replace('/', Path.DirectorySeparatorChar));
+            string filePath = Path.Combine(releaseRootPath.Value, requiredReleaseFile.RelativePath.Replace('/', Path.DirectorySeparatorChar));
 
             if (File.Exists(filePath) == false)
             {

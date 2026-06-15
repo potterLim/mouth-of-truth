@@ -106,7 +106,7 @@ namespace MouthOfTruth.Game.Voice
             }
 
             AnswerAudioFilePath audioFilePath = AnswerAudioWorkspacePaths.BuildAudioFilePath(questionId);
-            WaveFileWriter.WriteMono16BitPcm(audioFilePath, mergedSamples, MICROPHONE_SAMPLE_RATE);
+            WaveFileWriter.WriteMono16BitPcm(audioFilePath, new MonoAudioSampleBuffer(mergedSamples), MICROPHONE_SAMPLE_RATE);
 
             return Task.FromResult(new AnswerCaptureResult(AnswerTranscript.Empty, audioFilePath, new VoiceSegmentCount(mRecordedSegmentCount)));
         }

@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using MouthOfTruth.Game.Data;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -236,12 +237,12 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mMouthImage.color = new Color(1.0f, 1.0f, 1.0f, Mathf.Clamp01(alpha));
         }
 
-        private TempleCameraTransition captureTempleCameraTransition(float targetScale, Vector2 targetMouthCenter)
+        private TempleCameraTransition captureTempleCameraTransition(TempleCameraScale targetScale, Vector2 targetMouthCenter)
         {
             return new TempleCameraTransition(
                 mTempleApproachCameraRectTransform.localScale.x,
                 mTempleApproachCameraRectTransform.anchoredPosition,
-                getTempleCameraPositionForCenteredMouth(targetScale, targetMouthCenter));
+                getTempleCameraPositionForCenteredMouth(targetScale.Value, targetMouthCenter));
         }
 
         private void setTempleCameraPose(float scale, float yOffset)
@@ -361,14 +362,14 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                 mTargetPosition = targetPosition;
             }
 
-            public float GetScale(float targetScale, float progress)
+            public float GetScale(TempleCameraScale targetScale, NormalizedProgress progress)
             {
-                return Mathf.Lerp(mStartScale, targetScale, progress);
+                return Mathf.Lerp(mStartScale, targetScale.Value, progress.Value);
             }
 
-            public Vector2 GetPosition(float progress)
+            public Vector2 GetPosition(NormalizedProgress progress)
             {
-                return Vector2.Lerp(mStartPosition, mTargetPosition, progress);
+                return Vector2.Lerp(mStartPosition, mTargetPosition, progress.Value);
             }
         }
     }

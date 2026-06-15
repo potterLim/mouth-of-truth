@@ -183,14 +183,9 @@ namespace MouthOfTruth.Game.Presentation.Runtime
             mCanvasGroup.alpha = alpha.Value;
         }
 
-        public void SetScale(float scale)
+        public void SetScale(QuestionCardScale questionCardScale)
         {
-            mRectTransform.localScale = Vector3.one * Mathf.Max(0.01f, scale);
-        }
-
-        public void SetScale(float horizontalScale, float verticalScale)
-        {
-            mRectTransform.localScale = new Vector3(Mathf.Max(0.01f, horizontalScale), Mathf.Max(0.01f, verticalScale), 1.0f);
+            mRectTransform.localScale = new Vector3(questionCardScale.Horizontal, questionCardScale.Vertical, 1.0f);
         }
 
         public void OnPointerEnter(PointerEventData eventData)

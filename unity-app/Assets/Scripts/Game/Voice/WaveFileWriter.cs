@@ -6,16 +6,11 @@ namespace MouthOfTruth.Game.Voice
 {
     internal static class WaveFileWriter
     {
-        internal static void WriteMono16BitPcm(AnswerAudioFilePath outputFilePath, float[] monoSamples, AudioSampleRate sampleRate)
+        internal static void WriteMono16BitPcm(AnswerAudioFilePath outputFilePath, MonoAudioSampleBuffer monoAudioSampleBuffer, AudioSampleRate sampleRate)
         {
             if (outputFilePath.IsEmpty)
             {
                 throw new ArgumentException("Output file path is required.", nameof(outputFilePath));
-            }
-
-            if (monoSamples == null)
-            {
-                throw new ArgumentNullException(nameof(monoSamples));
             }
 
             string directoryPath = Path.GetDirectoryName(outputFilePath.Value);
@@ -31,7 +26,7 @@ namespace MouthOfTruth.Game.Voice
                 int bytesPerSample = sizeof(short);
                 int channelCount = 1;
                 int byteRate = sampleRate.Value * channelCount * bytesPerSample;
-                int dataChunkSize = monoSamples.Length * bytesPerSample;
+                int dataChunkSize = monoAudioSampleBuffer.SampleCount * bytesPerSample;
 
                 binaryWriter.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));
                 binaryWriter.Write(36 + dataChunkSize);
@@ -47,8 +42,9 @@ namespace MouthOfTruth.Game.Voice
                 binaryWriter.Write(System.Text.Encoding.ASCII.GetBytes("data"));
                 binaryWriter.Write(dataChunkSize);
 
-                foreach (float sample in monoSamples)
+                for (int sampleIndex = 0; sampleIndex < monoAudioSampleBuffer.SampleCount; sampleIndex += 1)
                 {
+                    float sample = monoAudioSampleBuffer[sampleIndex];
                     short pcmSample = (short)Mathf.Clamp(sample * short.MaxValue, short.MinValue, short.MaxValue);
                     binaryWriter.Write(pcmSample);
                 }

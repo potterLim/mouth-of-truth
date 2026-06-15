@@ -14,15 +14,15 @@ namespace MouthOfTruth.Game.Input.Leap
         public bool ShouldSuppressFallbackInput =>
             mLeapHandTrackingRuntime != null && mLeapHandTrackingRuntime.ShouldOwnPointerInput;
 
-        public bool TryGetPointerScreenPosition(out Vector2 screenPosition)
+        public bool TryGetPointerScreenPosition(out PointerScreenPosition pointerScreenPosition)
         {
             if (mLeapHandTrackingRuntime == null)
             {
-                screenPosition = default;
+                pointerScreenPosition = default;
                 return false;
             }
 
-            return mLeapHandTrackingRuntime.TryGetPointerScreenPosition(out screenPosition);
+            return mLeapHandTrackingRuntime.TryGetPointerScreenPosition(out pointerScreenPosition);
         }
 
         public bool WasReturnToTitleTriggeredThisFrame()

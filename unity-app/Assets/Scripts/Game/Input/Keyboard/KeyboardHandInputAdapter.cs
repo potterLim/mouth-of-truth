@@ -6,14 +6,19 @@ namespace MouthOfTruth.Game.Input.Keyboard
     {
         private readonly KeyCode mReturnToTitleKeyCode;
 
-        public KeyboardHandInputAdapter(KeyCode returnToTitleKeyCode = KeyCode.Backspace)
+        public KeyboardHandInputAdapter()
+            : this(KeyCode.Backspace)
+        {
+        }
+
+        public KeyboardHandInputAdapter(KeyCode returnToTitleKeyCode)
         {
             mReturnToTitleKeyCode = returnToTitleKeyCode;
         }
 
-        public bool TryGetPointerScreenPosition(out Vector2 screenPosition)
+        public bool TryGetPointerScreenPosition(out PointerScreenPosition pointerScreenPosition)
         {
-            screenPosition = UnityEngine.Input.mousePosition;
+            pointerScreenPosition = new PointerScreenPosition(UnityEngine.Input.mousePosition);
             return true;
         }
 

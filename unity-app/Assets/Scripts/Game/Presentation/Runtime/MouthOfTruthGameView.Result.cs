@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using MouthOfTruth.Game.Analysis;
+using MouthOfTruth.Game.Data;
 using UnityEngine;
 
 namespace MouthOfTruth.Game.Presentation.Runtime
@@ -15,7 +16,8 @@ namespace MouthOfTruth.Game.Presentation.Runtime
 
             if (isTempleApproachSceneActive())
             {
-                TempleCameraTransition templeCameraTransition = captureTempleCameraTransition(TEMPLE_RESULT_FOCUS_SCALE, TEMPLE_MOUTH_FOCUS_CENTER);
+                TempleCameraScale targetCameraScale = new TempleCameraScale(TEMPLE_RESULT_FOCUS_SCALE);
+                TempleCameraTransition templeCameraTransition = captureTempleCameraTransition(targetCameraScale, TEMPLE_MOUTH_FOCUS_CENTER);
 
                 await animateOverTimeAsync(
                     0.54f,
@@ -26,8 +28,9 @@ namespace MouthOfTruth.Game.Presentation.Runtime
                         float shakeFalloff = 1.0f - easedProgress;
                         float residualShake = Mathf.Sin(progress * Mathf.PI * 7.0f) * shakeFalloff * 4.2f;
                         float residualVerticalShake = Mathf.Sin(progress * Mathf.PI * 8.0f) * shakeFalloff * 1.8f;
-                        float cameraScale = templeCameraTransition.GetScale(TEMPLE_RESULT_FOCUS_SCALE, easedProgress) + (pulse * 0.020f);
-                        Vector2 cameraPosition = templeCameraTransition.GetPosition(easedProgress);
+                        NormalizedProgress cameraProgress = NormalizedProgress.FromUnclamped(easedProgress);
+                        float cameraScale = templeCameraTransition.GetScale(targetCameraScale, cameraProgress) + (pulse * 0.020f);
+                        Vector2 cameraPosition = templeCameraTransition.GetPosition(cameraProgress);
                         setTempleCameraPose(cameraScale, cameraPosition.y + residualVerticalShake, cameraPosition.x + residualShake);
                         setOverlayTint(new Color(0.022f, 0.016f, 0.014f, 1.0f), Mathf.Lerp(0.39f, 0.38f, easedProgress));
                         setTempleApproachMouthColor(new Color(1.0f, 0.94f, 0.84f, Mathf.Lerp(0.90f, 1.0f, easedProgress)));
